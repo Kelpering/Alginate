@@ -1,0 +1,20 @@
+# TODO
+- Port BigNum2 (FullCrypto2) to repository
+- Convert BigNum2 (FullCrypto2) to subtree (BigNum) or equivalent
+- Refactor BigNum2 into BigNum library
+  - Class Structure
+  - Initialization
+  - Conversion and Print
+  - Assignment / Equal to
+  - Addition
+  - Subtraction
+  - Multiplication
+    - Basecase
+    - Karatsuba  (Manually test if this is faster)
+  - Division
+  - Remainder / Modulus
+  - Exponentiation
+  - Modular Exponentiation
+  - Conditionals (Greater, Less, Equal)
+  - Shift operations (Digit-Wise)
+  - Shift operations (Bit-Wise)
