@@ -1,5 +1,31 @@
 #include "./BigNum.hpp"
 
+void BigNum::trunc()
+{
+    // Return immediately if number is already truncated.
+    if (num[num_size-1] != 0)
+        return;
+
+    // Calculate new array without zeroes.
+    while (num[num_size-1] == 0)
+        num_size--;
+    
+    // Prevent num_size == 0
+    if (num_size == 0)
+        num_size++;
+
+    // Create new array, transfer old.
+    uint8_t* temp = new uint8_t[num_size];
+    for (size_t i = 0; i < num_size; i++)
+        temp[i] = num[i];
+    
+    // Swap old array with new temp array.
+    delete[] num;
+    num = temp;
+
+    return;
+}
+
 void BigNum::copy(const BigNum& number)
 {
     // Copy basic variables.
@@ -14,7 +40,7 @@ void BigNum::copy(const BigNum& number)
     return;
 }
 
-const BigNum BigNum::shallow_copy() const
+BigNum BigNum::shallow_copy() const
 {
     // Create new BigNum
     BigNum shallow;
@@ -64,7 +90,7 @@ void BigNum::assign(uint64_t number, bool isNegative)
     return;
 }
 
-void BigNum::assign(std::vector<uint8_t>& number, bool isNegative)
+void BigNum::assign(const std::vector<uint8_t>& number, bool isNegative)
 {
     // Set the sign bit according to isNegative.
     sign = isNegative;
@@ -90,4 +116,60 @@ void BigNum::assign(std::vector<uint8_t>& number, bool isNegative)
         num[i] = number[i];
 
     return;
+}
+
+BigNum BigNum::add(const BigNum& x, const BigNum& y)
+{
+    // Create z (uninitialized)
+    BigNum z;
+    
+    // Handle sign
+    if (x.sign && y.sign)
+        z.sign = true;
+    else if (x.sign && !y.sign)
+        return sub(y, x.shallow_copy().self_abs());
+    else if (!x.sign && y.sign)
+        return sub(x, y.shallow_copy().self_abs());
+    else
+        z.sign = false;
+
+    // Initialize z
+    z.num_size = 1 + ((x.num_size > y.num_size) ? x.num_size : y.num_size);
+    z.num = new uint8_t[z.num_size] {0};
+    for (size_t i = 0; i < x.num_size; i++)
+        z.num[i] = x.num[i];
+
+    // Initialize addition algorithm.
+    uint16_t calc = 0;
+    uint8_t carry = 0;
+    size_t i;
+
+    // Add y to z
+    for (i = 0; i < y.num_size; i++)
+    {
+        // Add single place value + previous carry (if any).
+        calc = (uint16_t) z.num[i] + (uint16_t) y.num[i] + (uint16_t) carry;
+
+        // Set single correct place value.
+        z.num[i] = calc % 256;
+
+        // Handle carry propagation.
+        carry = (calc > 255) ? 1 : 0;
+    }
+
+    // Handle final carry propagation.
+    while (carry)
+    {
+        // Add previous carry.
+        calc = (uint16_t) z.num[i] + (uint16_t) carry;
+        z.num[i++] = calc % 256;
+
+        // Handle carry propagation.
+        carry = (calc > 255) ? 1 : 0;
+    }
+
+    // Remove any excess zeroes.
+    z.trunc();
+
+    return z;
 }
