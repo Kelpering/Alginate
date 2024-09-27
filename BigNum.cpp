@@ -183,3 +183,133 @@ BigNum BigNum::add(const BigNum& x, const BigNum& y)
 
     return z;
 }
+
+BigNum BigNum::sub(const BigNum& x, const BigNum& y)
+{
+    // Handle sign
+    if (x.sign && y.sign)
+        return sub(y.shallow_copy().self_abs(), x.shallow_copy().self_abs());
+    else if (x.sign && !y.sign)
+    {
+        BigNum z;
+        z = add(x.shallow_copy().self_abs(), y);
+        z.sign = true;
+        return z;
+    }
+    else if (!x.sign && y.sign)
+        return add(x, y.shallow_copy().self_abs());
+
+    // Handle x < y
+    if (x.shallow_copy() < y.shallow_copy())
+    {
+        BigNum z;
+        z = sub(y,x);
+        z.sign = true;
+        return z;
+    }
+
+    // x >= y guaranteed
+    BigNum z = x;
+
+    for (size_t i = y.num_size; i > 0; i--)
+    {
+        // If z digit is smaller than y digit, borrow from the next highest non zero.
+        uint16_t calc = 0;
+        if (z.num[i-1] < y.num[i-1])
+        {
+            for (size_t j = i; calc != 256; j++)
+            {
+                // If 0, replace with guaranteed borrow digit.
+                // Subtract final carry digit and borrow to calc.
+                if (z.num[j] == 0)
+                    z.num[j] = 255;
+                else
+                {
+                    z.num[j]--;
+                    calc = 256;
+                }
+            }
+        }
+        // Calculate digit, including carry.
+        calc += (uint16_t) z.num[i-1] - (uint16_t) y.num[i-1];
+        z.num[i-1] = calc;
+    }
+
+    return z;
+}
+
+bool BigNum::less_than(const BigNum& x, const BigNum& y)
+{
+    // If signs don't match, x's sign is the deciding factor.
+    if (x.sign != y.sign)
+        return x.sign;
+    bool flip = x.sign;
+
+    // If digit sizes don't match, x's digit size is the deciding factor.
+    if (x.num_size != y.num_size)
+        return (x.num_size < y.num_size) ^ flip;
+    // If digit sizes do match, but they are zero, then 0 < 0 must be false.
+    else if (x.num_size == 0)
+        return false;
+
+    // Check each digit, starting from the largest.
+    for (size_t i = x.num_size; i > 0; i--)
+    {
+        if (x.num[i-1] > y.num[i-1])
+            return false ^ flip;
+        else if (x.num[i-1] < y.num[i-1])
+            return true ^ flip;
+    }
+    
+    // If final check passes, then x.num[0] == y.num[0] therefore: false.
+    return false;
+}
+
+bool BigNum::equal(const BigNum& x, const BigNum& y)
+{
+    // If signs don't match, false.
+    if (x.sign != y.sign)
+        return false;
+
+    // If size doesn't match, then false
+    if (x.num_size != y.num_size)
+        return false;
+    // if size does match and size == 0, then return true.
+    else if (x.num_size == 0)
+        return true;
+
+    // Check each digit
+    for (size_t i = 0; i < x.num_size; i++)
+        if (x.num[i] != y.num[i])
+            return false;
+
+    // If all checks pass, it must be true.
+    return true;
+}
+
+bool BigNum::greater_than(const BigNum& x, const BigNum& y)
+{
+    // If signs don't match, x's sign is the deciding factor.
+    if (x.sign != y.sign)
+        return x.sign;
+    bool flip = x.sign;
+
+    // If digit sizes don't match, x's digit size is the deciding factor.
+    if (x.num_size != y.num_size)
+        return (x.num_size > y.num_size) ^ flip;
+    // If digit sizes do match, but they are zero, then 0 < 0 must be false.
+    else if (x.num_size == 0)
+        return false;
+
+    // Check each digit, starting from the largest.
+    for (size_t i = x.num_size; i > 0; i--)
+    {
+        if (x.num[i-1] < y.num[i-1])
+            return false ^ flip;
+        else if (x.num[i-1] > y.num[i-1])
+            return true ^ flip;
+    }
+    
+    // If final check passes then x.num[0] == y.num[0], therefore: false.
+    return false;
+}

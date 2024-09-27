@@ -60,6 +60,7 @@ class BigNum
         }
 
     //* Subtraction
+
         // Returns x-y
         static BigNum sub(const BigNum& x, const BigNum& y);
         // Returns *this - y
@@ -69,6 +70,7 @@ class BigNum
 
     
     //* Misc
+
         // Print BigNum to stdio.
         void print() const;
         // Returns abs(x)
@@ -77,7 +79,68 @@ class BigNum
         BigNum abs() const {
             return abs(*this);
         }
+
+    //* Conditionals
+
+        // Returns x < y
+        static bool less_than(const BigNum& x, const BigNum& y);
+        // Returns *this < y
+        bool less_than(const BigNum& y) const {
+            return less_than(*this, y);
+        }
         
+        // Returns x == y
+        static bool equal(const BigNum& x, const BigNum& y);
+        // Returns *this == y
+        bool equal(const BigNum& y) const {
+            return equal(*this, y);
+        }
+        
+        // Returns x > y
+        static bool greater_than(const BigNum& x, const BigNum& y);
+        // Returns *this > y
+        bool greater_than(const BigNum& y) const {
+            return greater_than(*this, y);
+        }
+
+    //* Operators
+
+        // Assignment
+        void operator=(const BigNum& y) {
+            copy(y);
+        }
+
+        // Addition
+        BigNum operator+(const BigNum& y) const {
+            return add(y);
+        }
+        void operator+=(const BigNum& y) {
+            *this = add(y);
+        }
+
+        // Subtraction
+        BigNum operator-(const BigNum& y) const {
+            return sub(y);
+        }
+        void operator-=(const BigNum& y) {
+            *this = sub(y);
+        }
+
+
+
+        // Comparison
+        bool operator<(const BigNum& y) const {
+            return less_than(y);
+        }
+        bool operator==(const BigNum& y) const {
+            return equal(y);
+        }
+        bool operator!=(const BigNum& y) const {
+            return !equal(y);
+        }
+        bool operator>(const BigNum& y) const {
+            return greater_than(y);
+        }
 };
 
 #endif // __BIGNUM_HPP__
