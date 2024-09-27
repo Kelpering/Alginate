@@ -70,7 +70,7 @@ class BigNum
     
     //* Misc
         // Print BigNum to stdio.
-        void BigNum::print() const;
+        void print() const;
         // Returns abs(x)
         static BigNum abs(const BigNum& x);
         // Returns abs(*this)
