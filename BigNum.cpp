@@ -238,6 +238,33 @@ BigNum BigNum::sub(const BigNum& x, const BigNum& y)
     return z;
 }
 
+BigNum BigNum::shl(const BigNum& x, size_t y)
+{
+    BigNum z;
+    z.sign = x.sign;
+
+    // Handle bitshifts larger than 8 (works on digits).
+    z.num_size = x.num_size + (y>>3);
+    z.num = new uint8_t[z.num_size] {0};
+
+    //! Go reverse order (works cause x != z)
+    // for (size_t i = ; i < x.num_size; i++)
+    //     z.num[] = x.num[];
+
+    // Convert y into bits only.
+    y %= 8;
+
+    //! Work on bits here, handle 0
+    return z;
+}
+
+BigNum BigNum::shr(const BigNum& x, size_t y)
+{
+
+    return y;
+}
+
+
 bool BigNum::less_than(const BigNum& x, const BigNum& y)
 {
     // If signs don't match, x's sign is the deciding factor.

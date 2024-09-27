@@ -68,16 +68,20 @@ class BigNum
             return sub(*this, y);
         }
 
-    
-    //* Misc
+    //* Shift
 
-        // Print BigNum to stdio.
-        void print() const;
-        // Returns abs(x)
-        static BigNum abs(const BigNum& x);
-        // Returns abs(*this)
-        BigNum abs() const {
-            return abs(*this);
+        // Returns x<<y (Bitwise)
+        static BigNum shl(const BigNum& x, size_t y);
+        // Returns *this<<y (Bitwise)
+        BigNum shl(size_t y) const {
+            return shl(*this, y);
+        }
+        
+        // Returns x>>y (Bitwise)
+        static BigNum shr(const BigNum& x, size_t y);
+        // Returns *this>>y (Bitwise)
+        BigNum shr(size_t y) const {
+            return shr(*this, y);
         }
 
     //* Conditionals
@@ -140,6 +144,17 @@ class BigNum
         }
         bool operator>(const BigNum& y) const {
             return greater_than(y);
+        }
+
+    //* Misc
+
+        // Print BigNum to stdio.
+        void print() const;
+        // Returns abs(x)
+        static BigNum abs(const BigNum& x);
+        // Returns abs(*this)
+        BigNum abs() const {
+            return abs(*this);
         }
 };
 
