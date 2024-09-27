@@ -29,7 +29,7 @@ const BigNum BigNum::shallow_copy() const
     return shallow;
 }
 
-void BigNum::assign(uint64_t number, bool isNegative = false)
+void BigNum::assign(uint64_t number, bool isNegative)
 {
     // Hold the bytes of number without dynamically allocating bytes.
     uint8_t scratch[8];     
@@ -64,7 +64,7 @@ void BigNum::assign(uint64_t number, bool isNegative = false)
     return;
 }
 
-void BigNum::assign(std::vector<uint8_t>& number, bool isNegative = false)
+void BigNum::assign(std::vector<uint8_t>& number, bool isNegative)
 {
     // Set the sign bit according to isNegative.
     sign = isNegative;
