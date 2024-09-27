@@ -55,6 +55,16 @@ BigNum BigNum::shallow_copy() const
     return shallow;
 }
 
+void BigNum::print() const
+{
+    std::cout << "Number: " << ((sign) ? '-':'+') << ' ';
+    for (size_t i = num_size; i > 0; i--)
+        std::cout << (int) num[i-1] << ' ';
+    std::cout << '\n';
+
+    return;
+}
+
 void BigNum::assign(uint64_t number, bool isNegative)
 {
     // Hold the bytes of number without dynamically allocating bytes.
