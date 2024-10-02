@@ -245,16 +245,26 @@ BigNum BigNum::shl(const BigNum& x, size_t y)
 
     // Handle bitshifts larger than 8 (works on digits).
     z.num_size = x.num_size + (y>>3);
+    if ((uint16_t) (x.num[x.num_size-1] << (y%8)) > 255)
+        z.num_size++;
+
     z.num = new uint8_t[z.num_size] {0};
 
-    //! Go reverse order (works cause x != z)
-    // for (size_t i = ; i < x.num_size; i++)
-    //     z.num[] = x.num[];
-
+    for (size_t i = 0; i < x.num_size; i++)
+        z.num[i+(y>>3)] = x.num[i];
+        
     // Convert y into bits only.
     y %= 8;
 
-    //! Work on bits here, handle 0
+    if (y)
+    {
+        // Apply shift operation to all but the last digit.
+        for (size_t i = z.num_size-1; i > 0; i--)
+            z.num[i] = (uint16_t) (z.num[i] << y) | (uint16_t) (z.num[i-1] >> (8-y));
+        // Final digit
+        z.num[0] <<= y;
+    }
+
     return z;
 }
 
