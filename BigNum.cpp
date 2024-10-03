@@ -270,8 +270,31 @@ BigNum BigNum::shl(const BigNum& x, size_t y)
 
 BigNum BigNum::shr(const BigNum& x, size_t y)
 {
+    BigNum z;
+    z.sign = x.sign;
 
-    return y;
+    // Handle bitshifts larger than 8 (works on digits).
+    z.num_size = x.num_size - (y>>3);
+
+    z.num = new uint8_t[z.num_size] {0};
+
+    for (size_t i = 0; i < z.num_size; i++)
+        z.num[i] = x.num[i+(y>>3)];
+        
+    // Convert y into bits only.
+    y %= 8;
+
+    if (y)
+    {
+        //! Final digit needs revision
+        // Apply shift operation to all but the last digit.
+        for (size_t i = z.num_size-1; i > 0; i--)
+            z.num[i] = (uint16_t) (z.num[i-1] << (8-y)) | (uint16_t) (z.num[i] >> y);
+        // Final digit
+        z.num[0] >>= y;
+    }
+
+    return z;
 }
 
 
