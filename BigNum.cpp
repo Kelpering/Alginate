@@ -238,6 +238,61 @@ BigNum BigNum::sub(const BigNum& x, const BigNum& y)
     return z;
 }
 
+BigNum BigNum::mul(const BigNum& x, const BigNum& y)
+{
+    // Basecase multiplication
+    // Karatsuba optimizaztions
+}
+
+BigNum BigNum::basecase_mul(const BigNum& x, const BigNum& y)
+{
+    BigNum z;
+    z.sign = x.sign ^ y.sign;
+    z.num_size = x.num_size + y.num_size; 
+    z.num = new uint8_t[z.num_size] {0};
+
+    // Looping the smaller number makes the alg faster.
+    const BigNum& big = (x.num_size > y.num_size) ? x : y;
+    const BigNum& sml = (x.num_size > y.num_size) ? y : x;
+
+    // Create temp to handle intermediate values
+    BigNum temp;
+    temp.num_size = z.num_size;
+    temp.num = new uint8_t[temp.num_size] {0};
+    // Loop smaller number (each row in mul alg)
+    for (size_t i = 0; i < sml.num_size; i++)
+    {
+        // Set temp's logical num_size to big.n_s + sml_offset.n_s + 1.
+        temp.num_size = i + big.num_size + 1;
+        for (size_t j = 0; j < temp.num_size; j++)
+            temp.num[j] = 0;
+
+        // Loop larger number (each digit in the current row)
+        uint8_t carry = 0;
+        for (size_t j = 0; j < big.num_size; j++)
+        {
+            // Perform single digit mult + carry
+            uint16_t calc = (big.num[j] * sml.num[i]) + carry;
+            temp[i+j] = calc % 256;
+
+            // Set new carry
+            carry = calc >> 8;
+        }
+
+        // Handle final carry propagation.
+        if (carry)
+            temp[i+big.num_size] = carry;
+
+        // Add temp directly to z (temp is correctly offset for this).
+        z += temp;
+    }
+
+    // Clean temp variables
+    delete[] temp.num;
+
+    return z
+}
+
 BigNum BigNum::shl(const BigNum& x, size_t y)
 {
     BigNum z;
@@ -286,12 +341,9 @@ BigNum BigNum::shr(const BigNum& x, size_t y)
 
     if (y)
     {
-        //! Final digit needs revision
         // Apply shift operation to all but the last digit.
-        for (size_t i = z.num_size-1; i > 0; i--)
-            z.num[i] = (uint16_t) (z.num[i-1] << (8-y)) | (uint16_t) (z.num[i] >> y);
-        // Final digit
-        z.num[0] >>= y;
+        for (size_t i = z.num_size; i > 0; i--)
+            z.num[i-1] = (uint16_t) (z.num[i-2] << (8-y)) | (uint16_t) (z.num[i-1] >> y);
     }
 
     return z;

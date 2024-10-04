@@ -11,6 +11,10 @@
     // Each function will be basic (create new BigNum, store there)
     // This should not affect Multiply vs Karatsuba
 
+//! Testing required:
+    //! shift right (shr)
+    //! basecase mul (mul) 
+
 class BigNum
 {
     private:
@@ -130,7 +134,24 @@ class BigNum
             *this = sub(y);
         }
 
+        // Multiplication
 
+
+        // Left Shift
+        BigNum operator<<(size_t y) const {
+            return shl(y);
+        }
+        void operator<<=(size_t y) {
+            *this = shl(y);
+        }
+
+        // Right Shift
+        BigNum operator>>(size_t y) const {
+            return shr(y);
+        }
+        void operator>>=(size_t y) {
+            *this = shr(y);
+        }
 
         // Comparison
         bool operator<(const BigNum& y) const {
