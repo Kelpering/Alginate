@@ -22,6 +22,15 @@ class BigNum
         size_t num_size = 0;
         bool sign = false;
 
+    //* Private implementations
+        
+        // Return x * y in columnar multiplication
+        static BigNum mul_basecase(const BigNum& big, const BigNum& sml);
+
+        // Return x * y with karatsuba optimizations (requires setup beforehand).
+        static BigNum mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits);
+
+
     //* Misc
 
         // Truncate any zeroes after the most significant digit.
@@ -70,6 +79,14 @@ class BigNum
         // Returns *this - y
         BigNum sub(const BigNum& y) const {
             return sub(*this, y);
+        }
+
+    //* Multiplication
+        // Returns x*y
+        static BigNum mul(const BigNum& x, const BigNum& y);
+        // Returns *this * y
+        BigNum mul(const BigNum& y) const {
+            return mul(*this, y);
         }
 
     //* Shift
@@ -135,7 +152,12 @@ class BigNum
         }
 
         // Multiplication
-
+        BigNum operator*(const BigNum& y) const {
+            return mul(y);
+        }
+        void operator*=(const BigNum& y) {
+            *this = mul(y);
+        }
 
         // Left Shift
         BigNum operator<<(size_t y) const {

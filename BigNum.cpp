@@ -1,18 +1,22 @@
 #include "./BigNum.hpp"
 
+// Number of digits before the karatsuba optimization is used.
+//! Optimize karatsuba threshold
+#define KARATSUBA_THRESHOLD 4
+
 void BigNum::trunc()
 {
+    // Handle num_size == 0.
+    if (num_size == 0)
+        return;
+
     // Return immediately if number is already truncated.
-    if (num[num_size-1] != 0)
+    if ((num[num_size-1] != 0) || (num[num_size-1] == 0 && num_size == 1))
         return;
 
     // Calculate new array without zeroes.
-    while (num[num_size-1] == 0)
+    while ((num[num_size-1] == 0) && (num_size > 1))
         num_size--;
-    
-    // Prevent num_size == 0
-    if (num_size == 0)
-        num_size++;
 
     // Create new array, transfer old.
     uint8_t* temp = new uint8_t[num_size];
@@ -130,6 +134,7 @@ void BigNum::assign(const std::vector<uint8_t>& number, bool isNegative)
 
 BigNum BigNum::add(const BigNum& x, const BigNum& y)
 {
+    //! Issues with add (access before an alloc'd number)
     // Create z (uninitialized)
     BigNum z;
     
@@ -240,20 +245,59 @@ BigNum BigNum::sub(const BigNum& x, const BigNum& y)
 
 BigNum BigNum::mul(const BigNum& x, const BigNum& y)
 {
-    // Basecase multiplication
-    // Karatsuba optimizaztions
+    // Organize x and y into a bigger and smaller digit pair.
+    const BigNum& big = (x.num_size > y.num_size) ? x: y;
+    const BigNum& sml = (x.num_size > y.num_size) ? y: x;
+
+    //! Remove true after testing phase
+    // Karatsuba optimization; perform if the smallest number is above the threshold.
+    if (sml > KARATSUBA_THRESHOLD)
+    {
+        //! Requires dynamic allocation optimizations to make efficient
+        
+        // If big is not a power of two, convert.
+        size_t max_size = big.num_size;
+        if ((max_size & (max_size-1)) != 0)
+        {
+            size_t i = 0;
+            while (max_size != 1)
+            {
+                max_size >>= 1;
+                i++;
+            }
+            max_size = 1 << (i+1);
+        }
+
+        // Setup the temporary a,b bignums.
+        BigNum a, b;
+        a.num_size = max_size;
+        b.num_size = max_size;
+        a.sign = false;
+        b.sign = false;
+        a.num = new uint8_t[a.num_size] {0};
+        b.num = new uint8_t[b.num_size] {0};
+        for (size_t i = 0; i < big.num_size; i++)
+            a.num[i] = big.num[i];
+        for (size_t i = 0; i < sml.num_size; i++)
+            b.num[i] = sml.num[i];
+
+        BigNum z = mul_karatsuba(a,b,max_size);
+        z.sign = x.sign ^ y.sign;
+        z.trunc();
+
+        return z;
+    }
+
+    // Default: return basecase
+    return mul_basecase(big,sml);
 }
 
-BigNum BigNum::basecase_mul(const BigNum& x, const BigNum& y)
+BigNum BigNum::mul_basecase(const BigNum& big, const BigNum& sml)
 {
     BigNum z;
-    z.sign = x.sign ^ y.sign;
-    z.num_size = x.num_size + y.num_size; 
+    z.sign = big.sign ^ sml.sign;
+    z.num_size = big.num_size + sml.num_size;
     z.num = new uint8_t[z.num_size] {0};
-
-    // Looping the smaller number makes the alg faster.
-    const BigNum& big = (x.num_size > y.num_size) ? x : y;
-    const BigNum& sml = (x.num_size > y.num_size) ? y : x;
 
     // Create temp to handle intermediate values
     BigNum temp;
@@ -262,7 +306,7 @@ BigNum BigNum::basecase_mul(const BigNum& x, const BigNum& y)
     // Loop smaller number (each row in mul alg)
     for (size_t i = 0; i < sml.num_size; i++)
     {
-        // Set temp's logical num_size to big.n_s + sml_offset.n_s + 1.
+        // Set temp's logical num_size to big.size + sml_offset.size + 1.
         temp.num_size = i + big.num_size + 1;
         for (size_t j = 0; j < temp.num_size; j++)
             temp.num[j] = 0;
@@ -273,7 +317,7 @@ BigNum BigNum::basecase_mul(const BigNum& x, const BigNum& y)
         {
             // Perform single digit mult + carry
             uint16_t calc = (big.num[j] * sml.num[i]) + carry;
-            temp[i+j] = calc % 256;
+            temp.num[i+j] = calc % 256;
 
             // Set new carry
             carry = calc >> 8;
@@ -281,7 +325,7 @@ BigNum BigNum::basecase_mul(const BigNum& x, const BigNum& y)
 
         // Handle final carry propagation.
         if (carry)
-            temp[i+big.num_size] = carry;
+            temp.num[i+big.num_size] = carry;
 
         // Add temp directly to z (temp is correctly offset for this).
         z += temp;
@@ -290,7 +334,52 @@ BigNum BigNum::basecase_mul(const BigNum& x, const BigNum& y)
     // Clean temp variables
     delete[] temp.num;
 
-    return z
+    return z;
+}
+
+BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
+{
+    //! Currently the karatsuba operation will be unoptimized for proof of concept
+    //! Once we have this working, we can optimize dynamic allocations and reuse to drastically speed up the operation.
+        //* Only one branch has to be allocated, the rest can be reused.
+        //* Allocations can all be performed in mul, using workspace in mul_karatsuba
+        //* 0x0 optimization
+        //* e = x1+x2, y1+y2 optimization (currently uses BigNum::mul instead of karatsuba)
+    // If below the threshold, we run basecase because it is faster.
+    if (digits < KARATSUBA_THRESHOLD)
+        return mul_basecase(x,y);
+
+    // Initialize x and y split numbers
+    BigNum x1, y1, x2, y2;
+    x1.num_size = x2.num_size = y1.num_size = y2.num_size = digits>>1;
+    x1.sign = x2.sign = y1.sign = y2.sign = false;
+    x1.num = new uint8_t[digits>>1];
+    x2.num = new uint8_t[digits>>1];
+    y1.num = new uint8_t[digits>>1];
+    y2.num = new uint8_t[digits>>1];
+
+    // Set _1 to lower half, _2 to higher half.
+    for (size_t i = 0; i < digits>>1; i++)
+    {
+        x1.num[i] = x.num[i];
+        x2.num[i] = x.num[i+(digits>>1)];
+        y1.num[i] = y.num[i];
+        y2.num[i] = y.num[i+(digits>>1)];
+    }
+
+    // BigNum d_f = mul_basecase(a1, b1);  // Smaller halves
+    // BigNum a_f = mul_basecase(a2, b2);  // Larger halves
+    // BigNum e_f = mul_basecase(a1+a2, b1+b2) - a_f - d_f;
+
+    BigNum d = mul_karatsuba(x1, y1, digits>>1);    // Smaller halves
+    BigNum a = mul_karatsuba(x2, y2, digits>>1);    // Higher halves
+    //! The addition in e here causes issue, further max_size and wacky karatsuba setups
+    //! need to be done to account for this. Possible optimization (or optimization sink).
+    BigNum e = mul(x1+x2, y1+y2) - a - d;
+
+    BigNum z = (a.shl(digits*8)) + (e.shl(digits*4)) + d;
+
+    return z;
 }
 
 BigNum BigNum::shl(const BigNum& x, size_t y)
@@ -328,6 +417,15 @@ BigNum BigNum::shr(const BigNum& x, size_t y)
     BigNum z;
     z.sign = x.sign;
 
+    // Handle y_bytes > x
+    if (x.num_size <= (y>>3))
+    {
+        z.num_size = 1;
+        z.num = new uint8_t[1] {0};
+
+        return z;
+    }
+
     // Handle bitshifts larger than 8 (works on digits).
     z.num_size = x.num_size - (y>>3);
 
@@ -342,9 +440,14 @@ BigNum BigNum::shr(const BigNum& x, size_t y)
     if (y)
     {
         // Apply shift operation to all but the last digit.
-        for (size_t i = z.num_size; i > 0; i--)
-            z.num[i-1] = (uint16_t) (z.num[i-2] << (8-y)) | (uint16_t) (z.num[i-1] >> y);
+        size_t i;
+        for (i = 0; i < z.num_size-1; i++)
+            z.num[i] = (uint16_t) (z.num[i+1] << (8-y)) | (uint16_t) (z.num[i] >> y);
+        z.num[i] = z.num[i] >> y;
     }
+   
+    // Remove excess zeroes.
+    z.trunc();
 
     return z;
 }
