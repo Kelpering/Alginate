@@ -367,17 +367,13 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
         y2.num[i] = y.num[i+(digits>>1)];
     }
 
-    // BigNum d_f = mul_basecase(a1, b1);  // Smaller halves
-    // BigNum a_f = mul_basecase(a2, b2);  // Larger halves
-    // BigNum e_f = mul_basecase(a1+a2, b1+b2) - a_f - d_f;
-
-    BigNum d = mul_karatsuba(x1, y1, digits>>1);    // Smaller halves
     BigNum a = mul_karatsuba(x2, y2, digits>>1);    // Higher halves
+    BigNum d = mul_karatsuba(x1, y1, digits>>1);    // Smaller halves
     //! The addition in e here causes issue, further max_size and wacky karatsuba setups
     //! need to be done to account for this. Possible optimization (or optimization sink).
     BigNum e = mul(x1+x2, y1+y2) - a - d;
 
-    BigNum z = (a.shl(digits*8)) + (e.shl(digits*4)) + d;
+    BigNum z = (a.shl(digits<<3)) + (e.shl(digits<<2)) + d;
 
     return z;
 }
