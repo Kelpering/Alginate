@@ -56,12 +56,17 @@ class BigNum
         // Create a BigNum from another BigNum.
         BigNum(const BigNum& number) {copy(number);};
 
+    //* Deconstructor
+        ~BigNum();
+
     //* Assignment
 
         // Assign the number to the uint64_t
         void assign(uint64_t number, bool isNegative = false);
         // Assign the number to the vector (in internal format).
         void assign(const std::vector<uint8_t>& number, bool isNegative = false);
+        // Assign the num array to a deep copy of the old array.
+        void assign(const BigNum& x);
 
     //* Addition
         

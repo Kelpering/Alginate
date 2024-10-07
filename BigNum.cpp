@@ -59,12 +59,12 @@ BigNum BigNum::shallow_copy() const
     return shallow;
 }
 
-void BigNum::print() const
+BigNum::~BigNum() 
 {
-    std::cout << "Number: " << ((sign) ? '-':'+') << ' ';
-    for (size_t i = num_size; i > 0; i--)
-        std::cout << (int) num[i-1] << ' ';
-    std::cout << '\n';
+    // De-allocate the num array at the end of scope.
+    if (num != nullptr)
+        delete[] num;
+    num = nullptr;
 
     return;
 }
@@ -129,6 +129,20 @@ void BigNum::assign(const std::vector<uint8_t>& number, bool isNegative)
     for (size_t i = 0; i < number.size(); i++)
         num[i] = number[i];
 
+    return;
+}
+
+void BigNum::assign(const BigNum& x)
+{
+    // Copy regular variables
+    num_size = x.num_size;
+    sign = x.sign;
+
+    // Deep copy the num array.
+    num = new uint8_t[num_size];
+    for (size_t i = 0; i < x.num_size; i++)
+        num[i] = x.num[i];
+    
     return;
 }
 
@@ -523,4 +537,22 @@ bool BigNum::greater_than(const BigNum& x, const BigNum& y)
     
     // If final check passes then x.num[0] == y.num[0], therefore: false.
     return false;
+}
+
+void BigNum::print() const
+{
+    std::cout << "Number: " << ((sign) ? '-':'+') << ' ';
+    for (size_t i = num_size; i > 0; i--)
+        std::cout << (int) num[i-1] << ' ';
+    std::cout << '\n';
+
+    return;
+}
+
+BigNum BigNum::abs(const BigNum& x)
+{
+    BigNum z = x;
+    z.sign = false;
+
+    return z;
 }
