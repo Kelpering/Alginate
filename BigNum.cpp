@@ -64,7 +64,7 @@ BigNum BigNum::shallow_copy() const
 BigNum::~BigNum() 
 {
     // De-allocate the num array at the end of scope.
-    if ((num != nullptr) && (shallow == false))
+    if (num != nullptr && shallow != true)
     {
         delete[] num;
         num = nullptr;
