@@ -37,6 +37,7 @@ void BigNum::copy(const BigNum& number)
     sign = number.sign;
 
     // Deep copy the num array.
+    delete[] num;
     num = new uint8_t[num_size] {0};
     for (size_t i = 0; i < num_size; i++)
         num[i] = number.num[i];
@@ -52,6 +53,7 @@ BigNum BigNum::shallow_copy() const
     // Copy basic variables.
     shallow.num_size = num_size;
     shallow.sign = sign;
+    shallow.shallow = true;
 
     // Copy the pointer to num array, not the array itself.
     shallow.num = num;
@@ -62,9 +64,11 @@ BigNum BigNum::shallow_copy() const
 BigNum::~BigNum() 
 {
     // De-allocate the num array at the end of scope.
-    if (num != nullptr)
+    if ((num != nullptr) && (shallow == false))
+    {
         delete[] num;
-    num = nullptr;
+        num = nullptr;
+    }
 
     return;
 }
@@ -148,7 +152,6 @@ void BigNum::assign(const BigNum& x)
 
 BigNum BigNum::add(const BigNum& x, const BigNum& y)
 {
-    //! Issues with add (access before an alloc'd number)
     // Create z (uninitialized)
     BigNum z;
     
@@ -286,8 +289,6 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
         BigNum a, b;
         a.num_size = max_size;
         b.num_size = max_size;
-        a.sign = false;
-        b.sign = false;
         a.num = new uint8_t[a.num_size] {0};
         b.num = new uint8_t[b.num_size] {0};
         for (size_t i = 0; i < big.num_size; i++)
@@ -312,6 +313,9 @@ BigNum BigNum::mul_basecase(const BigNum& big, const BigNum& sml)
     z.sign = big.sign ^ sml.sign;
     z.num_size = big.num_size + sml.num_size;
     z.num = new uint8_t[z.num_size] {0};
+    //! ^ This var is not freed in execution
+    //! The offending code is the z += temp;
+    //! the add func has a memory leak.
 
     // Create temp to handle intermediate values
     BigNum temp;
@@ -342,11 +346,9 @@ BigNum BigNum::mul_basecase(const BigNum& big, const BigNum& sml)
             temp.num[i+big.num_size] = carry;
 
         // Add temp directly to z (temp is correctly offset for this).
-        z += temp;
+        //! z += temp;
+        z = BigNum::add(z,temp);
     }
-
-    // Clean temp variables
-    delete[] temp.num;
 
     return z;
 }

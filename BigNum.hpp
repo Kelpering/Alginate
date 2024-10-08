@@ -21,6 +21,7 @@ class BigNum
         uint8_t* num = nullptr;
         size_t num_size = 0;
         bool sign = false;
+        bool shallow = false;
 
     //* Private implementations
         
