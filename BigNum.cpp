@@ -313,9 +313,6 @@ BigNum BigNum::mul_basecase(const BigNum& big, const BigNum& sml)
     z.sign = big.sign ^ sml.sign;
     z.num_size = big.num_size + sml.num_size;
     z.num = new uint8_t[z.num_size] {0};
-    //! ^ This var is not freed in execution
-    //! The offending code is the z += temp;
-    //! the add func has a memory leak.
 
     // Create temp to handle intermediate values
     BigNum temp;
@@ -346,8 +343,7 @@ BigNum BigNum::mul_basecase(const BigNum& big, const BigNum& sml)
             temp.num[i+big.num_size] = carry;
 
         // Add temp directly to z (temp is correctly offset for this).
-        //! z += temp;
-        z = BigNum::add(z,temp);
+        z += temp;
     }
 
     return z;
