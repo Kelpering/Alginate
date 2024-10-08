@@ -52,6 +52,7 @@ BigNum BigNum::shallow_copy() const
     // Copy basic variables.
     shallow.num_size = num_size;
     shallow.sign = sign;
+    shallow.shallow = true;
 
     // Copy the pointer to num array, not the array itself.
     shallow.num = num;
@@ -62,7 +63,7 @@ BigNum BigNum::shallow_copy() const
 BigNum::~BigNum() 
 {
     // De-allocate the num array at the end of scope.
-    if (num != nullptr)
+    if (num != nullptr && shallow != true)
         delete[] num;
     num = nullptr;
 
