@@ -24,13 +24,11 @@ class BigNum
         bool shallow = false;
 
     //* Private implementations
-        
         // Return x * y in columnar multiplication
         static BigNum mul_basecase(const BigNum& big, const BigNum& sml);
 
         // Return x * y with karatsuba optimizations (requires setup beforehand).
         static BigNum mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits);
-
 
     //* Misc
 

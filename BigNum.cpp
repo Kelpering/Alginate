@@ -1,8 +1,7 @@
 #include "./BigNum.hpp"
 
 // Number of digits before the karatsuba optimization is used.
-//! Optimize karatsuba threshold
-#define KARATSUBA_THRESHOLD 4
+#define KARATSUBA_THRESHOLD 128
 
 void BigNum::trunc()
 {
@@ -266,9 +265,8 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
     const BigNum& big = (x.num_size > y.num_size) ? x: y;
     const BigNum& sml = (x.num_size > y.num_size) ? y: x;
 
-    //! Remove true after testing phase
-    // Karatsuba optimization; perform if the smallest number is above the threshold.
-    if (sml > KARATSUBA_THRESHOLD)
+    // Karatsuba optimization: perform if the smallest number is above the threshold.
+    if (sml.num_size > KARATSUBA_THRESHOLD)
     {
         //! Requires dynamic allocation optimizations to make efficient
         
@@ -309,6 +307,23 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
 
 BigNum BigNum::mul_basecase(const BigNum& big, const BigNum& sml)
 {
+    bool sml_not_zero = false;
+    bool big_not_zero = false;
+    for (size_t i = 0; i < sml.num_size; i++)
+    {
+        if (sml.num[i] != 0)
+            sml_not_zero = true;
+        if (big.num[i] != 0)
+            big_not_zero = true;
+    }
+    for (size_t i = sml.num_size; i < big.num_size; i++)
+        if (big.num[i] != 0)
+            big_not_zero = true;
+
+    // Optimize x0 multiplication.
+    if ((sml_not_zero && big_not_zero) == false)
+        return 0;
+
     BigNum z;
     z.sign = big.sign ^ sml.sign;
     z.num_size = big.num_size + sml.num_size;
@@ -354,12 +369,26 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
     //! Currently the karatsuba operation will be unoptimized for proof of concept
     //! Once we have this working, we can optimize dynamic allocations and reuse to drastically speed up the operation.
         //* Only one branch has to be allocated, the rest can be reused.
-        //* Allocations can all be performed in mul, using workspace in mul_karatsuba
-        //* 0x0 optimization
-        //* e = x1+x2, y1+y2 optimization (currently uses BigNum::mul instead of karatsuba)
+        //^ Allocations can all be performed in mul, using above branch idea in mul_karatsuba
+        //* x0 optimization
+        //^ e = x1+x2, y1+y2 optimization (currently uses BigNum::mul instead of karatsuba)
     // If below the threshold, we run basecase because it is faster.
     if (digits < KARATSUBA_THRESHOLD)
         return mul_basecase(x,y);
+
+    bool x_not_zero = false;
+    bool y_not_zero = false;
+    for (size_t i = 0; i < digits; i++)
+    {
+        if (x.num[i] != 0)
+            x_not_zero = true;
+        if (y.num[i] != 0)
+            y_not_zero = true;
+    }
+
+    // Optimize x0 multiplication.
+    if ((x_not_zero && y_not_zero) == false)
+        return 0;
 
     // Initialize x and y split numbers
     BigNum x1, y1, x2, y2;
