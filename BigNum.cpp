@@ -419,6 +419,32 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
     return z;
 }
 
+BigNum BigNum::div(const BigNum& x, const BigNum& y)
+{
+    // If x is smaller than y, result must be zero.
+    if (x < y)
+        return 0;
+        
+    BigNum z;
+    z.sign = x.sign ^ y.sign;
+    z.num_size = x.num_size;
+    z.num = new uint8_t[z.num_size];
+
+    BigNum x_temp = x.abs();
+    BigNum y_temp = y.abs();
+
+    while ((x_temp.num[0] % 2 != 1) && (y_temp.num[0] % 2 != 1))
+    {
+        x_temp = x_temp.shr(1);
+        y_temp = y_temp.shr(1);
+    }
+
+    // Reduce until bitshift is no longer effective.
+
+
+    return 0;
+}
+
 BigNum BigNum::shl(const BigNum& x, size_t y)
 {
     BigNum z;

@@ -93,6 +93,14 @@ class BigNum
             return mul(*this, y);
         }
 
+    //* Division
+        // Returns x/y
+        static BigNum div(const BigNum& x, const BigNum& y);
+        // Returns *this / y
+        BigNum div(const BigNum& y) const {
+            return div(*this, y);
+        }
+
     //* Shift
 
         // Returns x<<y (Bitwise)
