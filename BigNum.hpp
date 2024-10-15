@@ -30,6 +30,8 @@ class BigNum
         // Return x * y with karatsuba optimizations (requires setup beforehand).
         static BigNum mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits);
 
+        static BigNum gcd_internal(BigNum& big, BigNum& sml);
+
     //* Misc
 
         // Truncate any zeroes after the most significant digit.
@@ -108,6 +110,10 @@ class BigNum
         BigNum mod(const BigNum& y) const {
             return mod(*this, y);
         }
+
+    //* Algorithms
+        // Returns gcd(x,y)
+        static BigNum gcd(const BigNum& x, const BigNum& y);
 
     //* Shift
 

@@ -537,6 +537,29 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
     return x_temp;
 }
 
+BigNum BigNum::gcd(const BigNum& x, const BigNum& y)
+{
+    BigNum big = (x > y) ? x : y;
+    BigNum sml = (x > y) ? y : x;
+    
+    return gcd_internal(big, sml);
+}
+
+BigNum BigNum::gcd_internal(BigNum& x, BigNum& y)
+{
+    BigNum& big = (x > y) ? x : y;
+    BigNum& sml = (x > y) ? y : x;
+
+    if (big == sml)
+        return big;
+    
+    // Recursive algorithm.
+    big -= sml;
+    return gcd_internal(big, sml);
+
+    return 0;
+}
+
 BigNum BigNum::shl(const BigNum& x, size_t y)
 {
     BigNum z;
