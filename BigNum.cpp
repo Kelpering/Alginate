@@ -1,5 +1,10 @@
 #include "./BigNum.hpp"
 
+//^ Optimizations
+    //^ resize func (handle num_size and num array)
+    // This can allow for DRAMATICALLY less calls to new / delete if we leave some unused space. Along with safer code
+    //^ Karatsuba optimizations (See mul_karatsuba)
+
 // Number of digits before the karatsuba optimization is used.
 #define KARATSUBA_THRESHOLD 128
 
@@ -256,6 +261,9 @@ BigNum BigNum::sub(const BigNum& x, const BigNum& y)
         z.num[i-1] = calc;
     }
 
+    // Remove any excess zeroes.
+    z.trunc();
+
     return z;
 }
 
@@ -421,28 +429,112 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
 
 BigNum BigNum::div(const BigNum& x, const BigNum& y)
 {
-    // If x is smaller than y, result must be zero.
+    // Handle x or y == 0.
+    if (x == 0 || y == 0)
+        return 0;
+
+    // If x is smaller than y, return 0.
     if (x < y)
         return 0;
-        
-    BigNum z;
-    z.sign = x.sign ^ y.sign;
-    z.num_size = x.num_size;
-    z.num = new uint8_t[z.num_size];
 
+    // Create temp nums.
     BigNum x_temp = x.abs();
     BigNum y_temp = y.abs();
 
-    while ((x_temp.num[0] % 2 != 1) && (y_temp.num[0] % 2 != 1))
+    // Reduce x/y to equivalent x_temp/y_temp (shifted by multiples of 2).
+    size_t shift = 0;
+    while (true)
     {
-        x_temp = x_temp.shr(1);
-        y_temp = y_temp.shr(1);
+        // Check individual bit based on shift.
+        if (((x_temp.num[shift>>3] >> (shift & 0x7)) & 1) != 0)
+            break;
+        if (((y_temp.num[shift>>3] >> (shift & 0x7)) & 1) != 0)
+            break;
+        shift++;
+    }
+    x_temp = x_temp.shr(shift);
+    y_temp = y_temp.shr(shift);
+
+    // Check for perfect reduction.
+    if (y_temp == 1)
+    {
+        BigNum z = x_temp;
+        z.sign = x.sign ^ y.sign;
+        return z;
     }
 
-    // Reduce until bitshift is no longer effective.
+    BigNum z = 0;
+    z.sign = x.sign ^ y.sign;
 
+    while (x_temp > y_temp || x_temp == y_temp)
+    {
+        // Find the maximum we can shift y_temp.
+        size_t shift = 0;
+        BigNum temp = y_temp;
+        while (x_temp > temp || x_temp == temp)
+        {
+            shift++;
+            temp <<= 1;
+        }
+        shift--;
 
-    return 0;
+        // Subtract max y_temp * power of 2
+        x_temp -= y_temp.shl(shift);
+        z += BigNum(1).shl(shift);
+    }
+
+    return z;
+}
+
+BigNum BigNum::mod(const BigNum& x, const BigNum& y)
+{
+    // Handle x or y == 0.
+    if (x == 0 || y == 0)
+        return 0;
+
+    // If x is smaller than y, return x
+    if (x < y)
+        return x;
+
+    // Create temp nums.
+    BigNum x_temp = x.abs();
+    BigNum y_temp = y.abs();
+
+    // Reduce x/y to equivalent x_temp/y_temp (shifted by multiples of 2).
+    size_t shift = 0;
+    while (true)
+    {
+        // Check individual bit based on shift.
+        if (((x_temp.num[shift>>3] >> (shift & 0x7)) & 1) != 0)
+            break;
+        if (((y_temp.num[shift>>3] >> (shift & 0x7)) & 1) != 0)
+            break;
+        shift++;
+    }
+    x_temp = x_temp.shr(shift);
+    y_temp = y_temp.shr(shift);
+
+    // Check for perfect reduction.
+    if (y_temp == 1)
+        return 0;
+
+    while (x_temp > y_temp || x_temp == y_temp)
+    {
+        // Find the maximum we can shift y_temp.
+        size_t shift = 0;
+        BigNum temp = y_temp;
+        while (x_temp > temp || x_temp == temp)
+        {
+            shift++;
+            temp <<= 1;
+        }
+        shift--;
+        
+        // Subtract max y_temp * power of 2
+        x_temp -= y_temp.shl(shift);
+    }
+
+    return x_temp;
 }
 
 BigNum BigNum::shl(const BigNum& x, size_t y)

@@ -101,6 +101,14 @@ class BigNum
             return div(*this, y);
         }
 
+    //* Modulus
+        // Returns x%y 
+        static BigNum mod(const BigNum& x, const BigNum& y);
+        // Returns *this % y
+        BigNum mod(const BigNum& y) const {
+            return mod(*this, y);
+        }
+
     //* Shift
 
         // Returns x<<y (Bitwise)
@@ -169,6 +177,22 @@ class BigNum
         }
         void operator*=(const BigNum& y) {
             *this = mul(y);
+        }
+
+        // Division
+        BigNum operator/(const BigNum& y) const {
+            return div(y);
+        }
+        void operator/=(const BigNum& y) {
+            *this = div(y);
+        }
+
+        // Modulus
+        BigNum operator%(const BigNum& y) const {
+            return mod(y);
+        }
+        void operator%=(const BigNum& y) {
+            *this = mod(y);
         }
 
         // Left Shift
