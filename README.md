@@ -9,13 +9,13 @@
   - ~~Assignment / Equal to~~
   - ~~Addition~~
   - ~~Subtraction~~
-  - Shift operations (Digit-Wise)
-  - Shift operations (Bit-Wise)
-  - Multiplication
-    - Basecase
-    - Karatsuba  (Manually test if this is faster)
-  - Division
-  - Remainder / Modulus
-  - Exponentiation
-  - Modular Exponentiation
-  - Conditionals (Greater, Lesser, Equal)
+  - ~~Shift operations (Digit-Wise)~~
+  - ~~Shift operations (Bit-Wise)~~
+  - ~~Multiplication~~
+    - ~~Basecase~~
+    - ~~Karatsuba  (Manually test if this is faster)~~
+  - ~~Division~~
+  - ~~Remainder / Modulus~~
+  - ~~Exponentiation~~
+  - ~~Modular Exponentiation~~
+  - ~~Conditionals (Greater, Lesser, Equal)~~
