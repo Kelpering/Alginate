@@ -96,6 +96,13 @@ class BigNum
             return mul(*this, y);
         }
 
+        // Returns x^y (exponentiation)
+        static BigNum exp(const BigNum& x, const BigNum& y);
+        // Returns *this ^ y (exponentiation)
+        BigNum exp(const BigNum& y) const {
+            return exp(*this, y);
+        }
+
     //* Division
         // Returns x/y
         static BigNum div(const BigNum& x, const BigNum& y);
@@ -112,17 +119,16 @@ class BigNum
             return mod(*this, y);
         }
 
-        // Returns x^y (exponentiation)
-        static BigNum exp(const BigNum& x, const BigNum& y);
-        // Returns *this ^ y (exponentiation)
-        BigNum exp(const BigNum& y) {
-            return exp(*this, y);
-        }
-
         // Returns (x^y) % mod (modular exponentiation).
         static BigNum mod_exp(BigNum x, BigNum y, const BigNum& mod);
-        BigNum mod_exp(const BigNum& y, const BigNum& mod) {
+        BigNum mod_exp(const BigNum& y, const BigNum& mod) const {
             return mod_exp(*this, y, mod);
+        }
+
+        // Returns y where (x*y) % mod == 1.
+        static BigNum mod_inv(const BigNum& x, const BigNum& mod);
+        BigNum mod_inv(const BigNum& mod) const {
+            return mod_inv(*this, mod);
         }
 
     //* Algorithms

@@ -494,6 +494,9 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
     if (x == 0 || y == 0)
         return 0;
 
+    if (x.sign)
+        return y - mod(x.abs(), y);
+
     // If x is smaller than y, return x
     if (x < y)
         return x;
@@ -578,6 +581,36 @@ BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
     }
 
     return z;
+}
+
+BigNum BigNum::mod_inv(const BigNum& x, const BigNum& mod)
+{
+    BigNum old_r,r, old_s,s;
+    old_r = x;
+    r = mod;
+
+    old_s = 1;
+    s = 0;
+
+    // Modified Extended Euclidean Algorithm
+    BigNum quotient, temp;
+    while (r != 0)
+    {
+        quotient = old_r / r;
+
+        temp = old_r;
+        old_r = r;
+        r = temp - (quotient * r);
+
+        temp = old_s;
+        old_s = s;
+        s = temp - (quotient * s);
+    }
+
+    // If old_r != 1, there is no modular multiplicative inverse.
+    if (old_r != 1)
+        return 0;
+    return old_s % mod;
 }
 
 BigNum BigNum::shl(const BigNum& x, size_t y)
