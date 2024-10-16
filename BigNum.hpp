@@ -30,6 +30,7 @@ class BigNum
         // Return x * y with karatsuba optimizations (requires setup beforehand).
         static BigNum mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits);
 
+        // Returns the Greatest Common Denominator of x and y.
         static BigNum gcd_internal(BigNum& big, BigNum& sml);
 
     //* Misc
@@ -109,6 +110,19 @@ class BigNum
         // Returns *this % y
         BigNum mod(const BigNum& y) const {
             return mod(*this, y);
+        }
+
+        // Returns x^y (exponentiation)
+        static BigNum exp(const BigNum& x, const BigNum& y);
+        // Returns *this ^ y (exponentiation)
+        BigNum exp(const BigNum& y) {
+            return exp(*this, y);
+        }
+
+        // Returns (x^y) % mod (modular exponentiation).
+        static BigNum mod_exp(BigNum x, BigNum y, const BigNum& mod);
+        BigNum mod_exp(const BigNum& y, const BigNum& mod) {
+            return mod_exp(*this, y, mod);
         }
 
     //* Algorithms

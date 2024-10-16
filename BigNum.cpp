@@ -333,7 +333,6 @@ BigNum BigNum::mul_basecase(const BigNum& big, const BigNum& sml)
         return 0;
 
     BigNum z;
-    z.sign = big.sign ^ sml.sign;
     z.num_size = big.num_size + sml.num_size;
     z.num = new uint8_t[z.num_size] {0};
 
@@ -368,6 +367,9 @@ BigNum BigNum::mul_basecase(const BigNum& big, const BigNum& sml)
         // Add temp directly to z (temp is correctly offset for this).
         z += temp;
     }
+
+    // Fix z.sign
+    z.sign = big.sign ^ sml.sign;
 
     return z;
 }
@@ -500,20 +502,6 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
     BigNum x_temp = x.abs();
     BigNum y_temp = y.abs();
 
-    // Reduce x/y to equivalent x_temp/y_temp (shifted by multiples of 2).
-    size_t shift = 0;
-    while (true)
-    {
-        // Check individual bit based on shift.
-        if (((x_temp.num[shift>>3] >> (shift & 0x7)) & 1) != 0)
-            break;
-        if (((y_temp.num[shift>>3] >> (shift & 0x7)) & 1) != 0)
-            break;
-        shift++;
-    }
-    x_temp = x_temp.shr(shift);
-    y_temp = y_temp.shr(shift);
-
     // Check for perfect reduction.
     if (y_temp == 1)
         return 0;
@@ -550,14 +538,46 @@ BigNum BigNum::gcd_internal(BigNum& x, BigNum& y)
     BigNum& big = (x > y) ? x : y;
     BigNum& sml = (x > y) ? y : x;
 
-    if (big == sml)
+    if (sml == 0)
         return big;
     
     // Recursive algorithm.
-    big -= sml;
+    big %= sml;
     return gcd_internal(big, sml);
 
     return 0;
+}
+
+BigNum BigNum::exp(const BigNum& x, const BigNum& y)
+{
+    if (y.sign == true)
+        return div(1,exp(x,y.abs()));
+    if (y == 0)
+        return 1;
+    if ((y % 2) == 0)
+        return exp(x*x, y>>1);
+    else
+        return x * exp(x*x, y>>1);
+}
+
+BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
+{
+    // Handle edge cases
+    if (mod == 1 || mod.sign)
+        return 0;
+
+    BigNum z = 1;
+    x %= mod;
+
+    while (y > 0)
+    {
+        if ((y % 2) == 1)
+            z = (z * x) % mod;
+        y >>= 1;
+        x = (x * x) % mod;
+    }
+
+    return z;
 }
 
 BigNum BigNum::shl(const BigNum& x, size_t y)
