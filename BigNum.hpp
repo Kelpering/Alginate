@@ -125,7 +125,7 @@ class BigNum
             return mod_exp(*this, y, mod);
         }
 
-        // Returns y where (x*y) % mod == 1.
+        // Returns y where (x*y) % mod == 1. Returns 0 if no inverse is possible.
         static BigNum mod_inv(const BigNum& x, const BigNum& mod);
         BigNum mod_inv(const BigNum& mod) const {
             return mod_inv(*this, mod);
