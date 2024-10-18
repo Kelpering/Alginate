@@ -131,9 +131,11 @@ class BigNum
             return mod_inv(*this, mod);
         }
 
-    //* Algorithms
+    //* Misc
         // Returns gcd(x,y)
         static BigNum gcd(const BigNum& x, const BigNum& y);
+        // Returns whether prob_prime is a probable prime to witness
+        static bool prime_check(const BigNum& prob_prime, const BigNum& witness);
 
     //* Shift
 

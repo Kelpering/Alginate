@@ -551,6 +551,41 @@ BigNum BigNum::gcd_internal(BigNum& x, BigNum& y)
     return 0;
 }
 
+bool BigNum::prime_check(const BigNum& prob_prime, const BigNum& witness)
+{
+    // Witness must be between 2 - (n-1) (inclusive)
+
+    // If even, number cannot be prime.
+    if ((prob_prime.num[0] & 1) == 0)
+        return false
+
+    size_t s = 0;
+    BigNum d = prob_prime - 1;
+
+    // While d is even
+    while ((d.num[0] & 1) == 0)
+    {   
+        // Halve d
+        d >>= 1;
+
+        // Increment s
+        s++;
+    }
+    //! Fact check above algorithm
+    // (exp(2, s) * d) + 1 == prob_prime
+
+    //* Check witness^d mod prob_prime == 1
+    if (witness.mod_exp(d, prob_prime) == 1)
+        return true;
+    
+    //* Check a^(2^r * d) mod prob_prime == prob_prime - 1 (-1 mod prob_prime)
+    // I believe we have to deincrement r here until we reach 1 (natural, not whole)
+    // s should probably be an easily incrementable size_t instead of bignum (because exponents would almost certainly be smaller)
+
+    // if BOTH above statements are false, THEN it is composite, return false.
+    // Do we assume the second statement is iterative?
+}
+
 BigNum BigNum::exp(const BigNum& x, const BigNum& y)
 {
     if (y.sign == true)
