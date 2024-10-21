@@ -431,8 +431,11 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
 
 BigNum BigNum::div(const BigNum& x, const BigNum& y)
 {
+    if (y == 0)
+        return error;
+
     // Handle x or y == 0.
-    if (x == 0 || y == 0)
+    if (x == 0)
         return 0;
 
     // If x is smaller than y, return 0.
@@ -491,8 +494,8 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
 BigNum BigNum::mod(const BigNum& x, const BigNum& y)
 {
     // Handle x or y == 0.
-    if (x == 0 || y == 0)
-        return 0;
+    if (x == 0 || y == 0 || y.sign)
+        return error;
 
     if (x.sign)
         return y - mod(x.abs(), y);
@@ -502,12 +505,8 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
         return x;
 
     // Create temp nums.
-    BigNum x_temp = x.abs();
-    BigNum y_temp = y.abs();
-
-    // Check for perfect reduction.
-    if (y_temp == 1)
-        return 0;
+    BigNum x_temp = x;
+    BigNum y_temp = y;
 
     while (x_temp > y_temp || x_temp == y_temp)
     {
@@ -530,8 +529,8 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
 
 BigNum BigNum::gcd(const BigNum& x, const BigNum& y)
 {
-    BigNum big = (x > y) ? x : y;
-    BigNum sml = (x > y) ? y : x;
+    BigNum big = (x > y) ? x.abs() : y.abs();
+    BigNum sml = (x > y) ? y.abs() : x.abs();
     
     return gcd_internal(big, sml);
 }
@@ -553,7 +552,13 @@ BigNum BigNum::gcd_internal(BigNum& x, BigNum& y)
 
 bool BigNum::prime_check(const BigNum& prob_prime, const BigNum& witness)
 {
-    // Witness must be between 2 - (n-1) (inclusive)
+    // witness and prob_prime must be positive
+    if (witness.sign || prob_prime.sign)
+        return error;
+
+    // witness must be between 2 - (n-1) (inclusive)
+    if (witness < 2 || witness > (prob_prime-2))
+        return error;
 
     // If even, number cannot be prime.
     if ((prob_prime.num[0] & 1) == 0)
@@ -579,19 +584,25 @@ bool BigNum::prime_check(const BigNum& prob_prime, const BigNum& witness)
         return true;
     
     //* Check a^(2^r * d) mod prob_prime == prob_prime - 1 (-1 mod prob_prime)
-    // I believe we have to deincrement r here until we reach 1 (natural, not whole)
-    // s should probably be an easily incrementable size_t instead of bignum (because exponents would almost certainly be smaller)
+        // where 0 <= r < s
+    for (size_t r = 0; r < s; r++)
+        if (witness.mod_exp(exp(2,r) * d, prob_prime) == prob_prime-1)
+            return true;
 
-    // if BOTH above statements are false, THEN it is composite, return false.
-    // Do we assume the second statement is iterative?
+    // This always returns false correctly
+    return false;
 }
 
 BigNum BigNum::exp(const BigNum& x, const BigNum& y)
 {
+    // x^-y = 1/(x^y)
     if (y.sign == true)
         return div(1,exp(x,y.abs()));
+
+    // x^0 = 1
     if (y == 0)
         return 1;
+
     if ((y % 2) == 0)
         return exp(x*x, y>>1);
     else
@@ -600,9 +611,9 @@ BigNum BigNum::exp(const BigNum& x, const BigNum& y)
 
 BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
 {
-    // Handle edge cases
-    if (mod == 1 || mod.sign)
-        return 0;
+    // mod must be a natural number, x must be positive.
+    if (mod == 0 || mod.sign || x.sign)
+        return error;
 
     BigNum z = 1;
     x %= mod;
@@ -620,6 +631,10 @@ BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
 
 BigNum BigNum::mod_inv(const BigNum& x, const BigNum& mod)
 {
+    // mod must be a natural number, x must be positive.
+    if (mod == 0 || mod.sign || x.sign)
+        return error;
+
     BigNum old_r,r, old_s,s;
     old_r = x;
     r = mod;
@@ -645,6 +660,7 @@ BigNum BigNum::mod_inv(const BigNum& x, const BigNum& mod)
     // If old_r != 1, there is no modular multiplicative inverse.
     if (old_r != 1)
         return 0;
+
     return old_s % mod;
 }
 

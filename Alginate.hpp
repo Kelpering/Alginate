@@ -215,6 +215,11 @@ class BigNum
             *this = div(y);
         }
 
+        // Exponentiation
+        BigNum operator^(const BigNum& y) const {
+            return exp(y);
+        }
+
         // Modulus
         BigNum operator%(const BigNum& y) const {
             return mod(y);
