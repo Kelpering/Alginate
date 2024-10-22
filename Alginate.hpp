@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <iostream>
 #include <vector>
+#include <string>
 
 // Current objective / rules:
     // Do not overcomplicate, make everything easy
@@ -261,7 +262,7 @@ class BigNum
     //* Misc
 
         // Print BigNum to stdio.
-        void print() const;
+        void print(String name = "Number") const;
         // Returns abs(x)
         static BigNum abs(const BigNum& x);
         // Returns abs(*this)

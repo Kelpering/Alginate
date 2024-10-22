@@ -811,9 +811,9 @@ bool BigNum::greater_than(const BigNum& x, const BigNum& y)
     return false;
 }
 
-void BigNum::print() const
+void BigNum::print(String name) const
 {
-    std::cout << "Number: " << ((sign) ? '-':'+') << ' ';
+    std::cout << name << ": " << ((sign) ? '-':'+') << ' ';
     for (size_t i = num_size; i > 0; i--)
         std::cout << (int) num[i-1] << ' ';
     std::cout << '\n';
