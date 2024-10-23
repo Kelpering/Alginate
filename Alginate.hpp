@@ -137,6 +137,9 @@ class BigNum
         static BigNum gcd(const BigNum& x, const BigNum& y);
         // Returns whether prob_prime is a probable prime to witness
         static bool prime_check(const BigNum& prob_prime, const BigNum& witness);
+        bool prime_check(const BigNum& witness) const {
+            return prime_check(*this, witness);
+        }
 
     //* Shift
 
