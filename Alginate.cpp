@@ -15,7 +15,7 @@ void BigNum::trunc()
         return;
 
     // Return immediately if number is already truncated.
-    if ((num[num_size-1] != 0) || (num[num_size-1] == 0 && num_size == 1))
+    if (num[num_size-1] != 0 || num_size == 1)
         return;
 
     // Calculate new array without zeroes.
