@@ -1,4 +1,4 @@
-#include "./BigNum.hpp"
+#include "./Alginate.hpp"
 
 //^ Optimizations
     //^ resize func (handle num_size and num array)
@@ -431,8 +431,9 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
 
 BigNum BigNum::div(const BigNum& x, const BigNum& y)
 {
+    // Handle invalid arguments
     if (y == 0)
-        return error;
+        throw std::invalid_argument("Division by Zero");
 
     // Handle x or y == 0.
     if (x == 0)
@@ -493,10 +494,13 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
 
 BigNum BigNum::mod(const BigNum& x, const BigNum& y)
 {
-    // Handle x or y == 0.
-    if (x == 0 || y == 0 || y.sign)
-        return error;
+    // Handle invalid arguments
+    if (x == 0)
+        throw std::invalid_argument("x != 0");
+    else if (y == 0 || y.sign)
+        throw std::invalid_argument("y > 0");
 
+    // Handle negative x mod y
     if (x.sign)
         return y - mod(x.abs(), y);
 
@@ -552,17 +556,17 @@ BigNum BigNum::gcd_internal(BigNum& x, BigNum& y)
 
 bool BigNum::prime_check(const BigNum& prob_prime, const BigNum& witness)
 {
-    // witness and prob_prime must be positive
-    if (witness.sign || prob_prime.sign)
-        return error;
-
-    // witness must be between 2 - (n-1) (inclusive)
-    if (witness < 2 || witness > (prob_prime-2))
-        return error;
+    // Handle invalid arguments
+    if (prob_prime.sign)
+        throw std::invalid_argument("Prob_prime must be positive.");
+    else if (witness.sign)
+        throw std::invalid_argument("Witness must be positive.");
+    else if (witness < 2 || witness > (prob_prime-2))
+        throw std::invalid_argument("2 <= witness < prob_prime");
 
     // If even, number cannot be prime.
     if ((prob_prime.num[0] & 1) == 0)
-        return false
+        return false;
 
     size_t s = 0;
     BigNum d = prob_prime - 1;
@@ -611,9 +615,11 @@ BigNum BigNum::exp(const BigNum& x, const BigNum& y)
 
 BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
 {
-    // mod must be a natural number, x must be positive.
-    if (mod == 0 || mod.sign || x.sign)
-        return error;
+    // Handle invalid arguments
+    if (x.sign)
+        throw std::invalid_argument("x >= 0");
+    else if (mod == 0 || mod.sign)
+        throw std::invalid_argument("mod > 0");
 
     BigNum z = 1;
     x %= mod;
@@ -631,9 +637,11 @@ BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
 
 BigNum BigNum::mod_inv(const BigNum& x, const BigNum& mod)
 {
-    // mod must be a natural number, x must be positive.
-    if (mod == 0 || mod.sign || x.sign)
-        return error;
+    // Handle invalid arguments
+    if (x.sign)
+        throw std::invalid_argument("x >= 0");
+    else if (mod == 0 || mod.sign)
+        throw std::invalid_argument("mod > 0");
 
     BigNum old_r,r, old_s,s;
     old_r = x;
@@ -811,7 +819,7 @@ bool BigNum::greater_than(const BigNum& x, const BigNum& y)
     return false;
 }
 
-void BigNum::print(String name) const
+void BigNum::print(const char* name) const
 {
     std::cout << name << ": " << ((sign) ? '-':'+') << ' ';
     for (size_t i = num_size; i > 0; i--)

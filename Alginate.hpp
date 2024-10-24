@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -265,7 +266,7 @@ class BigNum
     //* Misc
 
         // Print BigNum to stdio.
-        void print(String name = "Number") const;
+        void print(const char* name = "Number") const;
         // Returns abs(x)
         static BigNum abs(const BigNum& x);
         // Returns abs(*this)
