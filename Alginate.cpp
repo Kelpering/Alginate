@@ -536,22 +536,13 @@ BigNum BigNum::gcd(const BigNum& x, const BigNum& y)
     BigNum big = (x > y) ? x.abs() : y.abs();
     BigNum sml = (x > y) ? y.abs() : x.abs();
     
-    return gcd_internal(big, sml);
-}
-
-BigNum BigNum::gcd_internal(BigNum& x, BigNum& y)
-{
-    BigNum& big = (x > y) ? x : y;
-    BigNum& sml = (x > y) ? y : x;
-
     if (sml == 0)
         return big;
     
     // Recursive algorithm.
     big %= sml;
-    return gcd_internal(big, sml);
+    return gcd(big, sml);
 
-    return 0;
 }
 
 bool BigNum::prime_check(const BigNum& prob_prime, const BigNum& witness)
