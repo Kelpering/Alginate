@@ -32,9 +32,6 @@ class BigNum
         // Return x * y with karatsuba optimizations (requires setup beforehand).
         static BigNum mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits);
 
-        // Returns the Greatest Common Denominator of x and y.
-        static BigNum gcd_internal(BigNum& big, BigNum& sml);
-
     //* Misc
 
         // Truncate any zeroes after the most significant digit.
