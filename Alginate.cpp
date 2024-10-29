@@ -558,7 +558,6 @@ BigNum BigNum::gcd(const BigNum& x, const BigNum& y)
     // Recursive algorithm.
     big %= sml;
     return gcd(big, sml);
-
 }
 
 bool BigNum::prime_check(const BigNum& prob_prime, const BigNum& witness)
@@ -628,22 +627,43 @@ BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
     else if (mod == 0 || mod.sign)
         throw std::invalid_argument("mod > 0");
 
-    //! Replace mod function (and div probably).
-    //! If not fast enough, replace this function with a montogomery equal function.
+    //! FIX LATER
+    if (mod % 2 == 0)
+        throw std::runtime_error("FIX LATER");
+
     //^ Convert to Montgomery form
     //^ Perform REDC (x*y*r^-1) (Multiplication requires this extra step)
     //^ Unconvert after exponentiation
 
-    BigNum z = 1;
-    x %= mod;
+    // Find R (power of 2 > mod)
+    BigNum r = BigNum::shl(1,mod.num_size*8);
+    while (r > mod)
+        r >>= 1;
+    r <<= 1;
 
-    while (y > 0)
-    {
-        if ((y % 2) == 1)
-            z = (z * x) % mod;
-        y >>= 1;
-        x = (x * x) % mod;
-    }
+    BigNum r_inverse = BigNum::mod_inv(r, mod);
+
+    BigNum z = 1;
+
+    // Convert x and y into montgomery form
+    ((x+y) % mod).print();
+    x = (x * r) % mod;
+    y = (y * r) % mod;
+
+    // Montgomery works in (mod r), which is faster because r = 2^x (x being any integer).
+    // (mod r) == (& (r-1)), so keep bits, implement this in modulus? or do it manually here.
+    //^ TODO: Bitwise functions & | ^ ~ 
+    x = (x + y) % r;
+    ((x*r_inverse) % mod).print();
+
+
+    // while (y > 0)
+    // {
+    //     if ((y % 2) == 1)
+    //         z = (z * x) % mod;
+    //     y >>= 1;
+    //     x = (x * x) % mod;
+    // }
 
     return z;
 }
