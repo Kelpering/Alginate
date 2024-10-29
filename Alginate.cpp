@@ -512,6 +512,21 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
     BigNum x_temp = x;
     BigNum y_temp = y;
 
+    // Reduce x%y to equivalent x_temp%y_temp (shifted by multiples of 2).
+    size_t shift = 0;
+    while (true)
+    {
+        // Check individual bit based on shift.
+        if (((x_temp.num[shift>>3] >> (shift & 0x7)) & 1) != 0)
+            break;
+        if (((y_temp.num[shift>>3] >> (shift & 0x7)) & 1) != 0)
+            break;
+        shift++;
+    }
+    x_temp = x_temp.shr(shift);
+    y_temp = y_temp.shr(shift);
+
+
     while (x_temp > y_temp || x_temp == y_temp)
     {
         // Find the maximum we can shift y_temp.
@@ -528,7 +543,8 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
         x_temp -= y_temp.shl(shift);
     }
 
-    return x_temp;
+    // Account for previous shift operations
+    return x_temp.shl(shift);
 }
 
 BigNum BigNum::gcd(const BigNum& x, const BigNum& y)
