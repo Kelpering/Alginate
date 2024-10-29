@@ -628,6 +628,12 @@ BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
     else if (mod == 0 || mod.sign)
         throw std::invalid_argument("mod > 0");
 
+    //! Replace mod function (and div probably).
+    //! If not fast enough, replace this function with a montogomery equal function.
+    //^ Convert to Montgomery form
+    //^ Perform REDC (x*y*r^-1) (Multiplication requires this extra step)
+    //^ Unconvert after exponentiation
+
     BigNum z = 1;
     x %= mod;
 
