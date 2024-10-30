@@ -155,6 +155,13 @@ class BigNum
             return shr(*this, y);
         }
 
+    //* Bitwise operations
+
+    static BigNum bitwise_and(const BigNum& x, const BigNum& y);
+    BigNum bitwise_and(const BigNum& y) const {
+        return bitwise_and(*this,y);
+    }
+
     //* Conditionals
 
         // Returns x < y
@@ -244,6 +251,14 @@ class BigNum
         }
         void operator>>=(size_t y) {
             *this = shr(y);
+        }
+
+        // Bitwise And
+        BigNum operator&(const BigNum& y) const {
+            return bitwise_and(y);
+        }
+        void operator&=(const BigNum& y) {
+            *this = bitwise_and(y);
         }
 
         // Comparison

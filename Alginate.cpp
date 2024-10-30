@@ -631,50 +631,82 @@ BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
     if (mod % 2 == 0)
         throw std::runtime_error("FIX LATER");
 
-    //^ Convert to Montgomery form
-    //^ Perform REDC (x*y*r^-1) (Multiplication requires this extra step)
-    //^ Unconvert after exponentiation
+    // //^ Convert to Montgomery form
+    // //^ Perform REDC (x*y*r^-1) (Multiplication requires this extra step)
+    // //^ Unconvert after exponentiation
 
-    // Find R (power of 2 > mod)
-    BigNum r = BigNum::shl(1,mod.num_size*8);
+    // // Find R (power of 2 > mod)
+    // BigNum r = 
 
-    BigNum mod_inverse = (r*r.mod_inv(mod) - 1) / mod;
-
-    BigNum z = 1;
-
-    // Convert x and y into montgomery form
-    ((x*y) % mod).print("Correct result");
-
-
-    // Montgomery works in (mod r), which is faster because r = 2^x (x being any integer).
-    // (mod r) == (& (r-1)), so keep bits, implement this in modulus? or do it manually here.
-    //^ TODO: Bitwise functions & | ^ ~ 
-    x = (x * r) % mod;
-    y = (y * r) % mod;
-    BigNum z_mont = (x * y);
-    BigNum m = ((z_mont % r) * mod_inverse) % r;
-    BigNum t = (z_mont+(m*mod)) / r;
-    if ((t > mod) || (t == mod))
-        t = t - mod;
-    BigNum m2 = ((t % r) * mod_inverse) % r;
-    BigNum t2 = (t+(m2*mod)) / r;
-    if ((t2 > mod) || (t2 == mod))
-        t2 = t2 - mod;
-
-    // REDC algorithm seems slow if repeated like... a million times.
-    // How to optimize for multiple runs, or do we have to run it like modulus?
     
-    t2.print("REDC result   ");
-    // ((x*r_inverse*r_inverse) % mod).print();
-    // while (y > 0)
-    // {
-    //     if ((y % 2) == 1)
-    //         z = (z * x) % mod;
-    //     y >>= 1;
-    //     x = (x * x) % mod;
-    // }
 
-    return z;
+    // BigNum z = 1;
+
+    // // Convert x and y into montgomery form
+    // ((x*y) % mod).print("Correct result");
+
+
+    // // Montgomery works in (mod r), which is faster because r = 2^x (x being any integer).
+    // // (mod r) == (& (r-1)), so keep bits, implement this in modulus? or do it manually here.
+    // //^ TODO: Bitwise functions & | ^ ~ 
+    // x = (x * r) % mod;
+    // y = (y * r) % mod;
+    // BigNum z_mont = (x * y);
+    // BigNum m = ((z_mont % r) * mod_inverse) % r;
+    // BigNum t = (z_mont+(m*mod)) / r;
+    // if ((t > mod) || (t == mod))
+    //     t = t - mod;
+    // BigNum m2 = ((t % r) * mod_inverse) % r;
+    // BigNum t2 = (t+(m2*mod)) / r;
+    // if ((t2 > mod) || (t2 == mod))
+    //     t2 = t2 - mod;
+
+    // // REDC algorithm seems slow if repeated like... a million times.
+    // // How to optimize for multiple runs, or do we have to run it like modulus?
+    
+    // t2.print("REDC result   ");
+    // // ((x*r_inverse*r_inverse) % mod).print();
+    // // while (y > 0)
+    // // {
+    // //     if ((y % 2) == 1)
+    // //         z = (z * x) % mod;
+    // //     y >>= 1;
+    // //     x = (x * x) % mod;
+    // // }
+
+    //^ Convert this function into a montgomery equal function
+    BigNum R = BigNum::shl(1,mod.num_size*8);
+    BigNum R_1 = R - 1; // Used for efficient calculations
+    BigNum mod_prime = (R*R.mod_inv(mod) - 1) / mod;
+
+    // Montgomery form x and z
+    BigNum x_mont = (R * x) % mod;
+    BigNum z_mont = (R * 1) % mod;
+
+    BigNum temp1;
+
+    for (size_t i = 0; i < y.num_size * 8; i++)
+    {
+        // Current y bit is 1
+        if ((y.num[i>>3] >> (i & 0x7)) & 0x1)
+        {
+            // z_mont = (z_mont*x_mont) % mod;
+            z_mont = (z_mont*x_mont);
+            temp1 = (z_mont*mod_prime) & R_1;
+            z_mont = ((temp1*mod) + z_mont) >> mod.num_size*8;
+            if (z_mont > mod || z_mont == mod)
+                z_mont -= mod;
+        }
+        
+        // x_mont = (x_mont*x_mont) % mod;
+        x_mont = (x_mont*x_mont);
+        temp1 = (x_mont*mod_prime) & R_1;
+        x_mont = ((temp1*mod) + x_mont) >> mod.num_size*8;
+        if (x_mont > mod || x_mont == mod)
+            x_mont -= mod;
+    }
+
+    return z_mont;
 }
 
 BigNum BigNum::mod_inv(const BigNum& x, const BigNum& mod)
@@ -782,6 +814,18 @@ BigNum BigNum::shr(const BigNum& x, size_t y)
     z.trunc();
 
     return z;
+}
+
+BigNum BigNum::bitwise_and(const BigNum& x, const BigNum& y)
+{
+    const BigNum& big = (x > y) ? x : y;
+    BigNum sml = (x > y) ? y : x;
+
+    // ignore all of big's larger digits, as they become zero
+    for (size_t i = 0; i < sml.num_size; i++)
+        sml.num[i] &= big.num[i];
+
+    return sml;
 }
 
 
