@@ -637,26 +637,35 @@ BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
 
     // Find R (power of 2 > mod)
     BigNum r = BigNum::shl(1,mod.num_size*8);
-    while (r > mod)
-        r >>= 1;
-    r <<= 1;
 
-    BigNum r_inverse = BigNum::mod_inv(r, mod);
+    BigNum mod_inverse = (r*r.mod_inv(mod) - 1) / mod;
 
     BigNum z = 1;
 
     // Convert x and y into montgomery form
-    ((x+y) % mod).print();
-    x = (x * r) % mod;
-    y = (y * r) % mod;
+    ((x*y) % mod).print("Correct result");
+
 
     // Montgomery works in (mod r), which is faster because r = 2^x (x being any integer).
     // (mod r) == (& (r-1)), so keep bits, implement this in modulus? or do it manually here.
     //^ TODO: Bitwise functions & | ^ ~ 
-    x = (x + y) % r;
-    ((x*r_inverse) % mod).print();
+    x = (x * r) % mod;
+    y = (y * r) % mod;
+    BigNum z_mont = (x * y);
+    BigNum m = ((z_mont % r) * mod_inverse) % r;
+    BigNum t = (z_mont+(m*mod)) / r;
+    if ((t > mod) || (t == mod))
+        t = t - mod;
+    BigNum m2 = ((t % r) * mod_inverse) % r;
+    BigNum t2 = (t+(m2*mod)) / r;
+    if ((t2 > mod) || (t2 == mod))
+        t2 = t2 - mod;
 
-
+    // REDC algorithm seems slow if repeated like... a million times.
+    // How to optimize for multiple runs, or do we have to run it like modulus?
+    
+    t2.print("REDC result   ");
+    // ((x*r_inverse*r_inverse) % mod).print();
     // while (y > 0)
     // {
     //     if ((y % 2) == 1)
