@@ -401,13 +401,16 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
         return 0;
 
     // Initialize x and y split numbers
-    BigNum x1, y1, x2, y2;
-    x1.num_size = x2.num_size = y1.num_size = y2.num_size = digits>>1;
-    x1.sign = x2.sign = y1.sign = y2.sign = false;
+    BigNum x1, y1, x2, y2, x3, y3;
+    x1.num_size = x2.num_size = y1.num_size = y2.num_size = x3.num_size = y3.num_size = digits>>1;
+    x1.sign = x2.sign = y1.sign = y2.sign = x3.sign = y3.sign = false;
     x1.num = new uint8_t[digits>>1];
     x2.num = new uint8_t[digits>>1];
+    x3.num = new uint8_t[digits>>1] {0};
     y1.num = new uint8_t[digits>>1];
     y2.num = new uint8_t[digits>>1];
+    y3.num = new uint8_t[digits>>1] {0};
+
 
     // Set _1 to lower half, _2 to higher half.
     for (size_t i = 0; i < digits>>1; i++)
@@ -420,9 +423,29 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
 
     BigNum a = mul_karatsuba(x2, y2, digits>>1);    // Higher halves
     BigNum d = mul_karatsuba(x1, y1, digits>>1);    // Smaller halves
+
+    x1 = x1-x2;
+    for (size_t i = 0; i < x1.num_size)
+        x3.num[i] = x1.num[i];
+    y1 = y2-y2;
+    for (size_t i = 0; i < y1.num_size)
+        y3.num[i] = y1.num[i];
     //! The addition in e here causes issue, further max_size and wacky karatsuba setups
     //! need to be done to account for this. Possible optimization (or optimization sink).
     BigNum e = mul(x1+x2, y1+y2) - a - d;
+    //! NEW
+    // If this works, convert x1-x2 and y2-y1 into zero filled digits>>1 sized BigNums
+    // Might've been the sign digit, which is easy to change afterwards.
+    BigNum e2 = mul(x1-x2, y2-y1);
+    e2 = e2 + a + d
+    BigNum e3 = mul_karatsuba(x3, y3, digits>>1);
+    e3.sign = x1.sign ^ y1.sign;
+    e3 = e3 + a + d
+    if (e != e2)
+        std::cout << "ERROR e2\n";
+    if (e != e3)
+        std::cout << "ERROR e3\n";
+    //! NEW
 
     BigNum z = (a.shl(digits<<3)) + (e.shl(digits<<2)) + d;
 
