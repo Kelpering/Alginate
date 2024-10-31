@@ -49,6 +49,19 @@ void BigNum::copy(const BigNum& number)
     return;
 }
 
+void BigNum::move(BigNum& number)
+{
+// Copy basic variables.
+    num_size = number.num_size;
+    sign = number.sign;
+    shallow = number.shallow;
+
+    num = number.num;
+    number.num = NULL;
+
+    return;
+}
+
 BigNum BigNum::shallow_copy() const
 {
     // Create new BigNum
@@ -638,7 +651,7 @@ BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
         throw std::invalid_argument("mod > 0");
 
     //! FIX LATER
-    if (mod % 2 == 0)
+    if ((mod.num[0] & 1) == 0)
         throw std::runtime_error("FIX LATER");
 
     // //^ Convert to Montgomery form
@@ -684,6 +697,8 @@ BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
     // //     x = (x * x) % mod;
     // // }
 
+    std::cout << "Reached" << std::endl;
+
     //^ Convert this function into a montgomery equal function
     BigNum R = BigNum::shl(1,mod.num_size*8);
     BigNum R_1 = R - 1; // Used for efficient calculations
@@ -697,6 +712,7 @@ BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
 
     for (size_t i = 0; i < y.num_size * 8; i++)
     {
+        std::cout << "i" << i << std::endl;
         // Current y bit is 1
         if ((y.num[i>>3] >> (i & 0x7)) & 0x1)
         {

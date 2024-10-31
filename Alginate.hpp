@@ -40,6 +40,8 @@ class BigNum
         void copy(const BigNum& number);
         // Make a copy of the BigNum, but only copy the ptr to num.
         BigNum shallow_copy() const;
+        // Move the BigNum to this BigNum
+        void move(BigNum& number);
         // Set sign to false (used with shallow_copy).
         BigNum self_abs() {
             sign = false;
@@ -190,6 +192,12 @@ class BigNum
         // Assignment
         void operator=(const BigNum& y) {
             copy(y);
+        }
+
+        // Move
+        BigNum& operator=(BigNum&& other) {
+            move(other);
+            return *this;
         }
 
         // Addition
