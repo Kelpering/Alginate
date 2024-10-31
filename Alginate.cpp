@@ -427,7 +427,7 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
     x1 = x1-x2;
     for (size_t i = 0; i < x1.num_size)
         x3.num[i] = x1.num[i];
-    y1 = y2-y2;
+    y1 = y2-y1;
     for (size_t i = 0; i < y1.num_size)
         y3.num[i] = y1.num[i];
     //! The addition in e here causes issue, further max_size and wacky karatsuba setups
