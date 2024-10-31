@@ -5,5 +5,6 @@ A simple arbitrary precision integer arithmetic library, primarily built for use
 ## TODO
 
 - Implement RSA with Alginate primatives (Pratical test reveals inefficient and improper algorithms)
-  - Modular Exponentiation speed up
+  - ~~Modular Exponentiation speed up~~
+  - ~~Fix Karatsuba body func~~
   - resize func (replace manual allocs with resize func, allows optimizations)
