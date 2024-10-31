@@ -411,7 +411,6 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
     y2.num = new uint8_t[digits>>1];
     y3.num = new uint8_t[digits>>1] {0};
 
-
     // Set _1 to lower half, _2 to higher half.
     for (size_t i = 0; i < digits>>1; i++)
     {
@@ -424,34 +423,16 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
     BigNum a = mul_karatsuba(x2, y2, digits>>1);    // Higher halves
     BigNum d = mul_karatsuba(x1, y1, digits>>1);    // Smaller halves
 
-    // x1.trunc();
-    // x2.trunc();
-    // y1.trunc();
-    // y2.trunc();
-    // x1 = x1-x2;
-    
-    //! The addition in e here causes issue, further max_size and wacky karatsuba setups
-    //! need to be done to account for this. Possible optimization (or optimization sink).
-    BigNum e = mul(x1+x2, y1+y2) - a - d;
-    //! NEW
-    // If this works, convert x1-x2 and y2-y1 into zero filled digits>>1 sized BigNums
-    // Might've been the sign digit, which is easy to change afterwards.
+    // (x1-x2) * (y2-y1) + a + d (Zero extend parenthesis operations)
     x1 = x1-x2;
     y1 = y2-y1;
     for (size_t i = 0; i < x1.num_size; i++)
         x3.num[i] = x1.num[i];
-    // y1 = y2-y1;
     for (size_t i = 0; i < y1.num_size; i++)
         y3.num[i] = y1.num[i];
-    BigNum e2 = mul(x1, y1) + a + d;
-    BigNum e3 = mul_karatsuba(x3, y3, digits>>1);
-    e3.sign = x1.sign ^ y1.sign;
-    e3 = e3 + a + d;
-    if (e != e2)
-        std::cout << "ERROR e2\n";
-    if (e != e3)
-        std::cout << "ERROR e3\n";
-    //! NEW
+    BigNum e = mul_karatsuba(x3, y3, digits>>1);
+    e.sign = x1.sign ^ y1.sign;
+    e += a + d;
 
     BigNum z = (a.shl(digits<<3)) + (e.shl(digits<<2)) + d;
 
