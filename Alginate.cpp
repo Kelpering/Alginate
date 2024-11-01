@@ -1,5 +1,28 @@
 #include "./Alginate.hpp"
 
+// Current flaws:
+    // Slow
+
+// Issues:
+    // Re-allocs are common
+    // Resizing existing numbers are costly (malloc)
+    // Zero handling is abysmal (see karatsuba especially)
+    // Annoying to convert into base10
+    // Code is inconsistent
+    // Missing fundamental operations (OR, XOR, INVERSE)
+
+// Advantages:
+    // Memory is very large
+
+// Fixes:
+    // Resize func: Dynamic resizing allows for reuse of numbers.
+    // Resize all numbers by powers of 2 (2->3 == size: 4 10->31 == size: 64)
+        // Easy to implement (if bigger, <<= 1) (if smaller, >>= 1)
+    // Smart usage of move operator & BigNum references
+        // Allows for less redundant objects
+    // Ignore trailing zeroes: dynamic resize to cut off zeroes.
+    // Add base10 string func
+
 //^ Optimizations
     //^ resize func (handle num_size and num array)
     // This can allow for DRAMATICALLY less calls to new / delete if we leave some unused space. Along with safer code
