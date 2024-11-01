@@ -48,6 +48,15 @@
         // copy (Copy a Bignum to a new variable. Deep copy of num array rather than num array ptr.)
 
         // karatsuba optimization
+        // Montgomery optimization
+
+// add include guard
+
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <iostream>
+#include <string>
 
 class BigNum
 {
