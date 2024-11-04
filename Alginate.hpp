@@ -17,14 +17,14 @@
     // Clarify and solidify operator overloads
 
 // BigNum class
-    // num array
-    // num array size           (True allocated size)
-    // current num array size   (Visible size)
-    // sign (false = positive, true = negative)
+    //* num array
+    //* num array size           (True allocated size)
+    //* current num array size   (Visible size)
+    //* sign (false = positive, true = negative)
 
-    // Create empty BigNum (no num array)
-    // Create u64 BigNum (convert u64 to BigNum)
-    // Create i64 BigNum (convert i64 to signed BigNum)
+    //* Create empty BigNum (no num array)
+    //* Create u64 BigNum (convert u64 to BigNum)
+    //* Create i64 BigNum (convert i64 to signed BigNum)
     // Create string BigNum (convert base10 string to BigNum)
     // Create array BigNum (copy array into internal *num BigNum) [Probably converted to PKCS#1 standard later]
     // Create BigNum BigNum (copy BigNum into this BigNum)
@@ -70,7 +70,19 @@ class BigNum
         void resize(size_t new_size);
         
     public:
-        BigNum() {};                                    // Create empty BigNum (no num array)
-        BigNum(uint32_t* arr, size_t size, bool sign);  // Create BigNum with num = arr internally
+    //* Constructors
+    
+        BigNum(uint64_t number = 0, bool sign = false);
+        BigNum(uint32_t* number, size_t size, bool sign = false);
+        BigNum(uint8_t* number, size_t size, bool sign = false);
 
-}
+    //* Output
+
+        // Print the internal num array to console.
+        void print_debug(const char* name = "Number");
+
+        // Print the number in base 10.
+        void print(const char* name);
+
+
+};
