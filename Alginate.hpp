@@ -68,6 +68,12 @@ class BigNum
 
         // Resize BigNum to contain new_size. Might allocate more digits for efficiency.
         void resize(size_t new_size);
+
+        // Copy another BigNum's data.
+        BigNum& copy(const BigNum& x);
+
+        // Move another BigNum's data without copying (destroys other BigNum)
+        BigNum& move(BigNum& x);
         
     public:
     //* Constructors
@@ -75,6 +81,10 @@ class BigNum
         BigNum(uint64_t number = 0, bool sign = false);
         BigNum(uint32_t* number, size_t size, bool sign = false);
         BigNum(uint8_t* number, size_t size, bool sign = false);
+        BigNum(const BigNum& number) {copy(number);};    // Copy 
+        BigNum(BigNum&& number) {move(number);};        // Move 
+
+        ~BigNum();
 
     //* Output
 
@@ -83,6 +93,14 @@ class BigNum
 
         // Print the number in base 10.
         void print(const char* name);
+
+    //* Operators
+        
+        // Copy operator
+        BigNum& operator=(const BigNum& x) {return copy(x);};
+
+        // Move operator
+        BigNum& operator=(BigNum&& x) {return move(x);};
 
 
 };

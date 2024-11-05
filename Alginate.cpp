@@ -48,16 +48,31 @@ BigNum::BigNum(uint8_t* number, size_t size, bool sign)
     resize(temp_size);
 
     // Convert number into num array
-    for (size_t i = 0; i < size - (size%4); i+=4)
+    size_t i;
+    for (i = 0; i < size - (size%4); i+=4)
     {
         uint32_t temp = (number[i+0] << 0 ) | \
                         (number[i+1] << 8 ) | \
                         (number[i+2] << 16) | \
                         (number[i+3] << 24);
-
-        std::cout << std::hex << temp << '\n';
+        num[i>>2] = temp;
     }
-    // Final one here
+    // Final (variable) block
+    if (size%4)
+    {
+    uint32_t temp = 0;
+    for (; i < size; i++)
+        temp |= (number[i] << ((i%4)*8));
+    num[i>>2] = temp;
+    }
+    
+    return;
+}
+
+BigNum::~BigNum()
+{
+    delete[] num;
+    num = nullptr;
     
     return;
 }
@@ -92,6 +107,33 @@ void BigNum::resize(size_t new_size)
     num_size = new_size;
 
     return;
+}
+
+BigNum& BigNum::copy(const BigNum& x)
+{
+    // Assigns num_size and num_size_real
+    resize(x.num_size);
+    sign = x.sign;
+    
+    // Deep copy x.num array into this.num array
+    for (size_t i = 0; i < num_size; i++)
+        num[i] = x.num[i];
+        
+    return *this;
+}
+
+BigNum& BigNum::move(BigNum& x)
+{
+    // Move x -> this
+    num = x.num;
+    num_size = x.num_size;
+    num_size_real = x.num_size_real;
+    sign = x.sign;
+
+    // Destroy x
+    x.num = nullptr;
+
+    return *this;
 }
 
 //? Public
