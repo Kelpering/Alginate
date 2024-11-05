@@ -111,8 +111,9 @@ void BigNum::resize(size_t new_size)
 
 BigNum& BigNum::copy(const BigNum& x)
 {
-    // Assigns num_size and num_size_real
-    resize(x.num_size);
+    // Resize only if necessary
+    if (num_size < x.num_size)
+        resize(x.num_size);
     sign = x.sign;
     
     // Deep copy x.num array into this.num array
@@ -137,6 +138,59 @@ BigNum& BigNum::move(BigNum& x)
 }
 
 //? Public
+
+BigNum BigNum::add(const BigNum& x, const BigNum& y)
+{
+    bool sign;
+    // Handle sign
+    if (x.sign && y.sign)
+        sign = true;
+    else if (x.sign && !y.sign)
+        static_assert("ERROR");
+    else if (!x.sign && y.sign)
+        static_assert("ERROR");
+    else
+        sign = false;
+
+    // Create z, contains at most big + 1 digits.
+    size_t bigger_size = (x.num_size > y.num_size) ? x.num_size : y.num_size;
+    BigNum z = {(bigger_size + 1), sign};
+    // Keeps extra zeroes
+    z.copy(x);  
+
+    //! NOT WORKING (uint32_t max - 1 + 1 == 0)
+
+    // Initialize addition algorithm.
+    uint64_t calc = 0;
+    uint8_t carry = 0;
+    size_t i;
+
+    // Add y to z
+    for (i = 0; i < y.num_size; i++)
+    {
+        // Add single place value + previous carry (if any).
+        calc = (uint64_t) z.num[i] + (uint64_t) y.num[i] + (uint64_t) carry;
+
+        // Set single correct place value.
+        z.num[i] = calc & 0xFFFFFFFF;
+
+        // Handle carry propagation.
+        carry = (calc > 0xFFFFFFFF) ? 1 : 0;
+    }
+
+    // Handle final carry propagation.
+    while (carry)
+    {
+        // Add previous carry.
+        calc = (uint64_t) z.num[i] + (uint64_t) carry;
+        z.num[i++] = calc & 0xFFFFFFFF;
+
+        // Handle carry propagation.
+        carry = (calc > 0xFFFFFFFF) ? 1 : 0;
+    }
+
+    return z;
+}
 
 void BigNum::print_debug(const char* name)
 {

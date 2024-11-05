@@ -27,7 +27,7 @@
     //* Create i64 BigNum (convert i64 to signed BigNum)
     // Create string BigNum (convert base10 string to BigNum)
     // Create array BigNum (copy array into internal *num BigNum) [Probably converted to PKCS#1 standard later]
-    // Create BigNum BigNum (copy BigNum into this BigNum)
+    //* Create BigNum BigNum (copy BigNum into this BigNum)
 
     // Arithmetic (+ - * /) (add, sub, mul, div)
     // Bitwise (& | ^ ~ << >>) (bitwise_and, bitwise_or, bitwise_xor, bitwise not, shl, shr)
@@ -43,9 +43,9 @@
     // Operator overloads (see above for correct operator)
 
     // Internal
-        // resize (Handles ALL num allocations and resizes.)
-        // move (Move a BigNum to a new variable. Useful for dynamic allocations by c++.)
-        // copy (Copy a Bignum to a new variable. Deep copy of num array rather than num array ptr.)
+        //* resize (Handles ALL num allocations and resizes.)
+        //* move (Move a BigNum to a new variable. Useful for dynamic allocations by c++.)
+        //* copy (Copy a Bignum to a new variable. Deep copy of num array rather than num array ptr.)
 
         // karatsuba optimization
         // Montgomery optimization
@@ -81,11 +81,20 @@ class BigNum
         BigNum(uint64_t number = 0, bool sign = false);
         BigNum(uint32_t* number, size_t size, bool sign = false);
         BigNum(uint8_t* number, size_t size, bool sign = false);
-        BigNum(const BigNum& number) {copy(number);};    // Copy 
+        BigNum(const BigNum& number) {copy(number);};   // Copy 
         BigNum(BigNum&& number) {move(number);};        // Move 
 
         ~BigNum();
 
+    //* Arithmetic
+
+        // Addition (x+y)
+        static BigNum add(const BigNum& x, const BigNum& y);
+        BigNum add(const BigNum& y) const {
+            return add(*this,y);
+        }
+
+        
     //* Output
 
         // Print the internal num array to console.
