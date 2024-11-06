@@ -26,12 +26,12 @@
     //* Create u64 BigNum (convert u64 to BigNum)
     //* Create i64 BigNum (convert i64 to signed BigNum)
     // Create string BigNum (convert base10 string to BigNum)
-    // Create array BigNum (copy array into internal *num BigNum) [Probably converted to PKCS#1 standard later]
+    //* Create array BigNum (copy array into internal *num BigNum) [Probably converted to PKCS#1 standard later]
     //* Create BigNum BigNum (copy BigNum into this BigNum)
 
-    // Arithmetic (+ - * /) (add, sub, mul, div)
+    //^ Arithmetic (+ - * /) (add, sub, mul, div)
     // Bitwise (& | ^ ~ << >>) (bitwise_and, bitwise_or, bitwise_xor, bitwise not, shl, shr)
-    // Comparison (== != < <= > >=) (equal, not_equal, less_than, less_equal, greater_than, greater_equal)
+    //* Comparison (== != < <= > >=) (equal, not_equal, less_than, less_equal, greater_than, greater_equal)
     // Exponentiation (exp)
     // Modular Arithmetic (% [mod], mod_exp, mod_inv)
     // Output (base10 string, print internal)
@@ -100,16 +100,48 @@ class BigNum
 
     //* Arithmetic
 
-        // Addition (x+y)
+        // Addition (x + y)
         static BigNum add(const BigNum& x, const BigNum& y);
         BigNum add(const BigNum& y) const {
             return add(*this,y);
         }
 
-        // Subtraction (x-y)
+        // Subtraction (x - y)
         static BigNum sub(const BigNum& x, const BigNum& y);
         BigNum sub(const BigNum& y) const {
             return sub(*this, y);
+        }
+
+    //* Bitwise
+        
+        // Bitwise And (x & y)
+        static BigNum bitwise_and(const BigNum& x, const BigNum& y);
+        BigNum bitwise_and(const BigNum& y) const {
+            return bitwise_and(*this, y);
+        }
+
+        // Bitwise Or (x & y)
+        static BigNum bitwise_or(const BigNum& x, const BigNum& y);
+        BigNum bitwise_or(const BigNum& y) const {
+            return bitwise_or(*this, y);
+        }
+
+        // Bitwise Xor (x ^ y)
+        static BigNum bitwise_xor(const BigNum& x, const BigNum& y);
+        BigNum bitwise_xor(const BigNum& y) const {
+            return bitwise_xor(*this, y);
+        }
+
+        // Bitwise shl (x << y)
+        static BigNum bitwise_shl(const BigNum& x, size_t y);
+        BigNum bitwise_shl(size_t y) const {
+            return bitwise_shl(*this, y);
+        }
+        
+        // Bitwise shr (x >> y)
+        static BigNum bitwise_shr(const BigNum& x, size_t y);
+        BigNum bitwise_shr(size_t y) const {
+            return bitwise_shr(*this, y);
         }
 
     //* Comparison
@@ -128,6 +160,11 @@ class BigNum
         static bool equal_to(const BigNum& x, const BigNum& y);
         bool equal_to(const BigNum& y) const {
             return equal_to(*this, y);
+        }
+
+        static bool not_equal(const BigNum& x, const BigNum& y);
+        bool not_equal(const BigNum& y) const {
+            return not_equal(*this, y);
         }
 
         static bool greater_than(const BigNum& x, const BigNum& y);
@@ -176,6 +213,21 @@ class BigNum
             return sub(y);
         }
 
+        // Bitwise And
+        BigNum operator&(const BigNum& y) const {
+            return bitwise_and(y);
+        }
+
+        // Bitwise Or
+        BigNum operator|(const BigNum& y) const {
+            return bitwise_or(y);
+        }
+
+        // Bitwise Xor
+        BigNum operator^(const BigNum& y) const {
+            return bitwise_xor(y);
+        }
+
         // Less Than
         bool operator<(const BigNum& y) const {
             return less_than(*this,y);
@@ -189,6 +241,11 @@ class BigNum
         // Equal To
         bool operator==(const BigNum& y) const {
             return equal_to(*this,y);
+        }
+
+        // Not Equal To
+        bool operator!=(const BigNum& y) const {
+            return not_equal(*this,y);
         }
 
         // Greater Than

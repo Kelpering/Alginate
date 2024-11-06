@@ -141,6 +141,7 @@ BigNum& BigNum::copy(const BigNum& x)
 BigNum& BigNum::move(BigNum& x)
 {
     // Move x -> this
+    delete[] num;
     num = x.num;
     num_size = x.num_size;
     num_size_real = x.num_size_real;
@@ -279,6 +280,47 @@ BigNum BigNum::sub(const BigNum& x, const BigNum& y)
     return z;
 }
 
+BigNum BigNum::bitwise_and(const BigNum& x, const BigNum& y)
+{
+    const BigNum& big = (x.num_size > y.num_size) ? x : y;
+    const BigNum& sml = (x.num_size > y.num_size) ? y : x;
+
+    BigNum z = big;
+
+    for (size_t i = 0; i < sml.num_size; i++)
+        z.num[i] &= sml.num[i];
+    z.trunc();
+
+    return z;
+}
+
+BigNum BigNum::bitwise_or(const BigNum& x, const BigNum& y)
+{
+    const BigNum& big = (x.num_size > y.num_size) ? x : y;
+    const BigNum& sml = (x.num_size > y.num_size) ? y : x;
+
+    BigNum z = big;
+
+    for (size_t i = 0; i < sml.num_size; i++)
+        z.num[i] |= sml.num[i];
+
+    return z;
+}
+
+BigNum BigNum::bitwise_xor(const BigNum& x, const BigNum& y)
+{
+    const BigNum& big = (x.num_size > y.num_size) ? x : y;
+    const BigNum& sml = (x.num_size > y.num_size) ? y : x;
+
+    BigNum z = big;
+
+    for (size_t i = 0; i < sml.num_size; i++)
+        z.num[i] ^= sml.num[i];
+    z.trunc();
+
+    return z;
+}
+
 bool BigNum::less_than(const BigNum& x, const BigNum& y)
 {
     // If signs don't match, whichever is negative is smaller.
@@ -337,6 +379,20 @@ bool BigNum::equal_to(const BigNum& x, const BigNum& y)
             return false;
 
     return true;
+};
+
+bool BigNum::not_equal(const BigNum& x, const BigNum& y) 
+{
+    // Handle digits and sign (fast)
+    if ((x.num_size != y.num_size) || (x.sign != y.sign))
+        return true;
+
+    // Check each digit for inequality
+    for (size_t i = 0; i < x.num_size; i++)
+        if (x.num[i] != y.num[i])
+            return true;
+
+    return false;
 };
 
 bool BigNum::greater_than(const BigNum& x, const BigNum& y) 
