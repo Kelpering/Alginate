@@ -9,7 +9,11 @@ BigNum::BigNum(uint64_t number, bool sign)
     
     // Create num array (2 is large enough for uint64_t)
     if (number == 0)
+    {
+        resize(1);
+        num[0] = 0;
         return;
+    }
     else
         resize(2);
 
@@ -148,18 +152,46 @@ BigNum& BigNum::move(BigNum& x)
     return *this;
 }
 
+BigNum& BigNum::copy(const BigNum& x, bool new_sign)
+{
+    // Resize only if necessary
+    if (num_size < x.num_size)
+        resize(x.num_size);
+    sign = new_sign;
+    
+    // Deep copy x.num array into this.num array
+    for (size_t i = 0; i < x.num_size; i++)
+        num[i] = x.num[i];
+        
+    return *this;
+}
+
+BigNum& BigNum::move(BigNum& x, bool new_sign)
+{
+    // Move x -> this
+    num = x.num;
+    num_size = x.num_size;
+    num_size_real = x.num_size_real;
+    sign = new_sign;
+
+    // Destroy x
+    x.num = nullptr;
+
+    return *this;
+}
+
 //? Public
 
 BigNum BigNum::add(const BigNum& x, const BigNum& y)
 {
-    bool sign = false;
     // Handle sign
+    bool sign = false;
     if (x.sign && y.sign)
         sign = true;
     else if (x.sign && !y.sign)
-        static_assert("ERROR");
+        return sub(y,{x, false});
     else if (!x.sign && y.sign)
-        static_assert("ERROR");
+        return sub(x,{y,false});
     else
         sign = false;
 
@@ -167,15 +199,11 @@ BigNum BigNum::add(const BigNum& x, const BigNum& y)
     size_t bigger_size = (x.num_size > y.num_size) ? x.num_size : y.num_size;
     BigNum z;
     z.resize(bigger_size+1);
-    z.copy(x);
-    z.sign = sign;
+    z.copy(x, sign);
 
-    // Initialize addition algorithm.
     uint64_t calc = 0;
     uint8_t carry = 0;
     size_t i;
-
-    // Add y to z
     for (i = 0; i < y.num_size; i++)
     {
         // Add single place value + previous carry (if any).
@@ -204,6 +232,160 @@ BigNum BigNum::add(const BigNum& x, const BigNum& y)
     return z;
 }
 
+BigNum BigNum::sub(const BigNum& x, const BigNum& y) 
+{
+    // Handle sign
+    if (x.sign && y.sign)
+        return sub({y, false}, {x, false});
+    else if (x.sign && !y.sign)
+        return {add({x,false}, y), true};
+    else if (!x.sign && y.sign)
+        return add(x,{y,false});
+
+    // Handle y > x
+    if (y > x)
+        return {sub(y,x), true};
+
+    // x >= y
+    BigNum z = x;
+
+    for (size_t i = y.num_size; i > 0; i--)
+    {
+        // If z digit is smaller than y digit, borrow from the next highest non zero.
+        uint64_t calc = 0;
+        if (z.num[i-1] < y.num[i-1])
+        {
+            for (size_t j = i; calc != 0xFFFFFFFF; j++)
+            {
+                // If 0, replace with guaranteed borrow digit.
+                // Subtract final carry digit and borrow to calc.
+                if (z.num[j] == 0)
+                    z.num[j] = 0xFFFFFFFE;
+                else
+                {
+                    z.num[j]--;
+                    calc = 0xFFFFFFFF;
+                }
+            }
+        }
+        // Calculate digit, including carry.
+        calc += (uint64_t) z.num[i-1] - (uint64_t) y.num[i-1];
+        z.num[i-1] = calc;
+    }
+
+    // Remove any excess zeroes.
+    z.trunc();
+
+    return z;
+}
+
+bool BigNum::less_than(const BigNum& x, const BigNum& y)
+{
+    // If signs don't match, whichever is negative is smaller.
+    if (x.sign != y.sign)
+        return x.sign;
+
+    // If both numbers are negative, flip results.
+    bool flip = x.sign;
+
+    if (x.num_size != y.num_size)
+        return (x.num_size < y.num_size) ^ flip;
+
+    // Check largest digit first.
+    for (size_t i = x.num_size; i > 0; i--)
+    {
+        if (x.num[i-1] != y.num[i-1])
+            return (x.num[i-1] < y.num[i-1]) ^ flip;
+    }
+
+    // If digit check passes, x==y.
+    return false;
+};
+
+bool BigNum::less_equal(const BigNum& x, const BigNum& y) 
+{
+    // If signs don't match, whichever is negative is smaller.
+    if (x.sign != y.sign)
+        return x.sign;
+
+    // If both numbers are negative, flip results.
+    bool flip = x.sign;
+
+    if (x.num_size != y.num_size)
+        return (x.num_size < y.num_size) ^ flip;
+
+    // Check largest digit first.
+    for (size_t i = x.num_size; i > 0; i--)
+    {
+        if (x.num[i-1] != y.num[i-1])
+            return (x.num[i-1] < y.num[i-1]) ^ flip;
+    }
+
+    // If digit check passes, x==y.
+    return true;
+};
+
+bool BigNum::equal_to(const BigNum& x, const BigNum& y) 
+{
+    // Handle digits and sign (fast)
+    if ((x.num_size != y.num_size) || (x.sign != y.sign))
+        return false;
+
+    // Check each digit for inequality
+    for (size_t i = 0; i < x.num_size; i++)
+        if (x.num[i] != y.num[i])
+            return false;
+
+    return true;
+};
+
+bool BigNum::greater_than(const BigNum& x, const BigNum& y) 
+{
+    // If signs don't match, whichever is negative is smaller.
+    if (x.sign != y.sign)
+        return !x.sign;
+
+    // If both numbers are negative, flip results.
+    bool flip = x.sign;
+
+    if (x.num_size != y.num_size)
+        return (x.num_size > y.num_size) ^ flip;
+
+    // Check largest digit first.
+    for (size_t i = x.num_size; i > 0; i--)
+    {
+        if (x.num[i-1] != y.num[i-1])
+            return (x.num[i-1] > y.num[i-1]) ^ flip;
+    }
+
+    // If digit check passes, x==y.
+    return false;
+};
+
+bool BigNum::greater_equal(const BigNum& x, const BigNum& y) 
+{
+    // If signs don't match, whichever is negative is smaller.
+    if (x.sign != y.sign)
+        return !x.sign;
+
+    // If both numbers are negative, flip results.
+    bool flip = x.sign;
+
+    if (x.num_size != y.num_size)
+        return (x.num_size > y.num_size) ^ flip;
+
+    // Check largest digit first.
+    for (size_t i = x.num_size; i > 0; i--)
+    {
+        if (x.num[i-1] != y.num[i-1])
+            return (x.num[i-1] > y.num[i-1]) ^ flip;
+    }
+
+    // If digit check passes, x==y.
+    return true;
+};
+
+
 void BigNum::print_debug(const char* name) const
 {
     std::cout << name << ": " << ((sign) ? '-' : '+');
@@ -226,4 +408,25 @@ void BigNum::print(const char* name) const
     std::cout << '\n';
 
     return;
+}
+
+BigNum::operator uint64_t() const
+{
+    uint64_t res;
+    switch (num_size)
+    {
+    case 0:
+        res = 0;
+        break;
+
+    case 1:
+        res = num[0];
+        break;
+    
+    default:
+        res = num[0] | ((uint64_t) num[1] << 32);
+        break;
+    }
+
+    return res;
 }

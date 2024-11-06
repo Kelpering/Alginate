@@ -74,9 +74,11 @@ class BigNum
 
         // Copy another BigNum's data.
         BigNum& copy(const BigNum& x);
+        BigNum& copy(const BigNum& x, bool new_sign);
 
         // Move another BigNum's data without copying (destroys other BigNum)
         BigNum& move(BigNum& x);
+        BigNum& move(BigNum& x, bool new_sign);
         
     public:
     //* Constructors
@@ -84,9 +86,16 @@ class BigNum
         BigNum(uint64_t number = 0, bool sign = false);
         BigNum(uint32_t* number, size_t size, bool sign = false);
         BigNum(uint8_t* number, size_t size, bool sign = false);
-        BigNum(const BigNum& number) {copy(number);};   // Copy 
-        BigNum(BigNum&& number) {move(number);};        // Move 
+        
+        // Copy
+        BigNum(const BigNum& number)            {copy(number);};
+        BigNum(const BigNum& number, bool sign) {copy(number, sign);};
 
+        // Move
+        BigNum(BigNum&& number)                 {move(number);}; 
+        BigNum(BigNum&& number, bool sign)      {move(number, sign);}; 
+
+        // Deconstructor
         ~BigNum();
 
     //* Arithmetic
@@ -96,6 +105,41 @@ class BigNum
         BigNum add(const BigNum& y) const {
             return add(*this,y);
         }
+
+        // Subtraction (x-y)
+        static BigNum sub(const BigNum& x, const BigNum& y);
+        BigNum sub(const BigNum& y) const {
+            return sub(*this, y);
+        }
+
+    //* Comparison
+
+        // Less than (x<y)
+        static bool less_than(const BigNum& x, const BigNum& y);
+        bool less_than(const BigNum& y) const {
+            return less_than(*this, y);
+        }
+
+        static bool less_equal(const BigNum& x, const BigNum& y);
+        bool less_equal(const BigNum& y) const {
+            return less_equal(*this, y);
+        }
+
+        static bool equal_to(const BigNum& x, const BigNum& y);
+        bool equal_to(const BigNum& y) const {
+            return equal_to(*this, y);
+        }
+
+        static bool greater_than(const BigNum& x, const BigNum& y);
+        bool greater_than(const BigNum& y) const {
+            return greater_than(*this, y);
+        }
+
+        static bool greater_equal(const BigNum& x, const BigNum& y);
+        bool greater_equal(const BigNum& y) const {
+            return greater_equal(*this, y);
+        }
+
 
 
     //* Output
@@ -107,16 +151,54 @@ class BigNum
         void print(const char* name) const;
 
     //* Operators
-        
+
+        // Conversion operator
+        explicit operator uint64_t() const;
+
         // Copy operator
-        BigNum& operator=(const BigNum& y) {return copy(y);};
+        BigNum& operator=(const BigNum& y) {
+            return copy(y);
+        };
 
         // Move operator
-        BigNum& operator=(BigNum&& y) {return move(y);};
+        BigNum& operator=(BigNum&& y) {
+            return move(y);
+        };
 
-        // Arithmetic
+
+        // Addition
         BigNum operator+(const BigNum& y) const {
             return add(y);
+        }
+
+        // Subtraction
+        BigNum operator-(const BigNum& y) const {
+            return sub(y);
+        }
+
+        // Less Than
+        bool operator<(const BigNum& y) const {
+            return less_than(*this,y);
+        }
+
+        // Less Than or Equal To
+        bool operator<=(const BigNum& y) const {
+            return less_equal(*this,y);
+        }
+
+        // Equal To
+        bool operator==(const BigNum& y) const {
+            return equal_to(*this,y);
+        }
+
+        // Greater Than
+        bool operator>(const BigNum& y) const {
+            return greater_than(*this,y);
+        }
+
+        // Greater Than or Equal To
+        bool operator>=(const BigNum& y) const {
+            return greater_equal(*this,y);
         }
 
 
