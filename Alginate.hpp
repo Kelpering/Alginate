@@ -69,6 +69,9 @@ class BigNum
         // Resize BigNum to contain new_size. Might allocate more digits for efficiency.
         void resize(size_t new_size);
 
+        // Resize num_size (not the num array allocation) to remove leading zeroes.
+        void trunc();
+
         // Copy another BigNum's data.
         BigNum& copy(const BigNum& x);
 
@@ -94,22 +97,27 @@ class BigNum
             return add(*this,y);
         }
 
-        
+
     //* Output
 
         // Print the internal num array to console.
-        void print_debug(const char* name = "Number");
+        void print_debug(const char* name = "Number") const;
 
         // Print the number in base 10.
-        void print(const char* name);
+        void print(const char* name) const;
 
     //* Operators
         
         // Copy operator
-        BigNum& operator=(const BigNum& x) {return copy(x);};
+        BigNum& operator=(const BigNum& y) {return copy(y);};
 
         // Move operator
-        BigNum& operator=(BigNum&& x) {return move(x);};
+        BigNum& operator=(BigNum&& y) {return move(y);};
+
+        // Arithmetic
+        BigNum operator+(const BigNum& y) const {
+            return add(y);
+        }
 
 
 };

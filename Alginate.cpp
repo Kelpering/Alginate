@@ -109,6 +109,17 @@ void BigNum::resize(size_t new_size)
     return;
 }
 
+void BigNum::trunc()
+{
+    size_t temp_size = num_size;
+    // While there are leading zeroes and the number is not a valid 0.
+    while (num[temp_size-1] == 0 && temp_size > 1)
+        temp_size--;
+    resize(temp_size);
+
+    return;
+}
+
 BigNum& BigNum::copy(const BigNum& x)
 {
     // Resize only if necessary
@@ -117,7 +128,7 @@ BigNum& BigNum::copy(const BigNum& x)
     sign = x.sign;
     
     // Deep copy x.num array into this.num array
-    for (size_t i = 0; i < num_size; i++)
+    for (size_t i = 0; i < x.num_size; i++)
         num[i] = x.num[i];
         
     return *this;
@@ -141,7 +152,7 @@ BigNum& BigNum::move(BigNum& x)
 
 BigNum BigNum::add(const BigNum& x, const BigNum& y)
 {
-    bool sign;
+    bool sign = false;
     // Handle sign
     if (x.sign && y.sign)
         sign = true;
@@ -154,11 +165,10 @@ BigNum BigNum::add(const BigNum& x, const BigNum& y)
 
     // Create z, contains at most big + 1 digits.
     size_t bigger_size = (x.num_size > y.num_size) ? x.num_size : y.num_size;
-    BigNum z = {(bigger_size + 1), sign};
-    // Keeps extra zeroes
-    z.copy(x);  
-
-    //! NOT WORKING (uint32_t max - 1 + 1 == 0)
+    BigNum z;
+    z.resize(bigger_size+1);
+    z.copy(x);
+    z.sign = sign;
 
     // Initialize addition algorithm.
     uint64_t calc = 0;
@@ -189,10 +199,12 @@ BigNum BigNum::add(const BigNum& x, const BigNum& y)
         carry = (calc > 0xFFFFFFFF) ? 1 : 0;
     }
 
+    z.trunc();
+
     return z;
 }
 
-void BigNum::print_debug(const char* name)
+void BigNum::print_debug(const char* name) const
 {
     std::cout << name << ": " << ((sign) ? '-' : '+');
     for (size_t i = num_size; i > 0; i--)
@@ -202,7 +214,7 @@ void BigNum::print_debug(const char* name)
     return;
 }
 
-void BigNum::print(const char* name)
+void BigNum::print(const char* name) const
 {
     std::cout << name << ": " << ((sign) ? '-' : '+');
     
