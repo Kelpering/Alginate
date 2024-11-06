@@ -377,17 +377,61 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
     else
     {
         // Base multiplication
-        BigNum z;
-        mul_basecase(x, y, z);
+        BigNum temp, z;
+        temp.resize(big.num_size<<1);
+        z.resize(big.num_size<<1);
+
+        mul_basecase(x, y, temp, z);
+        
+        z.trunc();
+        
         return z;
     }
 
     return 0;
 }
 
-void BigNum::mul_basecase(const BigNum& x, const BigNum& y, BigNum& ret)
+void BigNum::mul_basecase(const BigNum& x, const BigNum& y, BigNum& temp, BigNum& ret)
 {
+    const BigNum& big = (x.num_size > y.num_size) ? x : y;
+    const BigNum& sml = (x.num_size > y.num_size) ? y : x;
     
+    // Loop smaller number (bottom row)
+    for (size_t i = 0; i < sml.num_size; i++)
+    {
+        // Set temp's logical size (not num_size_real)
+        // offset + big.num_size + 1
+        temp.resize(i + big.num_size + 1);
+        for (size_t j = 0; j < temp.num_size; j++)
+            temp.num[j] = 0;
+
+        // Loop larger number (top row)
+        uint32_t carry = 0;
+        for (size_t j = 0; j < big.num_size; j++)
+        {
+            // Perform single digit mult operation + previous carry
+            std::cout << "BIG: " << big.num[j] << '\n';
+            std::cout << "SML: " << sml.num[j] << '\n';
+            std::cout << "CRY: " << carry << '\n';
+            //Y = 0 ?
+            uint64_t calc = ((uint64_t) big.num[j] * (uint64_t) sml.num[i]) + (uint64_t) carry;
+
+            // Save calculation to (zero offset) temp digit.
+            temp.num[i+j] = (uint32_t) calc;
+
+
+            std::cout << "TEST: " << (calc >> 32) << '\n';
+            // Set next carry
+            carry = (uint32_t) (calc >> 32);
+        }
+
+        // Handle final carry
+        if (carry)
+            temp.num[i+big.num_size] = carry;
+
+        ret = ret + temp;
+    }
+
     return;
 }
 
