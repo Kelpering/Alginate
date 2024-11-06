@@ -30,17 +30,17 @@
     //* Create BigNum BigNum (copy BigNum into this BigNum)
 
     //^ Arithmetic (+ - * /) (add, sub, mul, div)
-    // Bitwise (& | ^ ~ << >>) (bitwise_and, bitwise_or, bitwise_xor, bitwise not, shl, shr)
+    //* Bitwise (& | ^ ~ << >>) (bitwise_and, bitwise_or, bitwise_xor, bitwise not, shl, shr)
     //* Comparison (== != < <= > >=) (equal, not_equal, less_than, less_equal, greater_than, greater_equal)
     // Exponentiation (exp)
     // Modular Arithmetic (% [mod], mod_exp, mod_inv)
-    // Output (base10 string, print internal)
+    //^ Output (base10 string, print internal)
     // Exceptions (div 0 == invalid_argument)
     // Misc
         // GCD
         // Prime Check (miller-rabin w/ provided witness to check)
         // RNG w/ provided uint8_t (*rng)() function ptr
-    // Operator overloads (see above for correct operator)
+    //^ Operator overloads (see above for correct operator)
 
     // Internal
         //* resize (Handles ALL num allocations and resizes.)
@@ -50,7 +50,8 @@
         // karatsuba optimization
         // Montgomery optimization
 
-// add include guard
+#ifndef __ALGINATE_HPP__
+#define __ALGINATE_HPP__
 
 #include <cstddef>
 #include <cstdint>
@@ -79,7 +80,11 @@ class BigNum
         // Move another BigNum's data without copying (destroys other BigNum)
         BigNum& move(BigNum& x);
         BigNum& move(BigNum& x, bool new_sign);
-        
+
+        // Multiplication helper functions
+        static void mul_basecase(const BigNum& x, const BigNum& y, BigNum& ret);
+        static void mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret);
+    
     public:
     //* Constructors
     
@@ -110,6 +115,12 @@ class BigNum
         static BigNum sub(const BigNum& x, const BigNum& y);
         BigNum sub(const BigNum& y) const {
             return sub(*this, y);
+        }
+
+        // Multiplication (x * y)
+        static BigNum mul(const BigNum& x, const BigNum& y);
+        BigNum mul(const BigNum& y) const {
+            return mul(*this, y);
         }
 
     //* Bitwise
@@ -260,3 +271,5 @@ class BigNum
 
 
 };
+
+#endif // __ALGINATE_HPP__

@@ -1,5 +1,9 @@
 #include "Alginate.hpp"
 
+//! REQUIRES REFINEMENT
+#define KARAT_SHIFT 4
+#define KARATSUBA_DIGITS (1<<KARAT_SHIFT)
+
 //? Constructors
 
 BigNum::BigNum(uint64_t number, bool sign)
@@ -278,6 +282,118 @@ BigNum BigNum::sub(const BigNum& x, const BigNum& y)
     z.trunc();
 
     return z;
+}
+
+BigNum BigNum::mul(const BigNum& x, const BigNum& y)
+{
+    // Basic idea:
+        // If we start out with basecase efficient digits (smallest of the two)
+        // Basecase is performed
+        // Else
+        // We will generate a workspace (Array of BigNum refs)
+            // This workspace need only be as large as 1 branch of recurses
+            // The values can be used between the same levels without overwriting important data
+            // The workspace BigNums must be created to hold the largest numbers, then resized correctly.
+            // The array will be performed in "reverse" order
+            // So we can alter the size_t level variable to modify the size of visible array space.
+
+        // Currently basecase digits will be 32 (as the level will never reach the bottom)
+
+    const BigNum& big = (x.num_size > y.num_size) ? x : y;
+    const BigNum& sml = (x.num_size > y.num_size) ? y : x;
+
+    if (sml.num_size > KARATSUBA_DIGITS)
+    {
+        // Karatsuba optimization 
+        //^ Setup workspace
+            //^ Calculate branch level based on KARATSUBA_DIGITS
+            //^ Create and size correct number of branches
+            //^ Create and size default number of BigNum's per branch
+            //^ Save result (largest level ret BigNum)
+            //^ Free resources
+
+        // Create a 2d matrix
+        /*
+        ?   Example (per level)
+        ?   [X level 1] [X level 2] [X level 3]
+        ?   [Y level 1] [Y level 2] [Y level 3]
+        ?   [R level 1] [R level 2] [R level 3]
+        ?   [A level 1] [A level 2] [A level 3]
+        ?   [D level 1] [D level 2] [D level 3]
+        ?   [E level 1] [E level 2] [E level 3]
+        */
+
+        //? Branch structure
+            //? x 0
+            //? y 1
+            //? a 2
+            //? d 3
+            //? e 4
+            //? ret 5     digits*2
+
+
+        // Smallest branch # should be the smallest BigNums
+        // AKA the levels should start Large->Small
+        // This will make program work the same across smaller levels
+
+        size_t shifts = 0;
+        while ((1ULL<<shifts) < big.num_size)
+            shifts++;
+        size_t branches = shifts-KARAT_SHIFT;
+        
+        BigNum** workspace = new BigNum*[branches];
+        for (size_t i = 0; i < branches; i++)
+        {
+            // Create each branch
+            workspace[i] = new BigNum[6];
+
+            // Individual BigNums
+            workspace[i][0].resize(KARATSUBA_DIGITS<<(i+1));        // X
+            workspace[i][1].resize(KARATSUBA_DIGITS<<(i+1));        // Y
+            workspace[i][2].resize(KARATSUBA_DIGITS<<(i+1));        // A
+            workspace[i][3].resize(KARATSUBA_DIGITS<<(i+1));        // D
+            workspace[i][4].resize(KARATSUBA_DIGITS<<(i+1));        // E
+            // Ret holds x.num_size + y.num_size digits (double in this case)
+            workspace[i][5].resize(KARATSUBA_DIGITS<<(i+2));        // Ret
+        }
+
+        // Manually set largest workspace (zero-fills unused space)
+        for (size_t i = 0; i < big.num_size; i++)
+            workspace[branches-1][0].num[i] = x.num[i];   // X
+        for (size_t i = 0; i < sml.num_size; i++)
+            workspace[branches-1][1].num[i] = y.num[i];   // Y
+
+        // top level workspace x and y are filled correctly
+        // Result should appear in top level workspace ret
+        // A, D, E are all used for temporary storage
+
+        mul_karatsuba(workspace, branches, workspace[branches-1][5]);
+        // BigNum z = workspace[branches-1][5];
+        // z.sign = x.sign ^ y.sign;
+        // return z;
+        //^ EXTRACT RESULT AND RETURN
+            
+    }
+    else
+    {
+        // Base multiplication
+        BigNum z;
+        mul_basecase(x, y, z);
+        return z;
+    }
+
+    return 0;
+}
+
+void BigNum::mul_basecase(const BigNum& x, const BigNum& y, BigNum& ret)
+{
+    
+    return;
+}
+
+void BigNum::mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret)
+{
+    return;
 }
 
 BigNum BigNum::bitwise_and(const BigNum& x, const BigNum& y)
