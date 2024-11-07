@@ -218,25 +218,48 @@ class BigNum
         BigNum operator+(const BigNum& y) const {
             return add(y);
         }
+        void operator+=(const BigNum& y) {
+            *this = add(y);
+        }
 
         // Subtraction
         BigNum operator-(const BigNum& y) const {
             return sub(y);
+        }
+        void operator-=(const BigNum& y) {
+            *this = sub(y);
+        }
+
+        // Multiplication
+        BigNum operator*(const BigNum& y) const {
+            return mul(y);
+        }
+        void operator*=(const BigNum& y) {
+            *this = mul(y);
         }
 
         // Bitwise And
         BigNum operator&(const BigNum& y) const {
             return bitwise_and(y);
         }
+        void operator&=(const BigNum& y) {
+            *this = bitwise_and(y);
+        }
 
         // Bitwise Or
         BigNum operator|(const BigNum& y) const {
             return bitwise_or(y);
         }
+        void operator|=(const BigNum& y) {
+            *this = bitwise_or(y);
+        }
 
         // Bitwise Xor
         BigNum operator^(const BigNum& y) const {
             return bitwise_xor(y);
+        }
+        void operator^=(const BigNum& y) {
+            *this = bitwise_xor(y);
         }
 
         // Less Than
