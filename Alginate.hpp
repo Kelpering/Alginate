@@ -262,6 +262,22 @@ class BigNum
             *this = bitwise_xor(y);
         }
 
+        // Bitwise Shl
+        BigNum operator<<(size_t y) const {
+            return bitwise_shl(y);
+        }
+        void operator<<=(size_t y) {
+            *this = bitwise_shl(y);
+        }
+
+        // Bitwise Shr
+        BigNum operator>>(size_t y) const {
+            return bitwise_shr(y);
+        }
+        void operator>>=(size_t y) {
+            *this = bitwise_shr(y);
+        }
+
         // Less Than
         bool operator<(const BigNum& y) const {
             return less_than(*this,y);

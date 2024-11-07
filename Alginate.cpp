@@ -1,8 +1,8 @@
 #include "Alginate.hpp"
 
 //! REQUIRES REFINEMENT
-#define KARAT_SHIFT 4
-#define KARATSUBA_DIGITS (1<<KARAT_SHIFT)
+#define KARAT_SHIFT 3
+#define KARATSUBA_DIGITS (1ULL<<KARAT_SHIFT)
 
 //? Constructors
 
@@ -367,10 +367,23 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
         // Result should appear in top level workspace ret
         // A, D, E are all used for temporary storage
 
-        mul_karatsuba(workspace, branches, workspace[branches-1][5]);
-        // BigNum z = workspace[branches-1][5];
-        // z.sign = x.sign ^ y.sign;
-        // return z;
+        mul_karatsuba(workspace, branches-1, workspace[branches-1][5]);
+        BigNum z = workspace[branches-1][5];
+        z.sign = x.sign ^ y.sign;
+        z.print_debug("Karatsuba");
+
+//!
+// BigNum temp, z;
+        // temp.resize(big.num_size<<1);
+        z.resize(big.num_size<<1);
+
+        mul_basecase(x, y, workspace[branches-1][2], z);
+        
+        z.sign = x.sign ^ y.sign;
+        z.print_debug("Basecase ");
+//!
+
+
         //^ EXTRACT RESULT AND RETURN
             
     }
@@ -396,6 +409,7 @@ void BigNum::mul_basecase(const BigNum& x, const BigNum& y, BigNum& temp, BigNum
 {
     const BigNum& big = (x.num_size > y.num_size) ? x : y;
     const BigNum& sml = (x.num_size > y.num_size) ? y : x;
+    ret = 0;
 
     // Check for full zero numbers
     bool is_zero;
@@ -405,20 +419,14 @@ void BigNum::mul_basecase(const BigNum& x, const BigNum& y, BigNum& temp, BigNum
         if (big.num[i] != 0)
             is_zero = false;
     if (is_zero)
-    {
-        ret = 0;
         return;
-    }
 
     is_zero = true;
-    for (size_t i = 0; i < big.num_size; i++)
-        if (big.num[i] != 0)
+    for (size_t i = 0; i < sml.num_size; i++)
+        if (sml.num[i] != 0)
             is_zero = false;
     if (is_zero)
-    {
-        ret = 0;
         return;
-    }
 
     // Loop smaller number (bottom row)
     for (size_t i = 0; i < sml.num_size; i++)
@@ -455,6 +463,167 @@ void BigNum::mul_basecase(const BigNum& x, const BigNum& y, BigNum& temp, BigNum
 
 void BigNum::mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret)
 {
+    //! MANUAL TEST ON KARATSUBA
+    if (level == 1)
+    {
+        //! Manually do karatsuba on the first level, track {A, D, E} and associated shift values
+        //! Then we must identify the mismatch
+        //* A
+        //* D
+        //* E
+        //^ RES
+
+        BigNum x_low, x_high, y_low, y_high;
+        x_low.resize(16);
+        x_high.resize(16);
+        y_low.resize(16);
+        y_high.resize(16);
+        for (size_t i = 0; i < 16; i++)
+        {
+            x_low.num[i] = workspace[1][0].num[i];
+            x_high.num[i] = workspace[1][0].num[i+16];
+            y_low.num[i] = workspace[1][1].num[i];
+            y_high.num[i] = workspace[1][1].num[i+16];
+        }
+
+        BigNum x3 = x_low - x_high;
+        BigNum y3 = y_high - y_low;
+
+        // x3.print_debug("\nx3");
+        // y3.print_debug("\ny3_test");
+
+        BigNum A = 0;
+        BigNum D = 0;
+        BigNum E = 0;
+        mul_basecase(x_high, y_high, workspace[0][0], A);
+        mul_basecase(x_low, y_low, workspace[0][0], D);
+        mul_basecase(x3, y3, workspace[0][0], E);
+        E.sign = x3.sign ^ y3.sign;
+        E += A + D;
+
+        A.print_debug("A");
+        D.print_debug("D");
+        E.print_debug("E");
+
+        //! Shift values are probably the last issue
+        //! bitwise before used 8 bit bytes
+        //! But digit size is 32 now, so work with that in mind.
+        //! We MIGHT BE on the right track here
+        //! E is the issue, somehow
+        BigNum res = A.bitwise_shl(1<<10) + E.bitwise_shl(1<<9) + D;
+        ret = res;
+        return;
+        res.print_debug("REAL_ANSWER");
+
+        // workspace[1][0].print_debug("x real");
+        // workspace[1][1].print_debug("y real");
+
+        // x_high.print_debug("\nx1_test");
+        // x_low.print_debug("\nx0_test");
+        // y_high.print_debug("\ny high");
+        // y_low.print_debug("\ny low ");
+    }
+    //? Branch structure
+        //? x 0
+        //? y 1
+        //? a 2
+        //? d 3
+        //? e 4
+        //? ret 5     digits*2
+
+    // If we reach the bottom of the karatsuba levels, call basecase instead.
+    // mul_basecase(x, y, a, ret)
+    if (level == 0)
+        return mul_basecase(workspace[0][0], workspace[0][1], workspace[0][2], ret);
+
+
+    // Zero check x and y
+    bool is_zero;
+
+    is_zero = true;
+    for (size_t i = 0; i < workspace[level][0].num_size; i++)
+        if (workspace[level][0].num[i] != 0)
+            is_zero = false;
+    if (is_zero)
+    {
+        workspace[level][5] = 0;
+        return;
+    }
+
+    is_zero = true;
+    for (size_t i = 0; i < workspace[level][0].num_size; i++)
+        if (workspace[level][1].num[i] != 0)
+            is_zero = false;
+    if (is_zero)
+    {
+        workspace[level][5] = 0;
+        return;
+    }
+
+    //^ Use level-1 to store variables we want to work with
+    
+    // A (High half digits)
+    workspace[level-1][0].resize(KARATSUBA_DIGITS<<(level));
+    workspace[level-1][1].resize(KARATSUBA_DIGITS<<(level));
+    for (size_t i = 0; i < KARATSUBA_DIGITS<<level; i++)
+    {
+        workspace[level-1][0].num[i] = workspace[level][0].num[i + (KARATSUBA_DIGITS<<(level))];
+        workspace[level-1][1].num[i] = workspace[level][1].num[i + (KARATSUBA_DIGITS<<(level))];
+    }
+    mul_karatsuba(workspace, level-1, workspace[level][2]);
+
+    // D (low half digits)
+    workspace[level-1][0].resize(KARATSUBA_DIGITS<<(level));
+    workspace[level-1][1].resize(KARATSUBA_DIGITS<<(level));
+    for (size_t i = 0; i < KARATSUBA_DIGITS<<level; i++)
+    {
+        workspace[level-1][0].num[i] = workspace[level][0].num[i];
+        workspace[level-1][1].num[i] = workspace[level][1].num[i];
+    }
+    mul_karatsuba(workspace, level-1, workspace[level][3]);
+
+
+    
+    // x_low - x_high = [level-1][x]
+    workspace[level-1][0].resize(KARATSUBA_DIGITS<<(level));
+    workspace[level-1][2].resize(KARATSUBA_DIGITS<<(level));
+    workspace[level-1][3].resize(KARATSUBA_DIGITS<<(level));
+    for (size_t i = 0; i < KARATSUBA_DIGITS<<level; i++)
+    {
+        workspace[level-1][2].num[i] = workspace[level][0].num[i];
+        workspace[level-1][3].num[i] = workspace[level][0].num[i + (KARATSUBA_DIGITS<<(level))];
+    }
+    workspace[level-1][0] = workspace[level-1][2] - workspace[level-1][3];
+    
+    // y_high - y_low = [level-1][y]
+    workspace[level-1][0].resize(KARATSUBA_DIGITS<<(level));
+    workspace[level-1][2].resize(KARATSUBA_DIGITS<<(level));
+    workspace[level-1][3].resize(KARATSUBA_DIGITS<<(level));
+    for (size_t i = 0; i < KARATSUBA_DIGITS<<level; i++)
+    {
+        workspace[level-1][2].num[i] = workspace[level][1].num[i];
+        workspace[level-1][3].num[i] = workspace[level][1].num[i + (KARATSUBA_DIGITS<<(level))];
+    }
+    workspace[level-1][1] =  workspace[level-1][3] - workspace[level-1][2];
+    
+    // E (x1-x2) * (y2-y1) + a + d
+    mul_karatsuba(workspace, level-1, workspace[level][4]);
+    workspace[level][4].sign = workspace[level-1][0].sign ^ workspace[level-1][1].sign;
+    workspace[level][4] += (workspace[level][2] + workspace[level][3]);
+
+    // X digits
+    // SHIFT BY:
+    // (KARATSUBA_DIGITS<<(level+1)) << 3 (bitwise)
+    // (KARATSUBA_DIGITS<<(level+1)) << 2 (bitwise)
+
+    // workspace[level][2].print_debug("A");
+    // workspace[level][3].print_debug("D");
+    // workspace[level][4].print_debug("E");
+
+    workspace[level][5] = workspace[level][2].bitwise_shl((KARATSUBA_DIGITS<<(level+1)) << 3) +\
+    workspace[level][4].bitwise_shl((KARATSUBA_DIGITS<<(level+1)) << 2) +
+    workspace[level][3];
+
     return;
 }
 
@@ -497,6 +666,42 @@ BigNum BigNum::bitwise_xor(const BigNum& x, const BigNum& y)
     z.trunc();
 
     return z;
+}
+
+BigNum BigNum::bitwise_shl(const BigNum& x, size_t y)
+{
+    BigNum z = {0, x.sign};
+    size_t z_size = 0;
+
+    z_size = x.num_size + (y>>5);
+    if ((uint64_t) (x.num[x.num_size-1] << (y&0x1F)) > (0xFFFFFFFF-1))
+        z_size++;
+    z.resize(z_size);
+
+    // Bytewise shift (moves by increments of 8 bits)
+    for (size_t i = 0; i < x.num_size; i++)
+        z.num[i + (y>>5)] = x.num[i];
+
+    // Convert y into bits only
+    y &= 0x1F;
+
+    if (y)
+    {
+        // Apply bitwise shift operation to all but last digit
+        for (size_t i = z.num_size-1; i > 0; i--)
+            z.num[i] = (uint64_t) (z.num[i] << y) | (uint64_t) (z.num[i-1] >> (32-y));
+
+        // Final digit
+        z.num[0] <<= y;
+    }
+
+    return z;
+}
+
+BigNum BigNum::bitwise_shr(const BigNum& x, size_t y)
+{
+
+    return 1234;   
 }
 
 bool BigNum::less_than(const BigNum& x, const BigNum& y)
