@@ -706,6 +706,83 @@ BigNum BigNum::bitwise_shl(const BigNum& x, size_t y)
 
 BigNum BigNum::bitwise_shr(const BigNum& x, size_t y)
 {
+//!
+
+
+    // Handle y_bytes > x
+    if (x.num_size <= (y>>3))
+    {
+        z.num_size = 1;
+        z.num = new uint8_t[1] {0};
+
+        return z;
+    }
+
+    // Handle bitshifts larger than 8 (works on digits).
+    z.num_size = x.num_size - (y>>3);
+
+    z.num = new uint8_t[z.num_size] {0};
+
+    for (size_t i = 0; i < z.num_size; i++)
+        z.num[i] = x.num[i+(y>>3)];
+        
+    // Convert y into bits only.
+    y %= 8;
+
+    if (y)
+    {
+        // Apply shift operation to all but the last digit.
+        size_t i;
+        for (i = 0; i < z.num_size-1; i++)
+            z.num[i] = (uint16_t) (z.num[i+1] << (8-y)) | (uint16_t) (z.num[i] >> y);
+        z.num[i] = z.num[i] >> y;
+    }
+   
+    // Remove excess zeroes.
+    z.trunc();
+
+    return z;
+//!
+
+    BigNum z = {0, x.sign};
+    size_t z_size = 0;
+
+    // Handle shift_digits > x digits
+    if (x.num_size <= (y>>5))
+        return z;
+
+    // Handle bitshifts larger than 32.
+    size_t new_size = x.num_size - (y>>5);
+
+    for (size_t i = 0; i < new_size; i++)
+        z.num[i] = z.num[i+(z.num_size-new_size)];
+    z.resize(new_size);
+
+    //! BITWISE BELOW UNFINISHED
+    z_size = x.num_size + (y>>5);
+    if ((uint64_t) (x.num[x.num_size-1] << (y&0x1F)) > (0xFFFFFFFF-1))
+        z_size++;
+    z.resize(z_size);
+
+    // Bytewise shift (moves by increments of 8 bits)
+    for (size_t i = 0; i < x.num_size; i++)
+        z.num[i + (y>>5)] = x.num[i];
+
+    // Convert y into bits only
+    y &= 0x1F;
+
+    if (y)
+    {
+        // Apply bitwise shift operation to all but last digit
+        for (size_t i = z.num_size-1; i > 0; i--)
+            z.num[i] = (uint64_t) (z.num[i] << y) | (uint64_t) (z.num[i-1] >> (32-y));
+
+        // Final digit
+        z.num[0] <<= y;
+    }
+
+    return z;
+
 
     return 1234;   
 }
