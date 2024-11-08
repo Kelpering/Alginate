@@ -34,7 +34,7 @@
 // Number of digits before the karatsuba optimization is used.
 #define KARATSUBA_THRESHOLD 128
 
-void BigNum::trunc()
+void BigNum_old::trunc()
 {
     // Handle num_size == 0.
     if (num_size == 0)
@@ -60,7 +60,7 @@ void BigNum::trunc()
     return;
 }
 
-void BigNum::copy(const BigNum& number)
+void BigNum_old::copy(const BigNum_old& number)
 {
     // Copy basic variables.
     num_size = number.num_size;
@@ -75,7 +75,7 @@ void BigNum::copy(const BigNum& number)
     return;
 }
 
-void BigNum::move(BigNum& number)
+void BigNum_old::move(BigNum_old& number)
 {
 // Copy basic variables.
     num_size = number.num_size;
@@ -88,10 +88,10 @@ void BigNum::move(BigNum& number)
     return;
 }
 
-BigNum BigNum::shallow_copy() const
+BigNum_old BigNum_old::shallow_copy() const
 {
     // Create new BigNum
-    BigNum shallow;
+    BigNum_old shallow;
 
     // Copy basic variables.
     shallow.num_size = num_size;
@@ -104,7 +104,7 @@ BigNum BigNum::shallow_copy() const
     return shallow;
 }
 
-BigNum::~BigNum() 
+BigNum_old::~BigNum_old() 
 {
     // De-allocate the num array at the end of scope.
     if (num != nullptr && shallow != true)
@@ -116,7 +116,7 @@ BigNum::~BigNum()
     return;
 }
 
-void BigNum::assign(uint64_t number, bool isNegative)
+void BigNum_old::assign(uint64_t number, bool isNegative)
 {
     // Hold the bytes of number without dynamically allocating bytes.
     uint8_t scratch[8];     
@@ -151,7 +151,7 @@ void BigNum::assign(uint64_t number, bool isNegative)
     return;
 }
 
-void BigNum::assign(const std::vector<uint8_t>& number, bool isNegative)
+void BigNum_old::assign(const std::vector<uint8_t>& number, bool isNegative)
 {
     // Set the sign bit according to isNegative.
     sign = isNegative;
@@ -179,7 +179,7 @@ void BigNum::assign(const std::vector<uint8_t>& number, bool isNegative)
     return;
 }
 
-void BigNum::assign(const BigNum& x)
+void BigNum_old::assign(const BigNum_old& x)
 {
     // Copy regular variables
     num_size = x.num_size;
@@ -193,10 +193,10 @@ void BigNum::assign(const BigNum& x)
     return;
 }
 
-BigNum BigNum::add(const BigNum& x, const BigNum& y)
+BigNum_old BigNum_old::add(const BigNum_old& x, const BigNum_old& y)
 {
     // Create z (uninitialized)
-    BigNum z;
+    BigNum_old z;
     
     // Handle sign
     if (x.sign && y.sign)
@@ -249,14 +249,14 @@ BigNum BigNum::add(const BigNum& x, const BigNum& y)
     return z;
 }
 
-BigNum BigNum::sub(const BigNum& x, const BigNum& y)
+BigNum_old BigNum_old::sub(const BigNum_old& x, const BigNum_old& y)
 {
     // Handle sign
     if (x.sign && y.sign)
         return sub(y.shallow_copy().self_abs(), x.shallow_copy().self_abs());
     else if (x.sign && !y.sign)
     {
-        BigNum z;
+        BigNum_old z;
         z = add(x.shallow_copy().self_abs(), y);
         z.sign = true;
         return z;
@@ -267,14 +267,14 @@ BigNum BigNum::sub(const BigNum& x, const BigNum& y)
     // Handle x < y
     if (x.shallow_copy() < y.shallow_copy())
     {
-        BigNum z;
+        BigNum_old z;
         z = sub(y,x);
         z.sign = true;
         return z;
     }
 
     // x >= y guaranteed
-    BigNum z = x;
+    BigNum_old z = x;
 
     for (size_t i = y.num_size; i > 0; i--)
     {
@@ -306,11 +306,11 @@ BigNum BigNum::sub(const BigNum& x, const BigNum& y)
     return z;
 }
 
-BigNum BigNum::mul(const BigNum& x, const BigNum& y)
+BigNum_old BigNum_old::mul(const BigNum_old& x, const BigNum_old& y)
 {
     // Organize x and y into a bigger and smaller digit pair.
-    const BigNum& big = (x.num_size > y.num_size) ? x: y;
-    const BigNum& sml = (x.num_size > y.num_size) ? y: x;
+    const BigNum_old& big = (x.num_size > y.num_size) ? x: y;
+    const BigNum_old& sml = (x.num_size > y.num_size) ? y: x;
 
     // Karatsuba optimization: perform if the smallest number is above the threshold.
     if (sml.num_size > KARATSUBA_THRESHOLD)
@@ -331,7 +331,7 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
         }
 
         // Setup the temporary a,b bignums.
-        BigNum a, b;
+        BigNum_old a, b;
         a.num_size = max_size;
         b.num_size = max_size;
         a.num = new uint8_t[a.num_size] {0};
@@ -341,7 +341,7 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
         for (size_t i = 0; i < sml.num_size; i++)
             b.num[i] = sml.num[i];
 
-        BigNum z = mul_karatsuba(a,b,max_size);
+        BigNum_old z = mul_karatsuba(a,b,max_size);
         z.sign = x.sign ^ y.sign;
         z.trunc();
 
@@ -352,7 +352,7 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
     return mul_basecase(big,sml);
 }
 
-BigNum BigNum::mul_basecase(const BigNum& big, const BigNum& sml)
+BigNum_old BigNum_old::mul_basecase(const BigNum_old& big, const BigNum_old& sml)
 {
     bool sml_not_zero = false;
     bool big_not_zero = false;
@@ -371,12 +371,12 @@ BigNum BigNum::mul_basecase(const BigNum& big, const BigNum& sml)
     if ((sml_not_zero && big_not_zero) == false)
         return 0;
 
-    BigNum z;
+    BigNum_old z;
     z.num_size = big.num_size + sml.num_size;
     z.num = new uint8_t[z.num_size] {0};
 
     // Create temp to handle intermediate values
-    BigNum temp;
+    BigNum_old temp;
     temp.num_size = z.num_size;
     temp.num = new uint8_t[temp.num_size] {0};
     // Loop smaller number (each row in mul alg)
@@ -413,7 +413,7 @@ BigNum BigNum::mul_basecase(const BigNum& big, const BigNum& sml)
     return z;
 }
 
-BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
+BigNum_old BigNum_old::mul_karatsuba(const BigNum_old& x, const BigNum_old& y, size_t digits)
 {
     //! Currently the karatsuba operation will be unoptimized for proof of concept
     //! Once we have this working, we can optimize dynamic allocations and reuse to drastically speed up the operation.
@@ -440,7 +440,7 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
         return 0;
 
     // Initialize x and y split numbers
-    BigNum x1, y1, x2, y2, x3, y3;
+    BigNum_old x1, y1, x2, y2, x3, y3;
     x1.num_size = x2.num_size = y1.num_size = y2.num_size = x3.num_size = y3.num_size = digits>>1;
     x1.sign = x2.sign = y1.sign = y2.sign = x3.sign = y3.sign = false;
     x1.num = new uint8_t[digits>>1];
@@ -459,8 +459,8 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
         y2.num[i] = y.num[i+(digits>>1)];
     }
 
-    BigNum a = mul_karatsuba(x2, y2, digits>>1);    // Higher halves
-    BigNum d = mul_karatsuba(x1, y1, digits>>1);    // Smaller halves
+    BigNum_old a = mul_karatsuba(x2, y2, digits>>1);    // Higher halves
+    BigNum_old d = mul_karatsuba(x1, y1, digits>>1);    // Smaller halves
 
     // (x1-x2) * (y2-y1) + a + d (Zero extend parenthesis operations)
     x1 = x1-x2;
@@ -469,16 +469,16 @@ BigNum BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits)
         x3.num[i] = x1.num[i];
     for (size_t i = 0; i < y1.num_size; i++)
         y3.num[i] = y1.num[i];
-    BigNum e = mul_karatsuba(x3, y3, digits>>1);
+    BigNum_old e = mul_karatsuba(x3, y3, digits>>1);
     e.sign = x1.sign ^ y1.sign;
     e += a + d;
 
-    BigNum z = (a.shl(digits<<3)) + (e.shl(digits<<2)) + d;
+    BigNum_old z = (a.shl(digits<<3)) + (e.shl(digits<<2)) + d;
 
     return z;
 }
 
-BigNum BigNum::div(const BigNum& x, const BigNum& y)
+BigNum_old BigNum_old::div(const BigNum_old& x, const BigNum_old& y)
 {
     // Handle invalid arguments
     if (y == 0)
@@ -493,8 +493,8 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
         return 0;
 
     // Create temp nums.
-    BigNum x_temp = x.abs();
-    BigNum y_temp = y.abs();
+    BigNum_old x_temp = x.abs();
+    BigNum_old y_temp = y.abs();
 
     // Reduce x/y to equivalent x_temp/y_temp (shifted by multiples of 2).
     size_t shift = 0;
@@ -513,19 +513,19 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
     // Check for perfect reduction.
     if (y_temp == 1)
     {
-        BigNum z = x_temp;
+        BigNum_old z = x_temp;
         z.sign = x.sign ^ y.sign;
         return z;
     }
 
-    BigNum z = 0;
+    BigNum_old z = 0;
     z.sign = x.sign ^ y.sign;
 
     while (x_temp > y_temp || x_temp == y_temp)
     {
         // Find the maximum we can shift y_temp.
         size_t shift = 0;
-        BigNum temp = y_temp;
+        BigNum_old temp = y_temp;
         while (x_temp > temp || x_temp == temp)
         {
             shift++;
@@ -535,13 +535,13 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
 
         // Subtract max y_temp * power of 2
         x_temp -= y_temp.shl(shift);
-        z += BigNum(1).shl(shift);
+        z += BigNum_old(1).shl(shift);
     }
 
     return z;
 }
 
-BigNum BigNum::mod(const BigNum& x, const BigNum& y)
+BigNum_old BigNum_old::mod(const BigNum_old& x, const BigNum_old& y)
 {
     // Handle invalid arguments
     if (x == 0)
@@ -558,8 +558,8 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
         return x;
 
     // Create temp nums.
-    BigNum x_temp = x;
-    BigNum y_temp = y;
+    BigNum_old x_temp = x;
+    BigNum_old y_temp = y;
 
     // Reduce x%y to equivalent x_temp%y_temp (shifted by multiples of 2).
     size_t shift = 0;
@@ -580,7 +580,7 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
     {
         // Find the maximum we can shift y_temp.
         size_t shift = 0;
-        BigNum temp = y_temp;
+        BigNum_old temp = y_temp;
         while (x_temp > temp || x_temp == temp)
         {
             shift++;
@@ -596,10 +596,10 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
     return x_temp.shl(shift);
 }
 
-BigNum BigNum::gcd(const BigNum& x, const BigNum& y)
+BigNum_old BigNum_old::gcd(const BigNum_old& x, const BigNum_old& y)
 {
-    BigNum big = (x > y) ? x.abs() : y.abs();
-    BigNum sml = (x > y) ? y.abs() : x.abs();
+    BigNum_old big = (x > y) ? x.abs() : y.abs();
+    BigNum_old sml = (x > y) ? y.abs() : x.abs();
     
     if (sml == 0)
         return big;
@@ -609,7 +609,7 @@ BigNum BigNum::gcd(const BigNum& x, const BigNum& y)
     return gcd(big, sml);
 }
 
-bool BigNum::prime_check(const BigNum& prob_prime, const BigNum& witness)
+bool BigNum_old::prime_check(const BigNum_old& prob_prime, const BigNum_old& witness)
 {
     // Handle invalid arguments
     if (prob_prime.sign)
@@ -624,7 +624,7 @@ bool BigNum::prime_check(const BigNum& prob_prime, const BigNum& witness)
         return false;
 
     size_t s = 0;
-    BigNum d = prob_prime - 1;
+    BigNum_old d = prob_prime - 1;
 
     // While d is even
     while ((d.num[0] & 1) == 0)
@@ -652,7 +652,7 @@ bool BigNum::prime_check(const BigNum& prob_prime, const BigNum& witness)
     return false;
 }
 
-BigNum BigNum::exp(const BigNum& x, const BigNum& y)
+BigNum_old BigNum_old::exp(const BigNum_old& x, const BigNum_old& y)
 {
     // x^-y = 1/(x^y)
     if (y.sign == true)
@@ -668,7 +668,7 @@ BigNum BigNum::exp(const BigNum& x, const BigNum& y)
         return x * exp(x*x, y>>1);
 }
 
-BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
+BigNum_old BigNum_old::mod_exp(BigNum_old x, BigNum_old y, const BigNum_old& mod)
 {
     // Handle invalid arguments
     if (x.sign)
@@ -726,15 +726,15 @@ BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
     std::cout << "Reached" << std::endl;
 
     //^ Convert this function into a montgomery equal function
-    BigNum R = BigNum::shl(1,mod.num_size*8);
-    BigNum R_1 = R - 1; // Used for efficient calculations
-    BigNum mod_prime = (R*R.mod_inv(mod) - 1) / mod;
+    BigNum_old R = BigNum_old::shl(1,mod.num_size*8);
+    BigNum_old R_1 = R - 1; // Used for efficient calculations
+    BigNum_old mod_prime = (R*R.mod_inv(mod) - 1) / mod;
 
     // Montgomery form x and z
-    BigNum x_mont = (R * x) % mod;
-    BigNum z_mont = (R * 1) % mod;
+    BigNum_old x_mont = (R * x) % mod;
+    BigNum_old z_mont = (R * 1) % mod;
 
-    BigNum temp1;
+    BigNum_old temp1;
 
     for (size_t i = 0; i < y.num_size * 8; i++)
     {
@@ -761,7 +761,7 @@ BigNum BigNum::mod_exp(BigNum x, BigNum y, const BigNum& mod)
     return z_mont;
 }
 
-BigNum BigNum::mod_inv(const BigNum& x, const BigNum& mod)
+BigNum_old BigNum_old::mod_inv(const BigNum_old& x, const BigNum_old& mod)
 {
     // Handle invalid arguments
     if (x.sign)
@@ -769,7 +769,7 @@ BigNum BigNum::mod_inv(const BigNum& x, const BigNum& mod)
     else if (mod == 0 || mod.sign)
         throw std::invalid_argument("mod > 0");
 
-    BigNum old_r,r, old_s,s;
+    BigNum_old old_r,r, old_s,s;
     old_r = x;
     r = mod;
 
@@ -777,7 +777,7 @@ BigNum BigNum::mod_inv(const BigNum& x, const BigNum& mod)
     s = 0;
 
     // Modified Extended Euclidean Algorithm
-    BigNum quotient, temp;
+    BigNum_old quotient, temp;
     while (r != 0)
     {
         quotient = old_r / r;
@@ -798,9 +798,9 @@ BigNum BigNum::mod_inv(const BigNum& x, const BigNum& mod)
     return old_s % mod;
 }
 
-BigNum BigNum::shl(const BigNum& x, size_t y)
+BigNum_old BigNum_old::shl(const BigNum_old& x, size_t y)
 {
-    BigNum z;
+    BigNum_old z;
     z.sign = x.sign;
 
     // Handle bitshifts larger than 8 (works on digits).
@@ -828,9 +828,9 @@ BigNum BigNum::shl(const BigNum& x, size_t y)
     return z;
 }
 
-BigNum BigNum::shr(const BigNum& x, size_t y)
+BigNum_old BigNum_old::shr(const BigNum_old& x, size_t y)
 {
-    BigNum z;
+    BigNum_old z;
     z.sign = x.sign;
 
     // Handle y_bytes > x
@@ -868,10 +868,10 @@ BigNum BigNum::shr(const BigNum& x, size_t y)
     return z;
 }
 
-BigNum BigNum::bitwise_and(const BigNum& x, const BigNum& y)
+BigNum_old BigNum_old::bitwise_and(const BigNum_old& x, const BigNum_old& y)
 {
-    const BigNum& big = (x > y) ? x : y;
-    BigNum sml = (x > y) ? y : x;
+    const BigNum_old& big = (x > y) ? x : y;
+    BigNum_old sml = (x > y) ? y : x;
 
     // ignore all of big's larger digits, as they become zero
     for (size_t i = 0; i < sml.num_size; i++)
@@ -881,7 +881,7 @@ BigNum BigNum::bitwise_and(const BigNum& x, const BigNum& y)
 }
 
 
-bool BigNum::less_than(const BigNum& x, const BigNum& y)
+bool BigNum_old::less_than(const BigNum_old& x, const BigNum_old& y)
 {
     // If signs don't match, x's sign is the deciding factor.
     if (x.sign != y.sign)
@@ -908,7 +908,7 @@ bool BigNum::less_than(const BigNum& x, const BigNum& y)
     return false;
 }
 
-bool BigNum::equal(const BigNum& x, const BigNum& y)
+bool BigNum_old::equal(const BigNum_old& x, const BigNum_old& y)
 {
     // If signs don't match, false.
     if (x.sign != y.sign)
@@ -930,7 +930,7 @@ bool BigNum::equal(const BigNum& x, const BigNum& y)
     return true;
 }
 
-bool BigNum::greater_than(const BigNum& x, const BigNum& y)
+bool BigNum_old::greater_than(const BigNum_old& x, const BigNum_old& y)
 {
     // If signs don't match, x's sign is the deciding factor.
     if (x.sign != y.sign)
@@ -957,7 +957,7 @@ bool BigNum::greater_than(const BigNum& x, const BigNum& y)
     return false;
 }
 
-void BigNum::print(const char* name) const
+void BigNum_old::print(const char* name) const
 {
     std::cout << name << ": " << ((sign) ? '-':'+') << ' ';
     for (size_t i = num_size; i > 0; i--)
@@ -967,9 +967,9 @@ void BigNum::print(const char* name) const
     return;
 }
 
-BigNum BigNum::abs(const BigNum& x)
+BigNum_old BigNum_old::abs(const BigNum_old& x)
 {
-    BigNum z = x;
+    BigNum_old z = x;
     z.sign = false;
 
     return z;

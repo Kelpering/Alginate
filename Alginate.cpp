@@ -1,4 +1,5 @@
 #include "Alginate.hpp"
+#include "Alginate_old.hpp"
 
 //! REQUIRES REFINEMENT
 #define KARAT_SHIFT 3
@@ -371,6 +372,8 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
         BigNum z = workspace[branches-1][5];
         z.sign = x.sign ^ y.sign;
         z.print_debug("Karatsuba");
+        
+        // return z;
 
 //!
 // BigNum temp, z;
@@ -495,22 +498,25 @@ void BigNum::mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret)
         BigNum A = 0;
         BigNum D = 0;
         BigNum E = 0;
+        BigNum E2= 0;
         mul_basecase(x_high, y_high, workspace[0][0], A);
         mul_basecase(x_low, y_low, workspace[0][0], D);
+        mul_basecase(x_high+x_low, y_high+y_low, workspace[0][0], E2);
         mul_basecase(x3, y3, workspace[0][0], E);
         E.sign = x3.sign ^ y3.sign;
         E += A + D;
+        E2 = E2 - A - D;
 
         A.print_debug("A");
         D.print_debug("D");
         E.print_debug("E");
-
+        E2.print_debug("F");
         //! Shift values are probably the last issue
         //! bitwise before used 8 bit bytes
         //! But digit size is 32 now, so work with that in mind.
         //! We MIGHT BE on the right track here
         //! E is the issue, somehow
-        BigNum res = A.bitwise_shl(1<<10) + E.bitwise_shl(1<<9) + D;
+        BigNum res = A.bitwise_shl(1<<10) + E2.bitwise_shl(1<<9) + D;
         ret = res;
         return;
         res.print_debug("REAL_ANSWER");
