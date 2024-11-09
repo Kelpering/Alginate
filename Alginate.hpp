@@ -82,6 +82,8 @@ class BigNum
         BigNum& move(BigNum& x, bool new_sign);
 
         // Multiplication helper functions
+        //! public modifier temporary
+    public:
         static void mul_basecase(const BigNum& x, const BigNum& y, BigNum& temp, BigNum& ret);
         static void mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret);
     
