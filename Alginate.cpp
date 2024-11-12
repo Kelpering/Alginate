@@ -522,6 +522,7 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
     size_t shift = 0;
     while (true)
     {
+        // If we were to check for entire 0 digits and increment by a digit, we could speed this up.
         if ((x.num[shift >> 5] >> (shift & 0x1F)) & 1)
             break;
         if ((y.num[shift >> 5] >> (shift & 0x1F)) & 1)
@@ -660,7 +661,7 @@ BigNum BigNum::bw_shr(const BigNum& x, size_t y)
         // Final digit
         z.num[i] >>= y;        
     }
-    
+
     return z;   
 }
 
