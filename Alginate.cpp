@@ -350,8 +350,8 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
         temp.resize(big.num_size<<1);
         z.resize(big.num_size<<1);
 
+        // Perform multiplication
         mul_basecase(x, y, temp, z);
-        
         z.sign = x.sign ^ y.sign;
         z.trunc();
 
@@ -501,14 +501,67 @@ void BigNum::mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret)
 
     //? Res = A.shl(digits<<6) + E.shl(digits<<5) + D
     ret =
-    workspace[level][2].bitwise_shl(digits << 6) +
-    workspace[level][4].bitwise_shl(digits << 5) +
+    workspace[level][2].bw_shl(digits << 6) +
+    workspace[level][4].bw_shl(digits << 5) +
     workspace[level][3];
 
     return;
 }
 
-BigNum BigNum::bitwise_and(const BigNum& x, const BigNum& y)
+BigNum BigNum::div(const BigNum& x, const BigNum& y)
+{
+    // Handle invalid arguments
+    if (y == 0)
+        throw std::invalid_argument("Divide by Zero error (y != 0)");
+
+    // Unsigned x < y check.
+    if (x.less_than(y, true))
+        return 0;
+    
+    // Reduce x/y to equivalent x_temp/y_temp.
+    size_t shift = 0;
+    while (true)
+    {
+        if ((x.num[shift >> 5] >> (shift & 0x1F)) & 1)
+            break;
+        if ((y.num[shift >> 5] >> (shift & 0x1F)) & 1)
+            break;
+
+        shift++;
+    }
+    BigNum x_temp = x.bw_shr(shift);
+    BigNum y_temp = y.bw_shr(shift);
+
+    // Handle perfect reduction.
+    if (y == 1)
+        return {x_temp, (bool) (x.sign ^ y.sign)};
+
+    BigNum z = 0;
+    z.sign = x.sign ^ y.sign;
+
+    while (x_temp >= y_temp)
+    {
+        // Find the maximum we can shift y_temp.
+        size_t shift = 0;
+        BigNum temp = y_temp;
+        // temp <<= 32*(x_temp.num_size - temp.num_size-1);
+        while (x_temp >= temp)
+        {
+            shift++;
+            
+            
+            temp <<= 1;
+        }
+        shift--;
+
+        x_temp -= y_temp.bw_shl(shift);
+        z += BigNum(1).bw_shl(shift);
+    }
+    
+    return z;
+}
+
+BigNum BigNum::bw_and(const BigNum& x, const BigNum& y)
 {
     const BigNum& big = (x.num_size > y.num_size) ? x : y;
     const BigNum& sml = (x.num_size > y.num_size) ? y : x;
@@ -522,7 +575,7 @@ BigNum BigNum::bitwise_and(const BigNum& x, const BigNum& y)
     return z;
 }
 
-BigNum BigNum::bitwise_or(const BigNum& x, const BigNum& y)
+BigNum BigNum::bw_or(const BigNum& x, const BigNum& y)
 {
     const BigNum& big = (x.num_size > y.num_size) ? x : y;
     const BigNum& sml = (x.num_size > y.num_size) ? y : x;
@@ -535,7 +588,7 @@ BigNum BigNum::bitwise_or(const BigNum& x, const BigNum& y)
     return z;
 }
 
-BigNum BigNum::bitwise_xor(const BigNum& x, const BigNum& y)
+BigNum BigNum::bw_xor(const BigNum& x, const BigNum& y)
 {
     const BigNum& big = (x.num_size > y.num_size) ? x : y;
     const BigNum& sml = (x.num_size > y.num_size) ? y : x;
@@ -549,13 +602,13 @@ BigNum BigNum::bitwise_xor(const BigNum& x, const BigNum& y)
     return z;
 }
 
-BigNum BigNum::bitwise_shl(const BigNum& x, size_t y)
+BigNum BigNum::bw_shl(const BigNum& x, size_t y)
 {
     BigNum z = {0, x.sign};
     size_t z_size = 0;
 
     z_size = x.num_size + (y>>5);
-    if ((uint64_t) (x.num[x.num_size-1] << (y&0x1F)) > (0xFFFFFFFF-1))
+    if (((uint64_t)x.num[x.num_size-1] << (y&0x1F)) > (0xFFFFFFFF))
         z_size++;
     z.resize(z_size);
 
@@ -579,7 +632,7 @@ BigNum BigNum::bitwise_shl(const BigNum& x, size_t y)
     return z;
 }
 
-BigNum BigNum::bitwise_shr(const BigNum& x, size_t y)
+BigNum BigNum::bw_shr(const BigNum& x, size_t y)
 {
     BigNum z = {0, x.sign};
 
@@ -601,17 +654,17 @@ BigNum BigNum::bitwise_shr(const BigNum& x, size_t y)
     {
         // Apply bitwise shift operation to all but last digit
         size_t i;
-        for (i = z.num_size-1; i > 0; i--)
-            z.num[i] = (uint64_t) (z.num[i+1] << (8-y)) | (uint64_t) (z.num[i] >> y);
+        for (i = 0; i < z.num_size-1; i++)
+            z.num[i] = (z.num[i+1] << (32-y)) | (uint64_t) (z.num[i] >> y);
 
         // Final digit
-        z.num[i] >>= y;
+        z.num[i] >>= y;        
     }
-
+    
     return z;   
 }
 
-bool BigNum::less_than(const BigNum& x, const BigNum& y)
+bool BigNum::less_than(const BigNum& x, const BigNum& y, bool remove_sign)
 {
     // If signs don't match, whichever is negative is smaller.
     if (x.sign != y.sign)
@@ -619,6 +672,9 @@ bool BigNum::less_than(const BigNum& x, const BigNum& y)
 
     // If both numbers are negative, flip results.
     bool flip = x.sign;
+    if (remove_sign)
+        flip = false;
+
 
     if (x.num_size != y.num_size)
         return (x.num_size < y.num_size) ^ flip;
@@ -634,7 +690,7 @@ bool BigNum::less_than(const BigNum& x, const BigNum& y)
     return false;
 };
 
-bool BigNum::less_equal(const BigNum& x, const BigNum& y) 
+bool BigNum::less_equal(const BigNum& x, const BigNum& y, bool remove_sign) 
 {
     // If signs don't match, whichever is negative is smaller.
     if (x.sign != y.sign)
@@ -642,6 +698,8 @@ bool BigNum::less_equal(const BigNum& x, const BigNum& y)
 
     // If both numbers are negative, flip results.
     bool flip = x.sign;
+    if (remove_sign)
+        flip = false;
 
     if (x.num_size != y.num_size)
         return (x.num_size < y.num_size) ^ flip;
@@ -685,7 +743,7 @@ bool BigNum::not_equal(const BigNum& x, const BigNum& y)
     return false;
 };
 
-bool BigNum::greater_than(const BigNum& x, const BigNum& y) 
+bool BigNum::greater_than(const BigNum& x, const BigNum& y, bool remove_sign) 
 {
     // If signs don't match, whichever is negative is smaller.
     if (x.sign != y.sign)
@@ -693,6 +751,8 @@ bool BigNum::greater_than(const BigNum& x, const BigNum& y)
 
     // If both numbers are negative, flip results.
     bool flip = x.sign;
+    if (remove_sign)
+        flip = false;
 
     if (x.num_size != y.num_size)
         return (x.num_size > y.num_size) ^ flip;
@@ -708,7 +768,7 @@ bool BigNum::greater_than(const BigNum& x, const BigNum& y)
     return false;
 };
 
-bool BigNum::greater_equal(const BigNum& x, const BigNum& y) 
+bool BigNum::greater_equal(const BigNum& x, const BigNum& y, bool remove_sign) 
 {
     // If signs don't match, whichever is negative is smaller.
     if (x.sign != y.sign)
@@ -716,6 +776,8 @@ bool BigNum::greater_equal(const BigNum& x, const BigNum& y)
 
     // If both numbers are negative, flip results.
     bool flip = x.sign;
+    if (remove_sign)
+        flip = false;
 
     if (x.num_size != y.num_size)
         return (x.num_size > y.num_size) ^ flip;

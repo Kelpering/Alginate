@@ -125,53 +125,59 @@ class BigNum
             return mul(*this, y);
         }
 
+        // Division (x / y)
+        static BigNum div(const BigNum& x, const BigNum& y);
+        BigNum div(const BigNum& y) const {
+            return div(*this, y);
+        }
+
     //* Bitwise
         
         // Bitwise And (x & y)
-        static BigNum bitwise_and(const BigNum& x, const BigNum& y);
-        BigNum bitwise_and(const BigNum& y) const {
-            return bitwise_and(*this, y);
+        static BigNum bw_and(const BigNum& x, const BigNum& y);
+        BigNum bw_and(const BigNum& y) const {
+            return bw_and(*this, y);
         }
 
         // Bitwise Or (x & y)
-        static BigNum bitwise_or(const BigNum& x, const BigNum& y);
-        BigNum bitwise_or(const BigNum& y) const {
-            return bitwise_or(*this, y);
+        static BigNum bw_or(const BigNum& x, const BigNum& y);
+        BigNum bw_or(const BigNum& y) const {
+            return bw_or(*this, y);
         }
 
         // Bitwise Xor (x ^ y)
-        static BigNum bitwise_xor(const BigNum& x, const BigNum& y);
-        BigNum bitwise_xor(const BigNum& y) const {
-            return bitwise_xor(*this, y);
+        static BigNum bw_xor(const BigNum& x, const BigNum& y);
+        BigNum bw_xor(const BigNum& y) const {
+            return bw_xor(*this, y);
         }
 
         // Bitwise shl (x << y)
-        static BigNum bitwise_shl(const BigNum& x, size_t y);
-        BigNum bitwise_shl(size_t y) const {
-            return bitwise_shl(*this, y);
+        static BigNum bw_shl(const BigNum& x, size_t y);
+        BigNum bw_shl(size_t y) const {
+            return bw_shl(*this, y);
         }
         
         // Bitwise shr (x >> y)
-        static BigNum bitwise_shr(const BigNum& x, size_t y);
-        BigNum bitwise_shr(size_t y) const {
-            return bitwise_shr(*this, y);
+        static BigNum bw_shr(const BigNum& x, size_t y);
+        BigNum bw_shr(size_t y) const {
+            return bw_shr(*this, y);
         }
 
     //* Comparison
 
         // Less than (x<y)
-        static bool less_than(const BigNum& x, const BigNum& y);
-        bool less_than(const BigNum& y) const {
-            return less_than(*this, y);
+        static bool less_than(const BigNum& x, const BigNum& y, bool remove_sign = false);
+        bool less_than(const BigNum& y, bool remove_sign = false) const {
+            return less_than(*this, y, remove_sign);
         }
 
-        static bool less_equal(const BigNum& x, const BigNum& y);
-        bool less_equal(const BigNum& y) const {
-            return less_equal(*this, y);
+        static bool less_equal(const BigNum& x, const BigNum& y, bool remove_sign);
+        bool less_equal(const BigNum& y, bool remove_sign) const {
+            return less_equal(*this, y, remove_sign);
         }
 
         static bool equal_to(const BigNum& x, const BigNum& y);
-        bool equal_to(const BigNum& y) const {
+        bool equal_to(const BigNum& y, bool remove_sign) const {
             return equal_to(*this, y);
         }
 
@@ -180,14 +186,14 @@ class BigNum
             return not_equal(*this, y);
         }
 
-        static bool greater_than(const BigNum& x, const BigNum& y);
-        bool greater_than(const BigNum& y) const {
-            return greater_than(*this, y);
+        static bool greater_than(const BigNum& x, const BigNum& y, bool remove_sign);
+        bool greater_than(const BigNum& y, bool remove_sign) const {
+            return greater_than(*this, y, remove_sign);
         }
 
-        static bool greater_equal(const BigNum& x, const BigNum& y);
-        bool greater_equal(const BigNum& y) const {
-            return greater_equal(*this, y);
+        static bool greater_equal(const BigNum& x, const BigNum& y, bool remove_sign);
+        bool greater_equal(const BigNum& y, bool remove_sign) const {
+            return greater_equal(*this, y, remove_sign);
         }
 
 
@@ -240,54 +246,62 @@ class BigNum
             *this = mul(y);
         }
 
+        // Divison
+        BigNum operator/(const BigNum& y) const {
+            return div(y);
+        }
+        void operator/=(const BigNum& y) {
+            *this = div(y);
+        }
+
         // Bitwise And
         BigNum operator&(const BigNum& y) const {
-            return bitwise_and(y);
+            return bw_and(y);
         }
         void operator&=(const BigNum& y) {
-            *this = bitwise_and(y);
+            *this = bw_and(y);
         }
 
         // Bitwise Or
         BigNum operator|(const BigNum& y) const {
-            return bitwise_or(y);
+            return bw_or(y);
         }
         void operator|=(const BigNum& y) {
-            *this = bitwise_or(y);
+            *this = bw_or(y);
         }
 
         // Bitwise Xor
         BigNum operator^(const BigNum& y) const {
-            return bitwise_xor(y);
+            return bw_xor(y);
         }
         void operator^=(const BigNum& y) {
-            *this = bitwise_xor(y);
+            *this = bw_xor(y);
         }
 
         // Bitwise Shl
         BigNum operator<<(size_t y) const {
-            return bitwise_shl(y);
+            return bw_shl(y);
         }
         void operator<<=(size_t y) {
-            *this = bitwise_shl(y);
+            *this = bw_shl(y);
         }
 
         // Bitwise Shr
         BigNum operator>>(size_t y) const {
-            return bitwise_shr(y);
+            return bw_shr(y);
         }
         void operator>>=(size_t y) {
-            *this = bitwise_shr(y);
+            *this = bw_shr(y);
         }
 
         // Less Than
         bool operator<(const BigNum& y) const {
-            return less_than(*this,y);
+            return less_than(*this,y, false);
         }
 
         // Less Than or Equal To
         bool operator<=(const BigNum& y) const {
-            return less_equal(*this,y);
+            return less_equal(*this,y, false);
         }
 
         // Equal To
@@ -302,12 +316,12 @@ class BigNum
 
         // Greater Than
         bool operator>(const BigNum& y) const {
-            return greater_than(*this,y);
+            return greater_than(*this,y, false);
         }
 
         // Greater Than or Equal To
         bool operator>=(const BigNum& y) const {
-            return greater_equal(*this,y);
+            return greater_equal(*this,y, false);
         }
 
 
