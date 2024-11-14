@@ -82,14 +82,13 @@ class BigNum
         BigNum& move(BigNum& x, bool new_sign);
 
         // Multiplication helper functions
-        //! public modifier temporary
-    public:
         static void mul_basecase(const BigNum& x, const BigNum& y, BigNum& temp, BigNum& ret);
         static void mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret);
-    
+
     public:
     //* Constructors
-    
+
+        // Basic
         BigNum(uint64_t number = 0, bool sign = false);
         BigNum(uint32_t* number, size_t size, bool sign = false);
         BigNum(uint8_t* number, size_t size, bool sign = false);
@@ -101,6 +100,12 @@ class BigNum
         // Move
         BigNum(BigNum&& number)                 {move(number);}; 
         BigNum(BigNum&& number, bool sign)      {move(number, sign);}; 
+
+        // Rand
+        BigNum(uint32_t(*rand_func)(), size_t size, bool sign = false);
+        BigNum(uint8_t(*rand_func)(), size_t size, bool sign = false);
+        BigNum(int32_t(*rand_func)(), size_t size, bool sign = false) : BigNum((uint32_t (*)())rand_func, size, sign) {};
+        BigNum(int8_t(*rand_func)(), size_t size, bool sign = false) : BigNum((uint8_t (*)())rand_func, size, sign) {};
 
         // Deconstructor
         ~BigNum();
@@ -130,6 +135,13 @@ class BigNum
         BigNum div(const BigNum& y) const {
             return div(*this, y);
         }
+        
+        // Modulus (x % y)
+        static BigNum mod(const BigNum& x, const BigNum& y);
+        BigNum mod(const BigNum& y) const {
+            return mod(*this, y);
+        }
+
 
     //* Bitwise
         
@@ -196,12 +208,10 @@ class BigNum
             return greater_equal(*this, y, remove_sign);
         }
 
-
-
     //* Output
 
         // Print the internal num array to console.
-        void print_debug(const char* name = "Number") const;
+        void print_debug(const char* name = "Number", bool show_size = false) const;
 
         // Print the number in base 10.
         void print(const char* name) const;
@@ -252,6 +262,14 @@ class BigNum
         }
         void operator/=(const BigNum& y) {
             *this = div(y);
+        }
+
+        // Modulus
+        BigNum operator%(const BigNum& y) const {
+            return mod(y);
+        }
+        void operator%=(const BigNum& y) {
+            *this = mod(y);
         }
 
         // Bitwise And
@@ -323,7 +341,6 @@ class BigNum
         bool operator>=(const BigNum& y) const {
             return greater_equal(*this,y, false);
         }
-
 
 };
 

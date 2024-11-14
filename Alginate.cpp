@@ -66,12 +66,62 @@ BigNum::BigNum(uint8_t* number, size_t size, bool sign)
         num[i>>2] = temp;
     }
     // Final (variable) block
-    if (size%4)
+    if (size & 0x3)
     {
-    uint32_t temp = 0;
-    for (; i < size; i++)
-        temp |= (number[i] << ((i%4)*8));
-    num[i>>2] = temp;
+        uint32_t temp = 0;
+        for (; i < size; i++)
+            temp |= (number[i] << ((i & 0x3) * 8));
+        num[i>>2] = temp;
+    }
+    
+    return;
+}
+
+BigNum::BigNum(uint32_t(*rand_func)(), size_t size, bool sign)
+{
+    // Initialize basic values
+    BigNum::sign = sign;
+    
+    // Create num array
+    resize(size);
+
+    // Convert number into num array
+    for (size_t i = 0; i < size; i++)
+        num[i] = rand_func();
+
+    // Prevent leading digit from being zero
+    while (num[size - 1] == 0)
+        num[size-1] = rand_func();
+    
+    return;
+}
+
+BigNum::BigNum(uint8_t(*rand_func)(), size_t size, bool sign)
+{
+    // Initialize basic values
+    BigNum::sign = sign;
+    
+    // Create num array
+    size_t temp_size = (size & 0x3) ? (size >> 2) + 1: (size >> 2);
+    resize(temp_size);
+
+    // Convert number into num array
+    size_t i;
+    for (i = 0; i < size - (size%4); i+=4)
+    {
+        uint32_t temp = (rand_func() << 0 ) | \
+                        (rand_func() << 8 ) | \
+                        (rand_func() << 16) | \
+                        (rand_func() << 24);
+        num[i>>2] = temp;
+    }
+    // Final (variable) block
+    if (size & 0x3)
+    {
+        uint32_t temp = 0;
+        for (; i < size; i++)
+            temp |= (rand_func() << ((i & 0x3) * 8));
+        num[i>>2] = temp;
     }
     
     return;
@@ -183,6 +233,155 @@ BigNum& BigNum::move(BigNum& x, bool new_sign)
     x.num = nullptr;
 
     return *this;
+}
+
+void BigNum::mul_basecase(const BigNum& x, const BigNum& y, BigNum& temp, BigNum& ret)
+{
+    const BigNum& big = (x.num_size > y.num_size) ? x : y;
+    const BigNum& sml = (x.num_size > y.num_size) ? y : x;
+    ret = 0;
+
+    // Check for full zero numbers
+    bool is_zero;
+
+    is_zero = true;
+    for (size_t i = 0; i < big.num_size; i++)
+        if (big.num[i] != 0)
+            is_zero = false;
+    if (is_zero)
+        return;
+
+    is_zero = true;
+    for (size_t i = 0; i < sml.num_size; i++)
+        if (sml.num[i] != 0)
+            is_zero = false;
+    if (is_zero)
+        return;
+
+    // Loop smaller number (bottom row)
+    for (size_t i = 0; i < sml.num_size; i++)
+    {
+        // Set temp's logical size (not num_size_real)
+        // offset + big.num_size + 1
+        temp.resize(i + big.num_size + 1);
+        for (size_t j = 0; j < temp.num_size; j++)
+            temp.num[j] = 0;
+
+        // Loop larger number (top row)
+        uint32_t carry = 0;
+        for (size_t j = 0; j < big.num_size; j++)
+        {
+            // Perform single digit mult operation + previous carry
+            uint64_t calc = ((uint64_t) big.num[j] * (uint64_t) sml.num[i]) + (uint64_t) carry;
+
+            // Save calculation to (zero offset) temp digit.
+            temp.num[i+j] = (uint32_t) calc;
+
+            // Set next carry
+            carry = (uint32_t) (calc >> 32);
+        }
+
+        // Handle final carry
+        if (carry)
+            temp.num[i+big.num_size] = carry;
+
+        ret += temp;
+    }
+
+    return;
+}
+
+void BigNum::mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret)
+{
+    // If we reach the bottom of the karatsuba levels, call basecase instead.
+    // mul_basecase(x, y, a, ret)
+    if (level == 0)
+        return mul_basecase(workspace[0][0], workspace[0][1], workspace[0][2], ret);
+
+    // Zero check x and y (optimization for uneven x*y)
+    bool is_zero;
+
+    is_zero = true;
+    for (size_t i = 0; i < workspace[level][0].num_size; i++)
+        if (workspace[level][0].num[i] != 0)
+            is_zero = false;
+    if (is_zero)
+    {
+        workspace[level][5] = 0;
+        return;
+    }
+
+    is_zero = true;
+    for (size_t i = 0; i < workspace[level][1].num_size; i++)
+        if (workspace[level][1].num[i] != 0)
+            is_zero = false;
+    if (is_zero)
+    {
+        workspace[level][5] = 0;
+        return;
+    }
+
+
+    // Number of digits in this current workspace
+    size_t digits = KARATSUBA_DIGITS<<level;
+    
+    //? A (High half digits)
+    workspace[level-1][0].resize(digits);
+    workspace[level-1][1].resize(digits);
+    for (size_t i = 0; i < digits; i++)
+    {
+        workspace[level-1][0].num[i] = workspace[level][0].num[i + digits];
+        workspace[level-1][1].num[i] = workspace[level][1].num[i + digits];
+    }
+    mul_karatsuba(workspace, level-1, workspace[level][2]);
+
+
+    //? D (Low half digits)
+    workspace[level-1][0].resize(digits);
+    workspace[level-1][1].resize(digits);
+    for (size_t i = 0; i < digits; i++)
+    {
+        workspace[level-1][0].num[i] = workspace[level][0].num[i];
+        workspace[level-1][1].num[i] = workspace[level][1].num[i];
+    }
+    mul_karatsuba(workspace, level-1, workspace[level][3]);
+
+    
+    //? x_low - x_high = [level-1][x]
+    workspace[level-1][0].resize(digits);
+    workspace[level-1][2].resize(digits);
+    workspace[level-1][3].resize(digits);
+    for (size_t i = 0; i < digits; i++)
+    {
+        workspace[level-1][2].num[i] = workspace[level][0].num[i];
+        workspace[level-1][3].num[i] = workspace[level][0].num[i + digits];
+    }
+    workspace[level-1][0] = workspace[level-1][2] - workspace[level-1][3];
+    
+    //? y_high - y_low = [level-1][y]
+    workspace[level-1][0].resize(digits);
+    workspace[level-1][2].resize(digits);
+    workspace[level-1][3].resize(digits);
+    for (size_t i = 0; i < digits; i++)
+    {
+        workspace[level-1][2].num[i] = workspace[level][1].num[i];
+        workspace[level-1][3].num[i] = workspace[level][1].num[i + digits];
+    }
+    workspace[level-1][1] =  workspace[level-1][3] - workspace[level-1][2];
+    
+    //? E (x_low-x_high) * (y_high-y_low) + a + d
+    mul_karatsuba(workspace, level-1, workspace[level][4]);
+    workspace[level][4].sign = workspace[level-1][0].sign ^ workspace[level-1][1].sign;
+    workspace[level][4] += (workspace[level][2] + workspace[level][3]);
+
+
+    //? Res = A.shl(digits<<6) + E.shl(digits<<5) + D
+    ret =
+    workspace[level][2].bw_shl(digits << 6) +
+    workspace[level][4].bw_shl(digits << 5) +
+    workspace[level][3];
+
+    return;
 }
 
 //? Public
@@ -359,155 +558,6 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
     }
 }
 
-void BigNum::mul_basecase(const BigNum& x, const BigNum& y, BigNum& temp, BigNum& ret)
-{
-    const BigNum& big = (x.num_size > y.num_size) ? x : y;
-    const BigNum& sml = (x.num_size > y.num_size) ? y : x;
-    ret = 0;
-
-    // Check for full zero numbers
-    bool is_zero;
-
-    is_zero = true;
-    for (size_t i = 0; i < big.num_size; i++)
-        if (big.num[i] != 0)
-            is_zero = false;
-    if (is_zero)
-        return;
-
-    is_zero = true;
-    for (size_t i = 0; i < sml.num_size; i++)
-        if (sml.num[i] != 0)
-            is_zero = false;
-    if (is_zero)
-        return;
-
-    // Loop smaller number (bottom row)
-    for (size_t i = 0; i < sml.num_size; i++)
-    {
-        // Set temp's logical size (not num_size_real)
-        // offset + big.num_size + 1
-        temp.resize(i + big.num_size + 1);
-        for (size_t j = 0; j < temp.num_size; j++)
-            temp.num[j] = 0;
-
-        // Loop larger number (top row)
-        uint32_t carry = 0;
-        for (size_t j = 0; j < big.num_size; j++)
-        {
-            // Perform single digit mult operation + previous carry
-            uint64_t calc = ((uint64_t) big.num[j] * (uint64_t) sml.num[i]) + (uint64_t) carry;
-
-            // Save calculation to (zero offset) temp digit.
-            temp.num[i+j] = (uint32_t) calc;
-
-            // Set next carry
-            carry = (uint32_t) (calc >> 32);
-        }
-
-        // Handle final carry
-        if (carry)
-            temp.num[i+big.num_size] = carry;
-
-        ret += temp;
-    }
-
-    return;
-}
-
-void BigNum::mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret)
-{
-    // If we reach the bottom of the karatsuba levels, call basecase instead.
-    // mul_basecase(x, y, a, ret)
-    if (level == 0)
-        return mul_basecase(workspace[0][0], workspace[0][1], workspace[0][2], ret);
-
-    // Zero check x and y (optimization for uneven x*y)
-    bool is_zero;
-
-    is_zero = true;
-    for (size_t i = 0; i < workspace[level][0].num_size; i++)
-        if (workspace[level][0].num[i] != 0)
-            is_zero = false;
-    if (is_zero)
-    {
-        workspace[level][5] = 0;
-        return;
-    }
-
-    is_zero = true;
-    for (size_t i = 0; i < workspace[level][1].num_size; i++)
-        if (workspace[level][1].num[i] != 0)
-            is_zero = false;
-    if (is_zero)
-    {
-        workspace[level][5] = 0;
-        return;
-    }
-
-
-    // Number of digits in this current workspace
-    size_t digits = KARATSUBA_DIGITS<<level;
-    
-    //? A (High half digits)
-    workspace[level-1][0].resize(digits);
-    workspace[level-1][1].resize(digits);
-    for (size_t i = 0; i < digits; i++)
-    {
-        workspace[level-1][0].num[i] = workspace[level][0].num[i + digits];
-        workspace[level-1][1].num[i] = workspace[level][1].num[i + digits];
-    }
-    mul_karatsuba(workspace, level-1, workspace[level][2]);
-
-
-    //? D (Low half digits)
-    workspace[level-1][0].resize(digits);
-    workspace[level-1][1].resize(digits);
-    for (size_t i = 0; i < digits; i++)
-    {
-        workspace[level-1][0].num[i] = workspace[level][0].num[i];
-        workspace[level-1][1].num[i] = workspace[level][1].num[i];
-    }
-    mul_karatsuba(workspace, level-1, workspace[level][3]);
-
-    
-    //? x_low - x_high = [level-1][x]
-    workspace[level-1][0].resize(digits);
-    workspace[level-1][2].resize(digits);
-    workspace[level-1][3].resize(digits);
-    for (size_t i = 0; i < digits; i++)
-    {
-        workspace[level-1][2].num[i] = workspace[level][0].num[i];
-        workspace[level-1][3].num[i] = workspace[level][0].num[i + digits];
-    }
-    workspace[level-1][0] = workspace[level-1][2] - workspace[level-1][3];
-    
-    //? y_high - y_low = [level-1][y]
-    workspace[level-1][0].resize(digits);
-    workspace[level-1][2].resize(digits);
-    workspace[level-1][3].resize(digits);
-    for (size_t i = 0; i < digits; i++)
-    {
-        workspace[level-1][2].num[i] = workspace[level][1].num[i];
-        workspace[level-1][3].num[i] = workspace[level][1].num[i + digits];
-    }
-    workspace[level-1][1] =  workspace[level-1][3] - workspace[level-1][2];
-    
-    //? E (x_low-x_high) * (y_high-y_low) + a + d
-    mul_karatsuba(workspace, level-1, workspace[level][4]);
-    workspace[level][4].sign = workspace[level-1][0].sign ^ workspace[level-1][1].sign;
-    workspace[level][4] += (workspace[level][2] + workspace[level][3]);
-
-
-    //? Res = A.shl(digits<<6) + E.shl(digits<<5) + D
-    ret =
-    workspace[level][2].bw_shl(digits << 6) +
-    workspace[level][4].bw_shl(digits << 5) +
-    workspace[level][3];
-
-    return;
-}
-
 BigNum BigNum::div(const BigNum& x, const BigNum& y)
 {
     // Handle invalid arguments
@@ -540,26 +590,57 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
     BigNum z = 0;
     z.sign = x.sign ^ y.sign;
 
+    //! Algorithm dont work
+    return z;
+}
+
+BigNum BigNum::mod(const BigNum& x, const BigNum& y)
+{
+    // Handle invalid arguments
+    if (y == 0)
+        throw std::invalid_argument("Divide by Zero error (y != 0)");
+
+    // Unsigned x < y check.
+    if (x.less_than(y, true))
+        return x;
+
+    // Reduce x/y to equivalent x_temp/y_temp.
+    size_t shift = 0;
+    while (true)
+    {
+        // If we were to check for entire 0 digits and increment by a digit, we could speed this up.
+        if ((x.num[shift >> 5] >> (shift & 0x1F)) & 1)
+            break;
+        if ((y.num[shift >> 5] >> (shift & 0x1F)) & 1)
+            break;
+
+        shift++;
+    }
+    BigNum x_temp = x >> shift;
+    BigNum y_temp = y >> shift;
+
     while (x_temp >= y_temp)
     {
         // Find the maximum we can shift y_temp.
-        size_t shift = 0;
+        size_t tshift = 0;   
         BigNum temp = y_temp;
-        // temp <<= 32*(x_temp.num_size - temp.num_size-1);
+
+        // Skip majority of the shift operations
+        if (x_temp.num_size > (temp.num_size + 1))
+            tshift = 32*(x_temp.num_size - temp.num_size - 1);
+        temp <<= tshift;
         while (x_temp >= temp)
         {
-            shift++;
-            
-            
+            tshift++;
             temp <<= 1;
         }
-        shift--;
+        tshift--;
 
-        x_temp -= y_temp.bw_shl(shift);
-        z += BigNum(1).bw_shl(shift);
+        x_temp -= y_temp << tshift;
     }
     
-    return z;
+    // Account for previous reduction
+    return x_temp << shift;
 }
 
 BigNum BigNum::bw_and(const BigNum& x, const BigNum& y)
@@ -605,6 +686,10 @@ BigNum BigNum::bw_xor(const BigNum& x, const BigNum& y)
 
 BigNum BigNum::bw_shl(const BigNum& x, size_t y)
 {
+    // Handle y == 0
+    if (y == 0)
+        return x;
+
     BigNum z = {0, x.sign};
     size_t z_size = 0;
 
@@ -635,6 +720,10 @@ BigNum BigNum::bw_shl(const BigNum& x, size_t y)
 
 BigNum BigNum::bw_shr(const BigNum& x, size_t y)
 {
+    // Handle y == 0
+    if (y == 0)
+        return x;
+
     BigNum z = {0, x.sign};
 
     // Handle shift_digits > x digits
@@ -794,10 +883,15 @@ bool BigNum::greater_equal(const BigNum& x, const BigNum& y, bool remove_sign)
     return true;
 };
 
-
-void BigNum::print_debug(const char* name) const
+void BigNum::print_debug(const char* name, bool show_size) const
 {
-    std::cout << name << ": " << ((sign) ? '-' : '+');
+    // Formatting
+    if (show_size)
+        std::cout << name << " (size: " << num_size << "): " << ((sign) ? '-' : '+');
+    else
+        std::cout << name << ": " << ((sign) ? '-' : '+');
+    
+    // Digit array
     for (size_t i = num_size; i > 0; i--)
         std::cout << ' ' << num[i-1];
     std::cout << '\n';
