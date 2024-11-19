@@ -1,5 +1,4 @@
 #include "Alginate.hpp"
-#include "Alginate_old.hpp"
 
 #define KARAT_SHIFT 4
 #define KARATSUBA_DIGITS (1ULL<<KARAT_SHIFT)
@@ -567,31 +566,83 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
     // Unsigned x < y check.
     if (x.less_than(y, true))
         return 0;
-    
-    // Reduce x/y to equivalent x_temp/y_temp.
-    size_t shift = 0;
-    while (true)
+
+
+
+    BigNum x_temp = x;
+    BigNum y_temp = y;
+    BigNum q = 0;
+    q.resize(x.num_size);
+
+    // While y's most significant digit is less than 2^32/2
+    size_t d = 1;
+    while (y_temp.num[y.num_size-1] < 1ULL<<31)
     {
-        // If we were to check for entire 0 digits and increment by a digit, we could speed this up.
-        if ((x.num[shift >> 5] >> (shift & 0x1F)) & 1)
-            break;
-        if ((y.num[shift >> 5] >> (shift & 0x1F)) & 1)
-            break;
-
-        shift++;
+        x_temp <<= 1;
+        y_temp <<= 1;
+        d++;
     }
-    BigNum x_temp = x.bw_shr(shift);
-    BigNum y_temp = y.bw_shr(shift);
 
-    // Handle perfect reduction.
-    if (y == 1)
-        return {x_temp, (bool) (x.sign ^ y.sign)};
+    //! Either the borrow case solves issue, or a 0 digit in quotient would cause this to hang.
+    //! We should probably just follow knuth to the letter here.
+    // While we can divide x_temp by y_temp
+    while (x_temp >= y_temp)
+    {
+        // Calculate q_h, r_h (approximations)
+            // correct q_h, r_h
 
-    BigNum z = 0;
-    z.sign = x.sign ^ y.sign;
+        // x_temp -= q_h*y_temp
+            // Possible borrow case
+        
+        // if borrow (if it exists)
+            // q_h--
+            // x_temp += y_temp (most sig digit in y_temp is zeroed out)
+    }
 
-    //! Algorithm dont work
-    return z;
+    // q is the correct quotient, remainder needs to denormalize
+    // d is powers of 2, so we can just shift by d to denormalize the remainder
+    // remainder is x_temp (after subtractions in loop)
+
+
+
+    
+    //^ Algorithm D from Knuth's book
+
+    // b = radix (2^32)
+
+    //1. Normalize
+        // d = any number where most sig digit of y > b/2
+        // x *= d, y *= d
+        // End result: most sig digit of y > 2^31 (2^32/2)
+    //2. Loop
+        // Initialize loop
+    //3. Calculate quotient approx
+        // q_h, r_h = ({current, next} x digit)/(most sig y)
+        // if q_h >= b || q_h*(next sig y) > b*r_h + ({next+1} x digit)
+            // q_h--;
+            // r_h += (most sig y)
+            // Repeat test if r_h < b
+    //4. mul and sub
+        // x -= q_h*y (most sig y 0)
+        // If negative (maybe just book), we gotta borrow
+    //5. set
+        // q = q_h
+    //6. if 4 borrow
+        // q--
+        // add v (most sig y 0) to u
+    //7. loop back to 3
+    //8. q is quotient, x will contain remainder if divided by normalizing d
+        //! To achieve remainder, we need to implement d as a power of 2 (to allow shift instead of div)
+
+    // This (simplified) function above is probably only half necessary. We mostly just need the normalize, q_h, and q_h fix sections. The rest is intuitive.
+    // q_h is the valuable quotient approximation
+    // normalization is probably required for q_h to function.
+
+    //* This algorithm is for x_var / y_var digit divide
+    //* There are simpler algorithms for x_var / y_1 digit divide (short div)
+    //* We might want to create a seperate function for that condition (y_len == 1)
+
+
 }
 
 BigNum BigNum::mod(const BigNum& x, const BigNum& y)
