@@ -563,31 +563,99 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
     if (y == 0)
         throw std::invalid_argument("Divide by Zero error (y != 0)");
 
+    //! y.num_size must be greater than 1
+    //! Use custom short div function to fix this.
+        // Short div
+        // use uint64_t digits, div instruction internal
+
     // Unsigned x < y check.
     if (x.less_than(y, true))
         return 0;
 
-
-
     BigNum x_temp = x;
     BigNum y_temp = y;
     BigNum q = 0;
-    q.resize(x.num_size);
+    q.resize(x.num_size+1);
 
     // While y's most significant digit is less than 2^32/2
-    size_t d = 1;
+    size_t d = 0;
+    size_t n = y_temp.num_size;
     while (y_temp.num[y.num_size-1] < 1ULL<<31)
     {
         x_temp <<= 1;
         y_temp <<= 1;
         d++;
     }
+    x_temp.resize(x.num_size+1);
 
-    //! Either the borrow case solves issue, or a 0 digit in quotient would cause this to hang.
-    //! We should probably just follow knuth to the letter here.
-    // While we can divide x_temp by y_temp
-    while (x_temp >= y_temp)
+    x_temp.print_debug("x_temp");
+    y_temp.print_debug("y_temp");
+
+    // Loop from q.num_size->0 (j)
+    // x.num[j+n]... x.num[j] is a number we need
+        // Extract into BigNum (partial copy)
+    // do q_h calcs and checks
+    // (mult and sub)
+        // using q_h and extracted BigNum
+        // replace x_temp digits with "remainder" calculated just before
+        // if negative, + 2^(32+n+1) aka borrow from next digit over
+            // maybe adding a 1 to the extracted num could auto do this
+            // Only for this step
+        //! We can remove this extra if we do extra y*q_h > x_temp check
+        //! If so, q_h-- and no internal remainder needed.
+    // q_h is the correct quotient digit from here, apply as needed
+    // loop end
+    // unnormalize the remainder if needed (>>d)
+
+
+    for (size_t i = x_temp.num_size - n; i > 0; i--)
     {
+        x_temp.print_debug("x_temp current");
+        uint64_t temp = ((uint64_t)x_temp.num[i+n-1] << 32) + x_temp.num[i+n-2];
+        // x_temp is giving errors because of -=
+        std::cout << "temp: " << x_temp.num[i+n-1] << '\n';
+        uint64_t q_h = temp / y_temp.num[n-1];
+        uint64_t r_h = temp % y_temp.num[n-1];
+
+
+        if (q_h >= (1ULL<<32) || (q_h*y_temp.num[n-2]) > ((1ULL<<32)*r_h + x_temp.num[i+n-3]))
+        {
+            q_h--;
+            r_h += y_temp.num[n-1];
+
+            if (r_h < (1ULL<<32))
+            {
+                if (q_h >= (1ULL<<32) || (q_h*y_temp.num[n-2]) > ((1ULL<<32)*r_h + x_temp.num[i+n-3]))
+                {
+                    q_h--;
+                    r_h += y_temp.num[n-1];
+                        
+                }
+            }
+        }
+    
+        std::cout << "\nq_h: " << q_h << '\n';
+        x_temp.print_debug("x_currnt");
+        ((y_temp*q_h) << 32*(i-1)).print_debug("y_approx");
+
+        x_temp -= (y_temp*q_h) << 32*(i-1);
+        if (x_temp.sign)
+        {
+            q_h--;
+            x_temp += (y_temp) << 32*(i-1);
+            x_temp -= y_temp.num[n-1] << 32*(n+i-1);
+        }
+
+        q.num[i-1] = q_h;
+    }
+
+    q.trunc();
+    q.print_debug("q");
+
+    (x_temp >> d).print_debug("r");
+
+    // while (x_temp >= y_temp)
+    // {
         // Calculate q_h, r_h (approximations)
             // correct q_h, r_h
 
@@ -597,7 +665,7 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
         // if borrow (if it exists)
             // q_h--
             // x_temp += y_temp (most sig digit in y_temp is zeroed out)
-    }
+    // }
 
     // q is the correct quotient, remainder needs to denormalize
     // d is powers of 2, so we can just shift by d to denormalize the remainder
@@ -642,7 +710,7 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
     //* There are simpler algorithms for x_var / y_1 digit divide (short div)
     //* We might want to create a seperate function for that condition (y_len == 1)
 
-
+    return q;
 }
 
 BigNum BigNum::mod(const BigNum& x, const BigNum& y)
