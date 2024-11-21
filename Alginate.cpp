@@ -557,6 +557,33 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
     }
 }
 
+/*
+
+    srand(42);
+    BigNum x = {rand, 321};
+    BigNum y = {rand, 31};
+    x.print_debug("x");
+    y.print_debug("y");
+    
+    std::cout << "\n\n";
+
+    BigNum q = x/y;
+    BigNum r = x%y;
+
+    q.print_debug("Quotient");
+    r.print_debug("Remainder");
+
+    ((q*y+r) - x).print_debug("\n\nx");
+
+    return 0;
+
+
+    This crashes (i think) the function after return
+    If this is true, detect why with valgrind (definitely OoB)
+    Once we fix this, speed test the function
+
+ */
+
 BigNum BigNum::div(const BigNum& x, const BigNum& y)
 {
     // Handle invalid arguments
@@ -574,142 +601,60 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
 
     BigNum x_temp = x;
     BigNum y_temp = y;
-    BigNum q = 0;
-    q.resize(x.num_size+1);
+    size_t n = y.num_size;
 
-    // While y's most significant digit is less than 2^32/2
+    BigNum q = 0;
+    q.resize(x_temp.num_size);
+
+    // While y's most significant digit is less than 2^32/2 (2^31)
     size_t d = 0;
-    size_t n = y_temp.num_size;
     while (y_temp.num[y.num_size-1] < 1ULL<<31)
     {
         x_temp <<= 1;
         y_temp <<= 1;
         d++;
     }
-    x_temp.resize(x.num_size+1);
+    // Guarantee a digit at x_temp[x.num_size]
+    if (x_temp.num_size <= x.num_size)
+        x_temp.resize(x.num_size+1);
 
-    x_temp.print_debug("x_temp");
-    y_temp.print_debug("y_temp");
-
-    // Loop from q.num_size->0 (j)
-    // x.num[j+n]... x.num[j] is a number we need
-        // Extract into BigNum (partial copy)
-    // do q_h calcs and checks
-    // (mult and sub)
-        // using q_h and extracted BigNum
-        // replace x_temp digits with "remainder" calculated just before
-        // if negative, + 2^(32+n+1) aka borrow from next digit over
-            // maybe adding a 1 to the extracted num could auto do this
-            // Only for this step
-        //! We can remove this extra if we do extra y*q_h > x_temp check
-        //! If so, q_h-- and no internal remainder needed.
-    // q_h is the correct quotient digit from here, apply as needed
-    // loop end
-    // unnormalize the remainder if needed (>>d)
-
-
-    for (size_t i = x_temp.num_size - n; i > 0; i--)
+    for (size_t i = x_temp.num_size-n; i > 0; i--)
     {
-        x_temp.print_debug("x_temp current");
-        uint64_t temp = ((uint64_t)x_temp.num[i+n-1] << 32) + x_temp.num[i+n-2];
-        // x_temp is giving errors because of -=
-        std::cout << "temp: " << x_temp.num[i+n-1] << '\n';
-        uint64_t q_h = temp / y_temp.num[n-1];
-        uint64_t r_h = temp % y_temp.num[n-1];
+        uint64_t q_h = (uint64_t) x_temp.num[n+i-1]<<32 | x_temp.num[n+i-2];
+        uint64_t r_h = q_h % y_temp.num[n-1];   // Unrelated remainder
+        q_h /= y_temp.num[n-1];     // Quotient approximation
 
-
-        if (q_h >= (1ULL<<32) || (q_h*y_temp.num[n-2]) > ((1ULL<<32)*r_h + x_temp.num[i+n-3]))
+        // Reduce q_h if we estimated too high (never too low)
+        bool check_bool = true;
+        check_label:
+        if ((q_h >= (1ULL<<32)) || (q_h*y_temp.num[n-2] > (1ULL<<32) * r_h + x_temp.num[n+i-3]))
         {
             q_h--;
             r_h += y_temp.num[n-1];
 
-            if (r_h < (1ULL<<32))
+            // recheck q_h only once
+            if (r_h < (1ULL<<32) && check_bool)
             {
-                if (q_h >= (1ULL<<32) || (q_h*y_temp.num[n-2]) > ((1ULL<<32)*r_h + x_temp.num[i+n-3]))
-                {
-                    q_h--;
-                    r_h += y_temp.num[n-1];
-                        
-                }
+                check_bool = false;
+                goto check_label;
             }
         }
-    
-        std::cout << "\nq_h: " << q_h << '\n';
-        x_temp.print_debug("x_currnt");
-        ((y_temp*q_h) << 32*(i-1)).print_debug("y_approx");
 
-        x_temp -= (y_temp*q_h) << 32*(i-1);
+        // Do a subtraction on x_temp, but keep the excess zeroes at the end.
+        x_temp.trunc();
+        x_temp -= (y_temp * q_h) << (i-1)*32;
+        // If q_h was still too high and x_temp went negative.
         if (x_temp.sign)
         {
             q_h--;
-            x_temp += (y_temp) << 32*(i-1);
-            x_temp -= y_temp.num[n-1] << 32*(n+i-1);
+            x_temp += (y_temp) << (i-1)*32;
         }
+        x_temp.resize(x.num_size+1);
 
         q.num[i-1] = q_h;
     }
 
     q.trunc();
-    q.print_debug("q");
-
-    (x_temp >> d).print_debug("r");
-
-    // while (x_temp >= y_temp)
-    // {
-        // Calculate q_h, r_h (approximations)
-            // correct q_h, r_h
-
-        // x_temp -= q_h*y_temp
-            // Possible borrow case
-        
-        // if borrow (if it exists)
-            // q_h--
-            // x_temp += y_temp (most sig digit in y_temp is zeroed out)
-    // }
-
-    // q is the correct quotient, remainder needs to denormalize
-    // d is powers of 2, so we can just shift by d to denormalize the remainder
-    // remainder is x_temp (after subtractions in loop)
-
-
-
-    
-    //^ Algorithm D from Knuth's book
-
-    // b = radix (2^32)
-
-    //1. Normalize
-        // d = any number where most sig digit of y > b/2
-        // x *= d, y *= d
-        // End result: most sig digit of y > 2^31 (2^32/2)
-    //2. Loop
-        // Initialize loop
-    //3. Calculate quotient approx
-        // q_h, r_h = ({current, next} x digit)/(most sig y)
-        // if q_h >= b || q_h*(next sig y) > b*r_h + ({next+1} x digit)
-            // q_h--;
-            // r_h += (most sig y)
-            // Repeat test if r_h < b
-    //4. mul and sub
-        // x -= q_h*y (most sig y 0)
-        // If negative (maybe just book), we gotta borrow
-    //5. set
-        // q = q_h
-    //6. if 4 borrow
-        // q--
-        // add v (most sig y 0) to u
-    //7. loop back to 3
-    //8. q is quotient, x will contain remainder if divided by normalizing d
-        //! To achieve remainder, we need to implement d as a power of 2 (to allow shift instead of div)
-
-    // This (simplified) function above is probably only half necessary. We mostly just need the normalize, q_h, and q_h fix sections. The rest is intuitive.
-    // q_h is the valuable quotient approximation
-    // normalization is probably required for q_h to function.
-
-    //* This algorithm is for x_var / y_var digit divide
-    //* There are simpler algorithms for x_var / y_1 digit divide (short div)
-    //* We might want to create a seperate function for that condition (y_len == 1)
-
     return q;
 }
 
@@ -719,47 +664,75 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
     if (y == 0)
         throw std::invalid_argument("Divide by Zero error (y != 0)");
 
+    //! y.num_size must be greater than 1
+    //! Use custom short div function to fix this.
+        // Short div
+        // use uint64_t digits, div instruction internal
+
     // Unsigned x < y check.
     if (x.less_than(y, true))
-        return x;
+        return y;
 
-    // Reduce x/y to equivalent x_temp/y_temp.
-    size_t shift = 0;
-    while (true)
+    BigNum x_temp = x;
+    BigNum y_temp = y;
+    size_t n = y.num_size;
+
+    BigNum q = 0;
+    q.resize(x_temp.num_size);
+
+    // While y's most significant digit is less than 2^32/2 (2^31)
+    size_t d = 0;
+    while (y_temp.num[y.num_size-1] < 1ULL<<31)
     {
-        // If we were to check for entire 0 digits and increment by a digit, we could speed this up.
-        if ((x.num[shift >> 5] >> (shift & 0x1F)) & 1)
-            break;
-        if ((y.num[shift >> 5] >> (shift & 0x1F)) & 1)
-            break;
-
-        shift++;
+        x_temp <<= 1;
+        y_temp <<= 1;
+        d++;
     }
-    BigNum x_temp = x >> shift;
-    BigNum y_temp = y >> shift;
+    // Guarantee a digit at x_temp[x.num_size]
+    if (x_temp.num_size <= x.num_size)
+        x_temp.resize(x.num_size+1);
 
-    while (x_temp >= y_temp)
+    for (size_t i = x_temp.num_size-n; i > 0; i--)
     {
-        // Find the maximum we can shift y_temp.
-        size_t tshift = 0;   
-        BigNum temp = y_temp;
+        uint64_t q_h = (uint64_t) x_temp.num[n+i-1]<<32 | x_temp.num[n+i-2];
+        uint64_t r_h = q_h % y_temp.num[n-1];   // Unrelated remainder
+        q_h /= y_temp.num[n-1];     // Quotient approximation
 
-        // Skip majority of the shift operations
-        if (x_temp.num_size > (temp.num_size + 1))
-            tshift = 32*(x_temp.num_size - temp.num_size - 1);
-        temp <<= tshift;
-        while (x_temp >= temp)
+        // Reduce q_h if we estimated too high (never too low)
+        bool check_bool = true;
+        check_label:
+        if ((q_h >= (1ULL<<32)) || (q_h*y_temp.num[n-2] > (1ULL<<32) * r_h + x_temp.num[n+i-3]))
         {
-            tshift++;
-            temp <<= 1;
-        }
-        tshift--;
+            q_h--;
+            r_h += y_temp.num[n-1];
 
-        x_temp -= y_temp << tshift;
+            // recheck q_h only once
+            if (r_h < (1ULL<<32) && check_bool)
+            {
+                check_bool = false;
+                goto check_label;
+            }
+        }
+
+        // Do a subtraction on x_temp, but keep the excess zeroes at the end.
+        x_temp.trunc();
+        x_temp -= (y_temp * q_h) << (i-1)*32;
+        // If q_h was still too high and x_temp went negative.
+        if (x_temp.sign)
+        {
+            q_h--;
+            x_temp += (y_temp) << (i-1)*32;
+        }
+        x_temp.resize(x.num_size+1);
+
+        q.num[i-1] = q_h;
     }
-    
-    // Account for previous reduction
-    return x_temp << shift;
+
+    // Unnormalize the remainder using fast shift operations.
+    x_temp.trunc();
+    x_temp >>= d;
+
+    return x_temp;
 }
 
 BigNum BigNum::bw_and(const BigNum& x, const BigNum& y)
@@ -870,7 +843,8 @@ BigNum BigNum::bw_shr(const BigNum& x, size_t y)
         z.num[i] >>= y;        
     }
 
-    return z;   
+    z.trunc();
+    return z;
 }
 
 bool BigNum::less_than(const BigNum& x, const BigNum& y, bool remove_sign)
