@@ -487,6 +487,42 @@ BigNum BigNum::sub(const BigNum& x, const BigNum& y)
     return z;
 }
 
+/*
+! Issue
+
+
+int main()
+{
+srand(42);
+    BigNum x = {rand, 42};
+    BigNum y = {rand, 17};
+    x.print_debug("x");
+    y.print_debug("y");
+    
+    std::cout << "\n\n";
+
+    BigNum q = x/y;
+    BigNum r = x%y;
+
+    q.print_debug("Quotient");
+    r.print_debug("\nRemainder");
+    // Whatever this damn equation means, its an issue.
+    // x -= (y*3) << (32*17);
+    x.print_debug("\nx_sub");
+    (x-((y*q)+r)).print_debug("\n\nx_sub    ");
+//! Reverse these to put them correctly in format
+//! Multiply these and you should not get a correct number
+//! Using the other equations here, we should be able to figure out the issue.
+//! Remember basecase
+//q 1530235910 381142998 3712526847 1061367774 1309603230 4233301285 3617973478 1918781492 4041881505 2495745014 109125978 1780995431 1654064825 3149171513 276161248 3852793108 1463762202 2437374367 2471510244 1113121203 296508464 84475676 4171683734 739614748 2184723514
+//y 2100918483 363416725 684743195 750421979 946359204 1639877263 1665589900 1980041819 664069454 1195613547 2019211600 1215391843 2130516497 836042151 1040001951 496986734 606808455
+
+    return 0;
+}
+
+*/
+
+
 BigNum BigNum::mul(const BigNum& x, const BigNum& y)
 {
     const BigNum& big = (x.num_size > y.num_size) ? x : y;
@@ -494,8 +530,8 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
     BigNum z;
     
 
-    // if (sml.num_size > KARATSUBA_DIGITS)
-    if (false)
+    if (sml.num_size > KARATSUBA_DIGITS)
+    // if (false)
     {
         // Calculate number of karatsuba levels.
         size_t shifts = 0;
