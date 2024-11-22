@@ -374,6 +374,11 @@ void BigNum::mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret)
     workspace[level][4] += (workspace[level][2] + workspace[level][3]);
 
 
+    // Prevent issues with next addition
+    workspace[level][2].trunc();
+    workspace[level][4].trunc();
+    workspace[level][3].trunc();
+
     //? Res = A.shl(digits<<6) + E.shl(digits<<5) + D
     ret =
     workspace[level][2].bw_shl(digits << 6) +
@@ -489,7 +494,8 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
     BigNum z;
     
 
-    if (sml.num_size > KARATSUBA_DIGITS)
+    // if (sml.num_size > KARATSUBA_DIGITS)
+    if (false)
     {
         // Calculate number of karatsuba levels.
         size_t shifts = 0;
@@ -556,33 +562,6 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
         return z;
     }
 }
-
-/*
-
-    srand(42);
-    BigNum x = {rand, 321};
-    BigNum y = {rand, 31};
-    x.print_debug("x");
-    y.print_debug("y");
-    
-    std::cout << "\n\n";
-
-    BigNum q = x/y;
-    BigNum r = x%y;
-
-    q.print_debug("Quotient");
-    r.print_debug("Remainder");
-
-    ((q*y+r) - x).print_debug("\n\nx");
-
-    return 0;
-
-
-    This crashes (i think) the function after return
-    If this is true, detect why with valgrind (definitely OoB)
-    Once we fix this, speed test the function
-
- */
 
 BigNum BigNum::div(const BigNum& x, const BigNum& y)
 {
