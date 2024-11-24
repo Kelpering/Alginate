@@ -779,6 +779,26 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
     return q;
 }
 
+BigNum BigNum::exp(const BigNum& x, const BigNum& y)
+{
+    // Handle sign
+    if (y.sign)
+        return div(1,exp(x,{y, false}));
+
+    // x^0 == 1
+    if (y == 0)
+        return 1;
+
+    // If y%2 == 0
+    if ((y.num[0] & 1) == 0)
+        return exp(x*x, y>>1);
+    else
+        return x * exp(x*x, y>>1);
+}
+
+
+//* Modular
+
 BigNum BigNum::mod(const BigNum& x, const BigNum& y)
 {
     // Handle invalid arguments
@@ -862,23 +882,6 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
     return x_temp;
 }
 
-BigNum BigNum::exp(const BigNum& x, const BigNum& y)
-{
-    // Handle sign
-    if (y.sign)
-        return div(1,exp(x,{y, false}));
-
-    // x^0 == 1
-    if (y == 0)
-        return 1;
-
-    // If y%2 == 0
-    if ((y.num[0] & 1) == 0)
-        return exp(x*x, y>>1);
-    else
-        return x * exp(x*x, y>>1);
-}
-
 BigNum BigNum::mod_exp(const BigNum& x, const BigNum& y, const BigNum& m)
 {
     BigNum x_temp = x;
@@ -896,6 +899,44 @@ BigNum BigNum::mod_exp(const BigNum& x, const BigNum& y, const BigNum& m)
 
     return z;
 }
+
+BigNum BigNum::mod_inv(const BigNum& x, const BigNum& m)
+{
+    // Handle invalid arguments
+    if (x.sign)
+        throw std::invalid_argument("x >= 0");
+    if (m == 0 || m.sign)
+        throw std::invalid_argument("mod > 0");
+
+    BigNum old_r,r, old_s,s;
+    old_r = x;
+    r = m;
+
+    old_s = 1;
+    s = 0;
+
+    BigNum q, temp;
+    while (r != 0)
+    {
+        std::cout << "here\n";
+        q = old_r / r;
+
+        temp = old_r;
+        old_r = r;
+        r = temp - (q * r);
+
+        temp = old_s;
+        old_s = s;
+        s = temp - (q * s);
+    }
+
+    // If old_r != 1, there is no inverse
+    if (old_r != 1)
+        return 0;
+    
+    return old_s % m;
+}
+
 
 //* Algorithm
 
@@ -917,6 +958,7 @@ BigNum BigNum::gcd(const BigNum& x, const BigNum& y)
     big %= sml;
     return gcd(big, sml);
 }
+
 
 //* Bitwise
 

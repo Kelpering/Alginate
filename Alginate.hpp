@@ -114,7 +114,8 @@ class BigNum
         // Deconstructor
         ~BigNum();
 
-    //* Arithmetic
+
+    //* Fundamental
 
         // Addition (x + y)
         static BigNum add(const BigNum& x, const BigNum& y);
@@ -140,22 +141,30 @@ class BigNum
             return div(*this, y);
         }
         
-        // Modulus (x % y)
-        static BigNum mod(const BigNum& x, const BigNum& y);
-        BigNum mod(const BigNum& y) const {
-            return mod(*this, y);
-        }
-
         // Exponentiation (x ^ y)
         static BigNum exp(const BigNum& x, const BigNum& y);
         BigNum exp(const BigNum& y) const {
             return exp(*this, y);
+        }
+
+
+    //* Modular
+
+        // Modulus (x % y)
+        static BigNum mod(const BigNum& x, const BigNum& y);
+        BigNum mod(const BigNum& y) const {
+            return mod(*this, y);
         }
         
         // Modular Exponentiation ((x ^ y) % m)
         static BigNum mod_exp(const BigNum& x, const BigNum& y, const BigNum& m);
         BigNum mod_exp(const BigNum& y, const BigNum& m) const {
             return mod_exp(*this, y, m);
+        }
+
+        static BigNum mod_inv(const BigNum& x, const BigNum& m);
+        BigNum mod_inv(const BigNum& m) const {
+            return mod_inv(*this, m);
         }
 
     
