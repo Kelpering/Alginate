@@ -134,6 +134,7 @@ BigNum::~BigNum()
     return;
 }
 
+
 //? Private
 
 void BigNum::resize(size_t new_size)
@@ -495,7 +496,7 @@ BigNum BigNum::short_mod(BigNum x, const BigNum& y)
 {
     // Quick div
     if (x.num_size == 1)
-        return x.num[0] / y.num[0];
+        return x.num[0] % y.num[0];
 
     BigNum z = 0;
     z.resize(x.num_size);
@@ -516,10 +517,14 @@ BigNum BigNum::short_mod(BigNum x, const BigNum& y)
         x.num[i-2] = x_temp % y.num[0];
     }
 
+    x.trunc();
     return x;
 }
 
+
 //? Public
+
+//* Fundamental
 
 BigNum BigNum::add(const BigNum& x, const BigNum& y)
 {
@@ -618,42 +623,6 @@ BigNum BigNum::sub(const BigNum& x, const BigNum& y)
     return z;
 }
 
-/*
-! Issue
-
-
-int main()
-{
-srand(42);
-    BigNum x = {rand, 42};
-    BigNum y = {rand, 17};
-    x.print_debug("x");
-    y.print_debug("y");
-    
-    std::cout << "\n\n";
-
-    BigNum q = x/y;
-    BigNum r = x%y;
-
-    q.print_debug("Quotient");
-    r.print_debug("\nRemainder");
-    // Whatever this damn equation means, its an issue.
-    // x -= (y*3) << (32*17);
-    x.print_debug("\nx_sub");
-    (x-((y*q)+r)).print_debug("\n\nx_sub    ");
-//! Reverse these to put them correctly in format
-//! Multiply these and you should not get a correct number
-//! Using the other equations here, we should be able to figure out the issue.
-//! Remember basecase
-//q 1530235910 381142998 3712526847 1061367774 1309603230 4233301285 3617973478 1918781492 4041881505 2495745014 109125978 1780995431 1654064825 3149171513 276161248 3852793108 1463762202 2437374367 2471510244 1113121203 296508464 84475676 4171683734 739614748 2184723514
-//y 2100918483 363416725 684743195 750421979 946359204 1639877263 1665589900 1980041819 664069454 1195613547 2019211600 1215391843 2130516497 836042151 1040001951 496986734 606808455
-
-    return 0;
-}
-
-*/
-
-
 BigNum BigNum::mul(const BigNum& x, const BigNum& y)
 {
     const BigNum& big = (x.num_size > y.num_size) ? x : y;
@@ -743,6 +712,10 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
     if (x.less_than(y, true))
         return 0;
 
+    // Handle sign
+    if (x.sign || y.sign)
+        return {div({x, false},{y, false}), (bool) (x.sign ^ y.sign)};
+
     // Use internal short_div function if y is too small to divide properly.
     if (y.num_size == 1)
         return short_div(x,y);
@@ -811,10 +784,17 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
     // Handle invalid arguments
     if (y == 0)
         throw std::invalid_argument("Divide by Zero error (y != 0)");
+    if (y.sign)
+        throw std::invalid_argument("Modulus by negative error (y > 0)");
+
+    // Handle sign
+    if (x.sign)
+        return y - mod({x, false},y);
 
     // Unsigned x < y check.
     if (x.less_than(y, true))
         return x;
+
 
     // Use internal short_div function if y is too small to divide properly.
     if (y.num_size == 1)
@@ -881,6 +861,64 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
 
     return x_temp;
 }
+
+BigNum BigNum::exp(const BigNum& x, const BigNum& y)
+{
+    // Handle sign
+    if (y.sign)
+        return div(1,exp(x,{y, false}));
+
+    // x^0 == 1
+    if (y == 0)
+        return 1;
+
+    // If y%2 == 0
+    if ((y.num[0] & 1) == 0)
+        return exp(x*x, y>>1);
+    else
+        return x * exp(x*x, y>>1);
+}
+
+BigNum BigNum::mod_exp(const BigNum& x, const BigNum& y, const BigNum& m)
+{
+    BigNum x_temp = x;
+    BigNum z = 1;
+    BigNum temp;
+
+    for (size_t i = 0; i < y.num_size * 32; i++)
+    {
+        // If current y bit is 1
+        if ((y.num[i>>5] >> (i & 0x1F)) & 0x1)
+            z = (z*x_temp) % m;
+        
+        x_temp = (x_temp*x_temp) % m;
+    }
+
+    return z;
+}
+
+//* Algorithm
+
+BigNum BigNum::gcd(const BigNum& x, const BigNum& y)
+{
+    // Handle sign
+    if (x.sign || y.sign)
+        return gcd({x,false}, {y,false});
+
+    // Find the larger/smaller number
+    BigNum big = (x > y) ? x : y;
+    BigNum sml = (x > y) ? y : x;
+
+    // Return result
+    if (sml == 0)
+        return big;
+
+    // big is no longer necessarily big.
+    big %= sml;
+    return gcd(big, sml);
+}
+
+//* Bitwise
 
 BigNum BigNum::bw_and(const BigNum& x, const BigNum& y)
 {
@@ -994,10 +1032,13 @@ BigNum BigNum::bw_shr(const BigNum& x, size_t y)
     return z;
 }
 
+
+//* Comparison
+
 bool BigNum::less_than(const BigNum& x, const BigNum& y, bool remove_sign)
 {
     // If signs don't match, whichever is negative is smaller.
-    if (x.sign != y.sign)
+    if ((x.sign != y.sign) && !remove_sign)
         return x.sign;
 
     // If both numbers are negative, flip results.
@@ -1023,7 +1064,7 @@ bool BigNum::less_than(const BigNum& x, const BigNum& y, bool remove_sign)
 bool BigNum::less_equal(const BigNum& x, const BigNum& y, bool remove_sign) 
 {
     // If signs don't match, whichever is negative is smaller.
-    if (x.sign != y.sign)
+    if ((x.sign != y.sign) && !remove_sign)
         return x.sign;
 
     // If both numbers are negative, flip results.
@@ -1045,10 +1086,10 @@ bool BigNum::less_equal(const BigNum& x, const BigNum& y, bool remove_sign)
     return true;
 };
 
-bool BigNum::equal_to(const BigNum& x, const BigNum& y) 
+bool BigNum::equal_to(const BigNum& x, const BigNum& y, bool remove_sign) 
 {
     // Handle digits and sign (fast)
-    if ((x.num_size != y.num_size) || (x.sign != y.sign))
+    if ((x.num_size != y.num_size) || ((x.sign != y.sign) && !remove_sign))
         return false;
 
     // Check each digit for inequality
@@ -1059,10 +1100,10 @@ bool BigNum::equal_to(const BigNum& x, const BigNum& y)
     return true;
 };
 
-bool BigNum::not_equal(const BigNum& x, const BigNum& y) 
+bool BigNum::not_equal(const BigNum& x, const BigNum& y, bool remove_sign) 
 {
     // Handle digits and sign (fast)
-    if ((x.num_size != y.num_size) || (x.sign != y.sign))
+    if ((x.num_size != y.num_size) || ((x.sign != y.sign) && !remove_sign))
         return true;
 
     // Check each digit for inequality
@@ -1076,7 +1117,7 @@ bool BigNum::not_equal(const BigNum& x, const BigNum& y)
 bool BigNum::greater_than(const BigNum& x, const BigNum& y, bool remove_sign) 
 {
     // If signs don't match, whichever is negative is smaller.
-    if (x.sign != y.sign)
+    if ((x.sign != y.sign) && !remove_sign)
         return !x.sign;
 
     // If both numbers are negative, flip results.
@@ -1101,7 +1142,7 @@ bool BigNum::greater_than(const BigNum& x, const BigNum& y, bool remove_sign)
 bool BigNum::greater_equal(const BigNum& x, const BigNum& y, bool remove_sign) 
 {
     // If signs don't match, whichever is negative is smaller.
-    if (x.sign != y.sign)
+    if ((x.sign != y.sign) && !remove_sign)
         return !x.sign;
 
     // If both numbers are negative, flip results.
@@ -1122,6 +1163,9 @@ bool BigNum::greater_equal(const BigNum& x, const BigNum& y, bool remove_sign)
     // If digit check passes, x==y.
     return true;
 };
+
+
+//* Output
 
 void BigNum::print_debug(const char* name, bool show_size) const
 {
@@ -1152,6 +1196,8 @@ void BigNum::print(const char* name) const
 
     return;
 }
+
+//* Misc
 
 BigNum::operator uint64_t() const
 {

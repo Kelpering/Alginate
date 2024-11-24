@@ -29,26 +29,26 @@
     //* Create array BigNum (copy array into internal *num BigNum) [Probably converted to PKCS#1 standard later]
     //* Create BigNum BigNum (copy BigNum into this BigNum)
 
-    //^ Arithmetic (+ - * /) (add, sub, mul, div)
+    //* Arithmetic (+ - * /) (add, sub, mul, div)
     //* Bitwise (& | ^ ~ << >>) (bitwise_and, bitwise_or, bitwise_xor, bitwise not, shl, shr)
     //* Comparison (== != < <= > >=) (equal, not_equal, less_than, less_equal, greater_than, greater_equal)
-    // Exponentiation (exp)
-    // Modular Arithmetic (% [mod], mod_exp, mod_inv)
+    //* Exponentiation (exp)
+    //! Modular Arithmetic (% [mod], mod_exp, mod_inv)
     //^ Output (base10 string, print internal)
-    // Exceptions (div 0 == invalid_argument)
-    // Misc
-        // GCD
-        // Prime Check (miller-rabin w/ provided witness to check)
-        // RNG w/ provided uint8_t (*rng)() function ptr
-    //^ Operator overloads (see above for correct operator)
+    //! Exceptions (div 0 == invalid_argument)
+    //^ Algorithm
+        //! GCD
+        //! Prime Check (miller-rabin w/ provided witness to check)
+        //* RNG w/ provided uint8_t (*rng)() function ptr
+    //* Operator overloads (see above for correct operator)
 
-    // Internal
+    //* Internal
         //* resize (Handles ALL num allocations and resizes.)
         //* move (Move a BigNum to a new variable. Useful for dynamic allocations by c++.)
         //* copy (Copy a Bignum to a new variable. Deep copy of num array rather than num array ptr.)
 
-        // karatsuba optimization
-        // Montgomery optimization
+        //* karatsuba optimization
+        //! Montgomery optimization
 
 #ifndef __ALGINATE_HPP__
 #define __ALGINATE_HPP__
@@ -146,6 +146,25 @@ class BigNum
             return mod(*this, y);
         }
 
+        // Exponentiation (x ^ y)
+        static BigNum exp(const BigNum& x, const BigNum& y);
+        BigNum exp(const BigNum& y) const {
+            return exp(*this, y);
+        }
+        
+        // Modular Exponentiation ((x ^ y) % m)
+        static BigNum mod_exp(const BigNum& x, const BigNum& y, const BigNum& m);
+        BigNum mod_exp(const BigNum& y, const BigNum& m) const {
+            return mod_exp(*this, y, m);
+        }
+
+    
+    //* Algorithm
+
+    static BigNum gcd(const BigNum& x, const BigNum& y);
+    BigNum gcd(const BigNum& y) const {
+        return gcd(*this, y);
+    }
 
     //* Bitwise
         
@@ -187,27 +206,27 @@ class BigNum
             return less_than(*this, y, remove_sign);
         }
 
-        static bool less_equal(const BigNum& x, const BigNum& y, bool remove_sign);
+        static bool less_equal(const BigNum& x, const BigNum& y, bool remove_sign = false);
         bool less_equal(const BigNum& y, bool remove_sign) const {
             return less_equal(*this, y, remove_sign);
         }
 
-        static bool equal_to(const BigNum& x, const BigNum& y);
+        static bool equal_to(const BigNum& x, const BigNum& y, bool remove_sign = false);
         bool equal_to(const BigNum& y, bool remove_sign) const {
             return equal_to(*this, y);
         }
 
-        static bool not_equal(const BigNum& x, const BigNum& y);
+        static bool not_equal(const BigNum& x, const BigNum& y, bool remove_sign = false);
         bool not_equal(const BigNum& y) const {
             return not_equal(*this, y);
         }
 
-        static bool greater_than(const BigNum& x, const BigNum& y, bool remove_sign);
+        static bool greater_than(const BigNum& x, const BigNum& y, bool remove_sign = false);
         bool greater_than(const BigNum& y, bool remove_sign) const {
             return greater_than(*this, y, remove_sign);
         }
 
-        static bool greater_equal(const BigNum& x, const BigNum& y, bool remove_sign);
+        static bool greater_equal(const BigNum& x, const BigNum& y, bool remove_sign = false);
         bool greater_equal(const BigNum& y, bool remove_sign) const {
             return greater_equal(*this, y, remove_sign);
         }
