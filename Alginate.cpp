@@ -957,11 +957,10 @@ BigNum BigNum::gcd(const BigNum& x, const BigNum& y)
 }
 
 
-
-//! Returning incorrect false
-// 7759 (witness 7757)
-//^ Check (7757^3879) % candidate == 1
-//^ Check ()
+//! Prime check is currently too slow for a practical 2048 or 4096 bit rsa.
+//! mod_exp could be improved (possibly) with montgomery
+    //! Montgomery form functions could be provided
+//! Double check other functions like comparisons
 bool BigNum::prime_check(const BigNum& candidate, const BigNum& witness)
 {
     // Handle invalid arguments
@@ -980,7 +979,7 @@ bool BigNum::prime_check(const BigNum& candidate, const BigNum& witness)
 
     // candidate  = (2^s * d + 1) for some (s, d)
     size_t s = 0;
-    BigNum d = candidate-1;
+    BigNum d = candidate - 1;
 
     // While the [s]'th bit of d is 0
     while (((d.num[s>>5] >> (s & 0x1F)) & 1) == 0)

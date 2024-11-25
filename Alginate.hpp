@@ -184,6 +184,7 @@ class BigNum
         return gcd(*this, y);
     }
 
+    // Returns whether or not candidate is a prime, if false then definitely not prime. If true, witness could be a strong liar. (Revise comment later)
     static bool prime_check(const BigNum& candidate, const BigNum& witness);
     bool prime_check(const BigNum& witness) const {
         return prime_check(*this, witness);
