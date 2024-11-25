@@ -33,11 +33,11 @@
     //* Bitwise (& | ^ ~ << >>) (bitwise_and, bitwise_or, bitwise_xor, bitwise not, shl, shr)
     //* Comparison (== != < <= > >=) (equal, not_equal, less_than, less_equal, greater_than, greater_equal)
     //* Exponentiation (exp)
-    //! Modular Arithmetic (% [mod], mod_exp, mod_inv)
+    //* Modular Arithmetic (% [mod], mod_exp, mod_inv)
     //^ Output (base10 string, print internal)
-    //! Exceptions (div 0 == invalid_argument)
+    //* Exceptions (div 0 == invalid_argument)
     //^ Algorithm
-        //! GCD
+        //* GCD
         //! Prime Check (miller-rabin w/ provided witness to check)
         //* RNG w/ provided uint8_t (*rng)() function ptr
     //* Operator overloads (see above for correct operator)
@@ -182,6 +182,11 @@ class BigNum
     static BigNum gcd(const BigNum& x, const BigNum& y);
     BigNum gcd(const BigNum& y) const {
         return gcd(*this, y);
+    }
+
+    static bool prime_check(const BigNum& candidate, const BigNum& witness);
+    bool prime_check(const BigNum& witness) const {
+        return prime_check(*this, witness);
     }
 
     //* Bitwise

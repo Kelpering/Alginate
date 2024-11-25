@@ -957,6 +957,52 @@ BigNum BigNum::gcd(const BigNum& x, const BigNum& y)
 }
 
 
+
+//! Returning incorrect false
+// 7759 (witness 7757)
+//^ Check (7757^3879) % candidate == 1
+//^ Check ()
+bool BigNum::prime_check(const BigNum& candidate, const BigNum& witness)
+{
+    // Handle invalid arguments
+    if (candidate.sign)
+        throw std::invalid_argument("Candidate must be positive");
+    if (witness.sign)
+        throw std::invalid_argument("Witness must be positive");
+    
+    // If witness is not within the range [2,candidate-1)
+    if (witness < 2 || witness > (candidate-2))
+        throw std::invalid_argument("Witness must be within the range 2 <= w < c-1 or [2,c-1)");
+    
+    // If candidate even, its not prime (very fast)
+    if ((candidate.num[0] & 1) == 0)
+        return false;
+
+    // candidate  = (2^s * d + 1) for some (s, d)
+    size_t s = 0;
+    BigNum d = candidate-1;
+
+    // While the [s]'th bit of d is 0
+    while (((d.num[s>>5] >> (s & 0x1F)) & 1) == 0)
+        s++;
+    d >>= s;
+
+    //* Check witness^d == 1 (mod candidate)
+    if (witness.mod_exp(d, candidate) == 1)
+        return true;
+    
+    //* Check witness^(2^r*d) == -1 (mod candidate) for some value r [0, s)
+        //? 2^r * d simplifies to a left bitshift by r (d<<r)
+        //? -1 == candidate - 1 (mod candidate)
+    for (size_t r = 0; r < s; r++)
+        if (witness.mod_exp(d<<r, candidate) == candidate - 1)
+            return true;
+    
+    // If we return false, the number is definitely not prime.
+    return false;
+}
+
+
 //* Bitwise
 
 BigNum BigNum::bw_and(const BigNum& x, const BigNum& y)
