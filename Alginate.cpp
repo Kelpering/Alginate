@@ -30,7 +30,7 @@ BigNum::BigNum(uint64_t number, bool sign)
     return;
 }
 
-BigNum::BigNum(uint32_t* number, size_t size, bool sign)
+BigNum::BigNum(const uint32_t* number, size_t size, bool sign)
 {
     // Initialize basic values
     BigNum::sign = sign;
@@ -45,7 +45,7 @@ BigNum::BigNum(uint32_t* number, size_t size, bool sign)
     return;
 }
 
-BigNum::BigNum(uint8_t* number, size_t size, bool sign)
+BigNum::BigNum(const uint8_t* number, size_t size, bool sign)
 {
     // Initialize basic values
     BigNum::sign = sign;
@@ -180,9 +180,8 @@ void BigNum::trunc()
 
 BigNum& BigNum::copy(const BigNum& x)
 {
-    // Resize only if necessary
-    if (num_size < x.num_size)
-        resize(x.num_size);
+    // Basic formatting
+    resize(x.num_size);
     sign = x.sign;
     
     // Deep copy x.num array into this.num array
@@ -804,12 +803,12 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
     // Handle invalid arguments
     if (y == 0)
         throw std::invalid_argument("Divide by Zero error (y != 0)");
-    if (y.sign)
-        throw std::invalid_argument("Modulus by negative error (y > 0)");
-
+    
     // Handle sign
     if (x.sign)
         return y - mod({x, false},y);
+    if (y.sign)
+        return {y + mod(x, {y,false}), true};
 
     // Unsigned x < y check.
     if (x.less_than(y, true))
@@ -905,20 +904,18 @@ BigNum BigNum::mod_inv(const BigNum& x, const BigNum& m)
     // Handle invalid arguments
     if (x.sign)
         throw std::invalid_argument("x >= 0");
-    if (m == 0 || m.sign)
+    if (m == 0)
         throw std::invalid_argument("mod > 0");
 
-    BigNum old_r,r, old_s,s;
-    old_r = x;
-    r = m;
+    BigNum old_r = x;
+    BigNum r = m;
 
-    old_s = 1;
-    s = 0;
+    BigNum old_s = 1;
+    BigNum s = 0;
 
     BigNum q, temp;
     while (r != 0)
     {
-        std::cout << "here\n";
         q = old_r / r;
 
         temp = old_r;

@@ -58,6 +58,7 @@
 #include <exception>
 #include <iostream>
 #include <string>
+#include <vector>
 
 class BigNum
 {
@@ -94,8 +95,14 @@ class BigNum
 
         // Basic
         BigNum(uint64_t number = 0, bool sign = false);
-        BigNum(uint32_t* number, size_t size, bool sign = false);
-        BigNum(uint8_t* number, size_t size, bool sign = false);
+
+        // Internal array (uint8_t)
+        BigNum(const uint32_t* number, size_t size, bool sign = false);
+        BigNum(const std::vector<uint32_t>& vec, bool sign = false) : BigNum(&vec[0], vec.size(), sign) {};
+
+        // Internal array (uint32_t)
+        BigNum(const uint8_t* number, size_t size, bool sign = false);
+        BigNum(const std::vector<uint8_t>& vec, bool sign = false) : BigNum(&vec[0], vec.size(), sign) {};
         
         // Copy
         BigNum(const BigNum& number)            {copy(number);};
@@ -105,10 +112,12 @@ class BigNum
         BigNum(BigNum&& number)                 {move(number);}; 
         BigNum(BigNum&& number, bool sign)      {move(number, sign);}; 
 
-        // Rand
+        // Rand (uint8_t)
         BigNum(uint32_t(*rand_func)(), size_t size, bool sign = false);
-        BigNum(uint8_t(*rand_func)(), size_t size, bool sign = false);
         BigNum(int32_t(*rand_func)(), size_t size, bool sign = false) : BigNum((uint32_t (*)())rand_func, size, sign) {};
+        
+        // Rand (uint32_t)
+        BigNum(uint8_t(*rand_func)(), size_t size, bool sign = false);
         BigNum(int8_t(*rand_func)(), size_t size, bool sign = false) : BigNum((uint8_t (*)())rand_func, size, sign) {};
 
         // Deconstructor
