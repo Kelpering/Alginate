@@ -1,54 +1,14 @@
-// New structure
+//^ TOOD
+    //^ Various optimizations in BigNum::mod_exp
+        //^ Montgomery
+        //^ Squaring optimization (x * x)
+    //^ Rewrite to conform to some style guide
+        //^ Clarify / standardize variable names
+        //^ Write comments
+        //^ Reorganize functions (location in code)
 
-// Restrictions
-    // All possible functions will be static, add overloads for non-static members
-    // Integer arithmetic ONLY (Z, set of integers)
-    // Internal RNG forbidden (maybe outside for random?)
-    // Num array will be base 2^32 (uint32_t). Architecture expected support for uint64_t.
 
-// Internal revisions
-    // Research copy and move operator (Possibly more?)
-    // Make copy, move, and other special operators be static functions first
-    // Make HEAVY use of move and reference operations to remove redundancies
-
-// Coding conventions
-    // Clarify variable names (x, y, m for standard & modular; base, exponent, etc for complex)
-    // Clarify function names and overloads
-    // Clarify and solidify operator overloads
-
-// BigNum class
-    //* num array
-    //* num array size           (True allocated size)
-    //* current num array size   (Visible size)
-    //* sign (false = positive, true = negative)
-
-    //* Create empty BigNum (no num array)
-    //* Create u64 BigNum (convert u64 to BigNum)
-    //* Create i64 BigNum (convert i64 to signed BigNum)
-    // Create string BigNum (convert base10 string to BigNum)
-    //* Create array BigNum (copy array into internal *num BigNum) [Probably converted to PKCS#1 standard later]
-    //* Create BigNum BigNum (copy BigNum into this BigNum)
-
-    //* Arithmetic (+ - * /) (add, sub, mul, div)
-    //* Bitwise (& | ^ ~ << >>) (bitwise_and, bitwise_or, bitwise_xor, bitwise not, shl, shr)
-    //* Comparison (== != < <= > >=) (equal, not_equal, less_than, less_equal, greater_than, greater_equal)
-    //* Exponentiation (exp)
-    //* Modular Arithmetic (% [mod], mod_exp, mod_inv)
-    //^ Output (base10 string, print internal)
-    //* Exceptions (div 0 == invalid_argument)
-    //^ Algorithm
-        //* GCD
-        //! Prime Check (miller-rabin w/ provided witness to check)
-        //* RNG w/ provided uint8_t (*rng)() function ptr
-    //* Operator overloads (see above for correct operator)
-
-    //* Internal
-        //* resize (Handles ALL num allocations and resizes.)
-        //* move (Move a BigNum to a new variable. Useful for dynamic allocations by c++.)
-        //* copy (Copy a Bignum to a new variable. Deep copy of num array rather than num array ptr.)
-
-        //* karatsuba optimization
-        //! Montgomery optimization
+//! Montgomery optimization
 
 #ifndef __ALGINATE_HPP__
 #define __ALGINATE_HPP__
@@ -88,8 +48,7 @@ class BigNum
         // static void mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret);
         static void mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNum& ret);
 
-        static BigNum short_div(BigNum x, const BigNum& y);
-        static BigNum short_mod(BigNum x, const BigNum& y);
+        static BigNum short_combined_div(BigNum x, const BigNum& y, BigNum* ret_mod);
 
     public:
     //* Constructors
@@ -149,6 +108,12 @@ class BigNum
         static BigNum div(const BigNum& x, const BigNum& y);
         BigNum div(const BigNum& y) const {
             return div(*this, y);
+        }
+
+        // Combined Division (x / y) && (x % y)
+        static BigNum div(const BigNum& x, const BigNum& y, BigNum& ret_mod);
+        BigNum div(const BigNum& y, BigNum& ret_mod) const {
+            return div(*this, y, ret_mod);
         }
         
         // Exponentiation (x ^ y)

@@ -1,7 +1,13 @@
 #include "Alginate.hpp"
 
+
+//? Macros
+
 #define KARAT_SHIFT 4
 #define KARATSUBA_DIGITS (1ULL<<KARAT_SHIFT)
+// Should we replace the "bit array" accesses with this?
+// #define bitarr_32(x,i) (((x).num[(i)>>5] >> ((i) & 0x1F)) & 0x1)
+
 
 //? Constructors
 
@@ -371,10 +377,8 @@ void BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNu
 //     // mul_basecase(x, y, a, ret)
 //     if (level == 0)
 //         return mul_basecase(workspace[0][0], workspace[0][1], workspace[0][2], ret);
-
 //     // Zero check x and y (optimization for uneven x*y)
 //     bool is_zero;
-
 //     is_zero = true;
 //     for (size_t i = 0; i < workspace[level][0].num_size; i++)
 //         if (workspace[level][0].num[i] != 0)
@@ -384,7 +388,6 @@ void BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNu
 //         workspace[level][5] = 0;
 //         return;
 //     }
-
 //     is_zero = true;
 //     for (size_t i = 0; i < workspace[level][1].num_size; i++)
 //         if (workspace[level][1].num[i] != 0)
@@ -394,11 +397,8 @@ void BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNu
 //         workspace[level][5] = 0;
 //         return;
 //     }
-
-
 //     // Number of digits in the current workspace halved
 //     size_t digits = KARATSUBA_DIGITS<<level;
-    
 //     //? A (High half digits)
 //     workspace[level-1][0].resize(digits);
 //     workspace[level-1][1].resize(digits);
@@ -408,8 +408,6 @@ void BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNu
 //         workspace[level-1][1].num[i] = workspace[level][1].num[i + digits];
 //     }
 //     mul_karatsuba(workspace, level-1, workspace[level][2]);
-
-
 //     //? D (Low half digits)
 //     workspace[level-1][0].resize(digits);
 //     workspace[level-1][1].resize(digits);
@@ -419,8 +417,6 @@ void BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNu
 //         workspace[level-1][1].num[i] = workspace[level][1].num[i];
 //     }
 //     mul_karatsuba(workspace, level-1, workspace[level][3]);
-
-    
 //     //? x_low - x_high = [level-1][x]
 //     workspace[level-1][0].resize(digits);
 //     workspace[level-1][2].resize(digits);
@@ -431,7 +427,6 @@ void BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNu
 //         workspace[level-1][3].num[i] = workspace[level][0].num[i + digits];
 //     }
 //     workspace[level-1][0] = workspace[level-1][2] - workspace[level-1][3];
-    
 //     //? y_high - y_low = [level-1][y]
 //     workspace[level-1][0].resize(digits);
 //     workspace[level-1][2].resize(digits);
@@ -442,29 +437,29 @@ void BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNu
 //         workspace[level-1][3].num[i] = workspace[level][1].num[i + digits];
 //     }
 //     workspace[level-1][1] =  workspace[level-1][3] - workspace[level-1][2];
-    
 //     //? E (x_low-x_high) * (y_high-y_low) + a + d
 //     mul_karatsuba(workspace, level-1, workspace[level][4]);
 //     workspace[level][4].sign = workspace[level-1][0].sign ^ workspace[level-1][1].sign;
 //     workspace[level][4] += (workspace[level][2] + workspace[level][3]);
-
 //     if (workspace[level][2].sign || workspace[level][4].sign || workspace[level][3].sign)
 //         throw std::runtime_error("Error Karatsuba");
-
 //     //? Res = A.shl(digits<<6) + E.shl(digits<<5) + D
 //     ret =
 //     workspace[level][2].bw_shl(digits << 6) +
 //     workspace[level][4].bw_shl(digits << 5) +
 //     workspace[level][3];
-
 //     return;
 // }
 
-BigNum BigNum::short_div(BigNum x, const BigNum& y)
+BigNum BigNum::short_combined_div(BigNum x, const BigNum& y, BigNum* ret_mod)
 {
     // Quick div
     if (x.num_size == 1)
+    {
+        if (ret_mod != NULL)
+            *ret_mod = x.num[0] % y.num[0];
         return x.num[0] / y.num[0];
+    }
 
     BigNum z = 0;
     z.resize(x.num_size);
@@ -485,39 +480,11 @@ BigNum BigNum::short_div(BigNum x, const BigNum& y)
         x.num[i-2] = x_temp % y.num[0];
     }
 
-    // Remove extra
     z.trunc();
-
-    return z;
-}
-
-BigNum BigNum::short_mod(BigNum x, const BigNum& y)
-{
-    // Quick div
-    if (x.num_size == 1)
-        return x.num[0] % y.num[0];
-
-    BigNum z = 0;
-    z.resize(x.num_size);
-    
-    // Give x a leading digit of 0.
-    x.resize(x.num_size+1);
-
-    // Loop over each digit in x to find the result.
-    for (size_t i = x.num_size; i > 1; i--)
-    {
-        // Merge the most and next most significant numbers into one uint64_t
-        uint64_t x_temp = ((uint64_t)x.num[i-1] << 32) | x.num[i-2];
-
-        // Find the exact quotient
-        z.num[i-2] = x_temp / y.num[0];
-        // Subtract the y * q from x
-        x.num[i-1] = 0;
-        x.num[i-2] = x_temp % y.num[0];
-    }
-
     x.trunc();
-    return x;
+    if (ret_mod != NULL)
+        *ret_mod = x;
+    return z;
 }
 
 
@@ -717,7 +684,8 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
 
     // Use internal short_div function if y is too small to divide properly.
     if (y.num_size == 1)
-        return short_div(x,y);
+        return short_combined_div(x, y, NULL);
+        // return short_div(x,y);
 
     BigNum x_temp = x;
     BigNum y_temp = y;
@@ -778,6 +746,119 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
     return q;
 }
 
+BigNum BigNum::div(const BigNum& x, const BigNum& y, BigNum& ret_mod)
+{
+    // Handle invalid arguments
+    if (y == 0)
+        throw std::invalid_argument("Divide by Zero error (y != 0)");
+
+    // Unsigned x < y check.
+    if (x.less_than(y, true))
+    {   
+        ret_mod = x;
+        return 0;
+    }
+
+    // Handle remainder w/ sign
+    if (x.sign && y.sign)
+    {
+        // -x % -y = -(x % y)
+        BigNum q = div({x,false}, {y,false}, ret_mod);
+        ret_mod.sign = true;
+        return q;
+    }
+    else if (x.sign)
+    {
+        // -x % y = (y - (+x % y))
+        BigNum q = div({x, false}, y, ret_mod);
+        q.sign = true;
+        ret_mod = y - ret_mod;
+        return q;
+    }
+    else if (y.sign)
+    {
+        // x % -y = (-y + (x % +y))
+        BigNum q = div(x, {y,false}, ret_mod);
+        q.sign = true;
+        ret_mod = y + ret_mod;
+        return q;
+    }
+
+    // // Handle sign
+    // if (x.sign || y.sign)
+    //     return {div({x, false},{y, false}, ret_mod), (bool) (x.sign ^ y.sign)};
+
+
+
+    // Use internal short_div function if y is too small to divide properly.
+    if (y.num_size == 1)
+        return short_combined_div(x, y, &ret_mod);
+        // return short_div(x,y);
+
+    BigNum x_temp = x;
+    BigNum y_temp = y;
+    size_t n = y.num_size;
+
+    BigNum q = 0;
+    q.resize(x_temp.num_size);
+
+    // While y's most significant digit is less than 2^32/2 (2^31)
+    size_t d = 0;
+    while (y_temp.num[y.num_size-1] < 1ULL<<31)
+    {
+        x_temp <<= 1;
+        y_temp <<= 1;
+        d++;
+    }
+    // Guarantee a digit at x_temp[x.num_size]
+    if (x_temp.num_size <= x.num_size)
+        x_temp.resize(x.num_size+1);
+
+    for (size_t i = x_temp.num_size-n; i > 0; i--)
+    {
+        uint64_t q_h = (uint64_t) x_temp.num[n+i-1]<<32 | x_temp.num[n+i-2];
+        uint64_t r_h = q_h % y_temp.num[n-1];   // Unrelated remainder
+        q_h /= y_temp.num[n-1];     // Quotient approximation
+
+        // Reduce q_h if we estimated too high (never too low)
+        bool check_bool = true;
+        check_label:
+        if ((q_h >= (1ULL<<32)) || (q_h*y_temp.num[n-2] > (1ULL<<32) * r_h + x_temp.num[n+i-3]))
+        {
+            q_h--;
+            r_h += y_temp.num[n-1];
+
+            // recheck q_h only once
+            if (r_h < (1ULL<<32) && check_bool)
+            {
+                check_bool = false;
+                goto check_label;
+            }
+        }
+
+        // Do a subtraction on x_temp, but keep the excess zeroes at the end.
+        x_temp.trunc();
+        x_temp -= (y_temp * q_h) << (i-1)*32;
+        // If q_h was still too high and x_temp went negative.
+        if (x_temp.sign)
+        {
+            q_h--;
+            x_temp += (y_temp) << (i-1)*32;
+        }
+        x_temp.resize(x.num_size+1);
+
+        q.num[i-1] = q_h;
+    }
+
+    // Remove excess zeroes
+    q.trunc();
+    x_temp.trunc();
+
+    // Unnormalize the remainder using fast shift operations.
+    ret_mod = x_temp >> d;
+    return q;
+}
+
 BigNum BigNum::exp(const BigNum& x, const BigNum& y)
 {
     // Handle sign
@@ -808,7 +889,7 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
     if (x.sign)
         return y - mod({x, false},y);
     if (y.sign)
-        return {y + mod(x, {y,false}), true};
+        return y + mod(x, {y,false});
 
     // Unsigned x < y check.
     if (x.less_than(y, true))
@@ -817,7 +898,12 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
 
     // Use internal short_div function if y is too small to divide properly.
     if (y.num_size == 1)
-        return short_mod(x,y);
+    {
+        BigNum ret_mod;
+        short_combined_div(x, y, &ret_mod);
+        return ret_mod;
+    }
+        // return short_mod(x,y);
 
     BigNum x_temp = x;
     BigNum y_temp = y;
@@ -891,9 +977,9 @@ BigNum BigNum::mod_exp(const BigNum& x, const BigNum& y, const BigNum& m)
     {
         // If current y bit is 1
         if ((y.num[i>>5] >> (i & 0x1F)) & 0x1)
-            z = (z*x_temp) % m;
+            z = (z * x_temp) % m;
         
-        x_temp = (x_temp*x_temp) % m;
+        x_temp = (x_temp * x_temp) % m;
     }
 
     return z;
@@ -916,11 +1002,11 @@ BigNum BigNum::mod_inv(const BigNum& x, const BigNum& m)
     BigNum q, temp;
     while (r != 0)
     {
-        q = old_r / r;
+        q = div(old_r, r, temp);
 
-        temp = old_r;
+        // r = old_r - (q * r) is just the remainder of old_r/r
         old_r = r;
-        r = temp - (q * r);
+        r = temp;
 
         temp = old_s;
         old_s = s;
@@ -1290,16 +1376,16 @@ void BigNum::print_internal(const char* name, bool show_size) const
 
 void BigNum::print(const char* name) const
 {
-    // Working output string.
+    // Base 2^32 to base 10 conversion variables.
     std::string working;
-    BigNum temp = *this;
+    BigNum temp = {*this, false};
+    BigNum remainder;
 
     // Convert base 2^32 (digit) into base 10 (string) array
     while (temp != 0)
     {
-        // Convert 0-9 (int) remainder into 0-9 (char) character
-        working += ((uint64_t) (temp % 10)) + '0';
-        temp /= 10;
+        temp = div(temp, 10, remainder);
+        working += ((uint64_t) remainder.num[0]) + '0';
     }
 
     // String array
@@ -1311,25 +1397,19 @@ void BigNum::print(const char* name) const
     return;
 }
 
+
 //* Misc
 
 BigNum::operator uint64_t() const
 {
-    uint64_t res;
+    // Prevent reading OoB with this switch
     switch (num_size)
     {
     case 0:
-        res = 0;
-        break;
-
+        return 0;
     case 1:
-        res = num[0];
-        break;
-    
+        return num[0];
     default:
-        res = num[0] | ((uint64_t) num[1] << 32);
-        break;
+        return num[0] | ((uint64_t) num[1] << 32);
     }
-
-    return res;
 }
