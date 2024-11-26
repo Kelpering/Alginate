@@ -4,11 +4,9 @@
         //^ Squaring optimization (x * x)
     //^ Rewrite to conform to some style guide
         //^ Clarify / standardize variable names
-        //^ Write comments
+        //^ Write better comments
+        //^ Write function documentation & doxygen comments
         //^ Reorganize functions (location in code)
-
-
-//! Montgomery optimization
 
 #ifndef __ALGINATE_HPP__
 #define __ALGINATE_HPP__
