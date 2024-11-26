@@ -53,6 +53,7 @@
 #ifndef __ALGINATE_HPP__
 #define __ALGINATE_HPP__
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <exception>

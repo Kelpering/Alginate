@@ -1143,7 +1143,7 @@ bool BigNum::less_than(const BigNum& x, const BigNum& y, bool remove_sign)
 
     // If digit check passes, x==y.
     return false;
-};
+}
 
 bool BigNum::less_equal(const BigNum& x, const BigNum& y, bool remove_sign) 
 {
@@ -1168,7 +1168,7 @@ bool BigNum::less_equal(const BigNum& x, const BigNum& y, bool remove_sign)
 
     // If digit check passes, x==y.
     return true;
-};
+}
 
 bool BigNum::equal_to(const BigNum& x, const BigNum& y, bool remove_sign) 
 {
@@ -1182,7 +1182,7 @@ bool BigNum::equal_to(const BigNum& x, const BigNum& y, bool remove_sign)
             return false;
 
     return true;
-};
+}
 
 bool BigNum::not_equal(const BigNum& x, const BigNum& y, bool remove_sign) 
 {
@@ -1196,7 +1196,7 @@ bool BigNum::not_equal(const BigNum& x, const BigNum& y, bool remove_sign)
             return true;
 
     return false;
-};
+}
 
 bool BigNum::greater_than(const BigNum& x, const BigNum& y, bool remove_sign) 
 {
@@ -1221,7 +1221,7 @@ bool BigNum::greater_than(const BigNum& x, const BigNum& y, bool remove_sign)
 
     // If digit check passes, x==y.
     return false;
-};
+}
 
 bool BigNum::greater_equal(const BigNum& x, const BigNum& y, bool remove_sign) 
 {
@@ -1246,7 +1246,7 @@ bool BigNum::greater_equal(const BigNum& x, const BigNum& y, bool remove_sign)
 
     // If digit check passes, x==y.
     return true;
-};
+}
 
 
 //* Output
@@ -1267,7 +1267,7 @@ void BigNum::print_debug(const char* name, bool show_size) const
     return;
 }
 
-void print_internal(const char* name, bool show_size) const 
+void BigNum::print_internal(const char* name, bool show_size) const 
 {
     // Formatting
     if (show_size)
@@ -1275,28 +1275,39 @@ void print_internal(const char* name, bool show_size) const
     else
         std::cout << name << ": " << ((sign) ? '-' : '+');
 
+    if (num_size == 0)
+    {
+        std::cout << "{ 0 }\n";
+        return;
+    }
+
     // Digit array
-    std::cout << "{";
-    for (size_t i = 1; i < num_size-1; i++)
+    std::cout << " { ";
+    for (size_t i = 0; i < num_size-1; i++)
         std::cout << num[i] << ", ";
-    std::cout << num[num_size-1] << "}\n";
+    std::cout << num[num_size-1] << " }\n";
 }
 
 void BigNum::print(const char* name) const
 {
     // Working output string.
-    std::string output;
+    std::string working;
+    BigNum temp = *this;
 
-    // Formatting
-    output += name += ": " += ((sign) ? '-' : '+');
-
-    while (*this != 0)
+    // Convert base 2^32 (digit) into base 10 (string) array
+    while (temp != 0)
     {
         // Convert 0-9 (int) remainder into 0-9 (char) character
-        output += ((uint64_t) (*this % 10)) + '0';
-        *this /= 10;
+        working += ((uint64_t) (temp % 10)) + '0';
+        temp /= 10;
     }
-    std::cout << output << '\n';
+
+    // String array
+    std::cout << name << ": " << ((sign) ? '-' : '+') << ' ';
+    for (size_t i = working.size(); i > 0; i--)
+        std::cout << working[i-1];
+    std::cout << '\n';
+
     return;
 }
 
