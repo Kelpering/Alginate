@@ -1,204 +1,256 @@
-#ifndef __BIGNUM_HPP__
-#define __BIGNUM_HPP__
+//^ TOOD
+    //^ Various optimizations in BigNum::mod_exp
+        //^ Montgomery
+        //^ Squaring optimization (x * x)
+    //^ Rewrite to conform to some style guide
+        //^ Clarify / standardize variable names
+        //^ Write better comments
+        //^ Write function documentation & doxygen comments
+        //^ Reorganize functions (location in code)
 
+#ifndef __ALGINATE_HPP__
+#define __ALGINATE_HPP__
+
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <iostream>
-#include <vector>
 #include <string>
-
-// Current objective / rules:
-    // Do not overcomplicate, make everything easy
-    // Each function will be basic (create new BigNum, store there)
-    // This should not affect Multiply vs Karatsuba
-
-//! Testing required:
-    //! shift right (shr)
-    //! basecase mul (mul) 
+#include <vector>
 
 class BigNum
 {
     private:
-        uint8_t* num = nullptr;
-        size_t num_size = 0;
-        bool sign = false;
-        bool shallow = false;
+        uint32_t* num = nullptr;     // Digit array (base 2^32)
+        size_t num_size = 0;        // Visible size of num
+        size_t num_size_real = 0;   // Allocation size of num
+        bool sign = false;          // Sign of BigNum
 
-    //* Private implementations
-        // Return x * y in columnar multiplication
-        static BigNum mul_basecase(const BigNum& big, const BigNum& sml);
+        // Resize BigNum to contain new_size. Might allocate more digits for efficiency.
+        void resize(size_t new_size);
 
-        // Return x * y with karatsuba optimizations (requires setup beforehand).
-        static BigNum mul_karatsuba(const BigNum& x, const BigNum& y, size_t digits);
-
-    //* Misc
-
-        // Truncate any zeroes after the most significant digit.
+        // Resize num_size (not the num array allocation) to remove leading zeroes.
         void trunc();
-        // Make a copy of the BigNum; deep copy the num array.
-        void copy(const BigNum& number);
-        // Make a copy of the BigNum, but only copy the ptr to num.
-        BigNum shallow_copy() const;
-        // Move the BigNum to this BigNum
-        void move(BigNum& number);
-        // Set sign to false (used with shallow_copy).
-        BigNum self_abs() {
-            sign = false;
-            return *this;
-        }
+
+        // Copy another BigNum's data.
+        BigNum& copy(const BigNum& x);
+        BigNum& copy(const BigNum& x, bool new_sign);
+
+        // Move another BigNum's data without copying (destroys other BigNum)
+        BigNum& move(BigNum& x);
+        BigNum& move(BigNum& x, bool new_sign);
+
+        // Multiplication helper functions
+        static void mul_basecase(const BigNum& x, const BigNum& y, BigNum& temp, BigNum& ret);
+        // static void mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret);
+        static void mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNum& ret);
+
+        static BigNum short_combined_div(BigNum x, const BigNum& y, BigNum* ret_mod);
+
     public:
     //* Constructors
-    
-        // Create an unsafe BigNum.
-        BigNum() {};
-        // Create a BigNum from a uint64_t, sign applied with boolean.
-        BigNum(uint64_t number, bool isNegative = false) {assign(number, isNegative);};
-        // Create a BigNum from a vector (in internal format), sign applied with boolean.
-        BigNum(const std::vector<uint8_t>& number, bool isNegative = false) {assign(number, isNegative);};
-        // Create a BigNum from another BigNum.
-        BigNum(const BigNum& number) {copy(number);};
 
-    //* Deconstructor
+        // Basic
+        BigNum(uint64_t number = 0, bool sign = false);
+
+        // Internal array (uint8_t)
+        BigNum(const uint32_t* number, size_t size, bool sign = false);
+        BigNum(const std::vector<uint32_t>& vec, bool sign = false) : BigNum(&vec[0], vec.size(), sign) {};
+
+        // Internal array (uint32_t)
+        BigNum(const uint8_t* number, size_t size, bool sign = false);
+        BigNum(const std::vector<uint8_t>& vec, bool sign = false) : BigNum(&vec[0], vec.size(), sign) {};
+        
+        // Copy
+        BigNum(const BigNum& number)            {copy(number);};
+        BigNum(const BigNum& number, bool sign) {copy(number, sign);};
+
+        // Move
+        BigNum(BigNum&& number)                 {move(number);}; 
+        BigNum(BigNum&& number, bool sign)      {move(number, sign);}; 
+
+        // Rand (uint8_t)
+        BigNum(uint32_t(*rand_func)(), size_t size, bool sign = false);
+        BigNum(int32_t(*rand_func)(), size_t size, bool sign = false) : BigNum((uint32_t (*)())rand_func, size, sign) {};
+        
+        // Rand (uint32_t)
+        BigNum(uint8_t(*rand_func)(), size_t size, bool sign = false);
+        BigNum(int8_t(*rand_func)(), size_t size, bool sign = false) : BigNum((uint8_t (*)())rand_func, size, sign) {};
+
+        // Deconstructor
         ~BigNum();
 
-    //* Assignment
 
-        // Assign the number to the uint64_t
-        void assign(uint64_t number, bool isNegative = false);
-        // Assign the number to the vector (in internal format).
-        void assign(const std::vector<uint8_t>& number, bool isNegative = false);
-        // Assign the num array to a deep copy of the old array.
-        void assign(const BigNum& x);
+    //* Fundamental
 
-    //* Addition
-        
-        // Returns x+y
+        // Addition (x + y)
         static BigNum add(const BigNum& x, const BigNum& y);
-        // Returns *this + y
         BigNum add(const BigNum& y) const {
-            return add(*this, y);
+            return add(*this,y);
         }
 
-    //* Subtraction
-
-        // Returns x-y
+        // Subtraction (x - y)
         static BigNum sub(const BigNum& x, const BigNum& y);
-        // Returns *this - y
         BigNum sub(const BigNum& y) const {
             return sub(*this, y);
         }
 
-    //* Multiplication
-        // Returns x*y
+        // Multiplication (x * y)
         static BigNum mul(const BigNum& x, const BigNum& y);
-        // Returns *this * y
         BigNum mul(const BigNum& y) const {
             return mul(*this, y);
         }
 
-        // Returns x^y (exponentiation)
-        static BigNum exp(const BigNum& x, const BigNum& y);
-        // Returns *this ^ y (exponentiation)
-        BigNum exp(const BigNum& y) const {
-            return exp(*this, y);
-        }
-
-    //* Division
-        // Returns x/y
+        // Division (x / y)
         static BigNum div(const BigNum& x, const BigNum& y);
-        // Returns *this / y
         BigNum div(const BigNum& y) const {
             return div(*this, y);
         }
 
-    //* Modulus
-        // Returns x%y 
+        // Combined Division (x / y) && (x % y)
+        static BigNum div(const BigNum& x, const BigNum& y, BigNum& ret_mod);
+        BigNum div(const BigNum& y, BigNum& ret_mod) const {
+            return div(*this, y, ret_mod);
+        }
+        
+        // Exponentiation (x ^ y)
+        static BigNum exp(const BigNum& x, const BigNum& y);
+        BigNum exp(const BigNum& y) const {
+            return exp(*this, y);
+        }
+
+
+    //* Modular
+
+        // Modulus (x % y)
         static BigNum mod(const BigNum& x, const BigNum& y);
-        // Returns *this % y
         BigNum mod(const BigNum& y) const {
             return mod(*this, y);
         }
-
-        // Returns (x^y) % mod (modular exponentiation).
-        static BigNum mod_exp(BigNum x, BigNum y, const BigNum& mod);
-        BigNum mod_exp(const BigNum& y, const BigNum& mod) const {
-            return mod_exp(*this, y, mod);
-        }
-
-        // Returns y where (x*y) % mod == 1. Returns 0 if no inverse is possible.
-        static BigNum mod_inv(const BigNum& x, const BigNum& mod);
-        BigNum mod_inv(const BigNum& mod) const {
-            return mod_inv(*this, mod);
-        }
-
-    //* Misc
-        // Returns gcd(x,y)
-        static BigNum gcd(const BigNum& x, const BigNum& y);
-        // Returns whether prob_prime is a probable prime to witness
-        static bool prime_check(const BigNum& prob_prime, const BigNum& witness);
-        bool prime_check(const BigNum& witness) const {
-            return prime_check(*this, witness);
-        }
-
-    //* Shift
-
-        // Returns x<<y (Bitwise)
-        static BigNum shl(const BigNum& x, size_t y);
-        // Returns *this<<y (Bitwise)
-        BigNum shl(size_t y) const {
-            return shl(*this, y);
-        }
         
-        // Returns x>>y (Bitwise)
-        static BigNum shr(const BigNum& x, size_t y);
-        // Returns *this>>y (Bitwise)
-        BigNum shr(size_t y) const {
-            return shr(*this, y);
+        // Modular Exponentiation ((x ^ y) % m)
+        static BigNum mod_exp(const BigNum& x, const BigNum& y, const BigNum& m);
+        BigNum mod_exp(const BigNum& y, const BigNum& m) const {
+            return mod_exp(*this, y, m);
         }
 
-    //* Bitwise operations
+        // Modular Inverse ((x * ret) % m == 1) (0 if no number exists)
+        static BigNum mod_inv(const BigNum& x, const BigNum& m);
+        BigNum mod_inv(const BigNum& m) const {
+            return mod_inv(*this, m);
+        }
 
-    static BigNum bitwise_and(const BigNum& x, const BigNum& y);
-    BigNum bitwise_and(const BigNum& y) const {
-        return bitwise_and(*this,y);
+    
+    //* Algorithm
+
+    static BigNum gcd(const BigNum& x, const BigNum& y);
+    BigNum gcd(const BigNum& y) const {
+        return gcd(*this, y);
     }
 
-    //* Conditionals
+    // Returns whether or not candidate is a prime, if false then definitely not prime. If true, witness could be a strong liar. (Revise comment later)
+    static bool prime_check(const BigNum& candidate, const BigNum& witness);
+    bool prime_check(const BigNum& witness) const {
+        return prime_check(*this, witness);
+    }
 
-        // Returns x < y
-        static bool less_than(const BigNum& x, const BigNum& y);
-        // Returns *this < y
-        bool less_than(const BigNum& y) const {
-            return less_than(*this, y);
+    //* Bitwise
+        
+        // Bitwise And (x & y)
+        static BigNum bw_and(const BigNum& x, const BigNum& y);
+        BigNum bw_and(const BigNum& y) const {
+            return bw_and(*this, y);
+        }
+
+        // Bitwise Or (x | y)
+        static BigNum bw_or(const BigNum& x, const BigNum& y);
+        BigNum bw_or(const BigNum& y) const {
+            return bw_or(*this, y);
+        }
+
+        // Bitwise Xor (x ^ y)
+        static BigNum bw_xor(const BigNum& x, const BigNum& y);
+        BigNum bw_xor(const BigNum& y) const {
+            return bw_xor(*this, y);
+        }
+
+        // Bitwise shl (x << y)
+        static BigNum bw_shl(const BigNum& x, size_t y);
+        BigNum bw_shl(size_t y) const {
+            return bw_shl(*this, y);
         }
         
-        // Returns x == y
-        static bool equal(const BigNum& x, const BigNum& y);
-        // Returns *this == y
-        bool equal(const BigNum& y) const {
-            return equal(*this, y);
+        // Bitwise shr (x >> y)
+        static BigNum bw_shr(const BigNum& x, size_t y);
+        BigNum bw_shr(size_t y) const {
+            return bw_shr(*this, y);
         }
-        
-        // Returns x > y
-        static bool greater_than(const BigNum& x, const BigNum& y);
-        // Returns *this > y
-        bool greater_than(const BigNum& y) const {
-            return greater_than(*this, y);
+
+    //* Comparison
+
+        // Less than (x < y)
+        static bool less_than(const BigNum& x, const BigNum& y, bool remove_sign = false);
+        bool less_than(const BigNum& y, bool remove_sign = false) const {
+            return less_than(*this, y, remove_sign);
         }
+
+        // Less Equal (x <= y)
+        static bool less_equal(const BigNum& x, const BigNum& y, bool remove_sign = false);
+        bool less_equal(const BigNum& y, bool remove_sign) const {
+            return less_equal(*this, y, remove_sign);
+        }
+
+        // Equal to (x == y)
+        static bool equal_to(const BigNum& x, const BigNum& y, bool remove_sign = false);
+        bool equal_to(const BigNum& y, bool remove_sign) const {
+            return equal_to(*this, y);
+        }
+
+        // Not Equal (x != y)
+        static bool not_equal(const BigNum& x, const BigNum& y, bool remove_sign = false);
+        bool not_equal(const BigNum& y) const {
+            return not_equal(*this, y);
+        }
+
+        // Greater than (x > y)
+        static bool greater_than(const BigNum& x, const BigNum& y, bool remove_sign = false);
+        bool greater_than(const BigNum& y, bool remove_sign) const {
+            return greater_than(*this, y, remove_sign);
+        }
+
+        // Greater Equal (x >= y)
+        static bool greater_equal(const BigNum& x, const BigNum& y, bool remove_sign = false);
+        bool greater_equal(const BigNum& y, bool remove_sign) const {
+            return greater_equal(*this, y, remove_sign);
+        }
+
+    //* Output
+
+        // Print the base 2^32 number to console.
+        void print_debug(const char* name = "Number", bool show_size = false) const;
+
+        // Print the internal num array to console.
+        void print_internal(const char* name = "Number", bool show_size = false) const;
+
+        // Print the number in base 10.
+        void print(const char* name = "Number") const;
 
     //* Operators
 
-        // Assignment
-        void operator=(const BigNum& y) {
-            copy(y);
-        }
+        // Conversion operator
+        explicit operator uint64_t() const;
 
-        // Move
-        BigNum& operator=(BigNum&& other) {
-            move(other);
-            return *this;
-        }
+        // Copy operator
+        BigNum& operator=(const BigNum& y) {
+            return copy(y);
+        };
+
+        // Move operator
+        BigNum& operator=(BigNum&& y) {
+            return move(y);
+        };
+
 
         // Addition
         BigNum operator+(const BigNum& y) const {
@@ -224,17 +276,12 @@ class BigNum
             *this = mul(y);
         }
 
-        // Division
+        // Divison
         BigNum operator/(const BigNum& y) const {
             return div(y);
         }
         void operator/=(const BigNum& y) {
             *this = div(y);
-        }
-
-        // Exponentiation
-        BigNum operator^(const BigNum& y) const {
-            return exp(y);
         }
 
         // Modulus
@@ -245,54 +292,76 @@ class BigNum
             *this = mod(y);
         }
 
-        // Left Shift
-        BigNum operator<<(size_t y) const {
-            return shl(y);
-        }
-        void operator<<=(size_t y) {
-            *this = shl(y);
-        }
-
-        // Right Shift
-        BigNum operator>>(size_t y) const {
-            return shr(y);
-        }
-        void operator>>=(size_t y) {
-            *this = shr(y);
-        }
-
         // Bitwise And
         BigNum operator&(const BigNum& y) const {
-            return bitwise_and(y);
+            return bw_and(y);
         }
         void operator&=(const BigNum& y) {
-            *this = bitwise_and(y);
+            *this = bw_and(y);
         }
 
-        // Comparison
+        // Bitwise Or
+        BigNum operator|(const BigNum& y) const {
+            return bw_or(y);
+        }
+        void operator|=(const BigNum& y) {
+            *this = bw_or(y);
+        }
+
+        // Bitwise Xor
+        BigNum operator^(const BigNum& y) const {
+            return bw_xor(y);
+        }
+        void operator^=(const BigNum& y) {
+            *this = bw_xor(y);
+        }
+
+        // Bitwise Shl
+        BigNum operator<<(size_t y) const {
+            return bw_shl(y);
+        }
+        void operator<<=(size_t y) {
+            *this = bw_shl(y);
+        }
+
+        // Bitwise Shr
+        BigNum operator>>(size_t y) const {
+            return bw_shr(y);
+        }
+        void operator>>=(size_t y) {
+            *this = bw_shr(y);
+        }
+
+        // Less Than
         bool operator<(const BigNum& y) const {
-            return less_than(y);
+            return less_than(*this,y, false);
         }
+
+        // Less Than or Equal To
+        bool operator<=(const BigNum& y) const {
+            return less_equal(*this,y, false);
+        }
+
+        // Equal To
         bool operator==(const BigNum& y) const {
-            return equal(y);
+            return equal_to(*this,y);
         }
+
+        // Not Equal To
         bool operator!=(const BigNum& y) const {
-            return !equal(y);
+            return not_equal(*this,y);
         }
+
+        // Greater Than
         bool operator>(const BigNum& y) const {
-            return greater_than(y);
+            return greater_than(*this,y, false);
         }
 
-    //* Misc
-
-        // Print BigNum to stdio.
-        void print(const char* name = "Number") const;
-        // Returns abs(x)
-        static BigNum abs(const BigNum& x);
-        // Returns abs(*this)
-        BigNum abs() const {
-            return abs(*this);
+        // Greater Than or Equal To
+        bool operator>=(const BigNum& y) const {
+            return greater_equal(*this,y, false);
         }
+
 };
 
-#endif // __BIGNUM_HPP__
+#endif // __ALGINATE_HPP__
