@@ -171,6 +171,7 @@ class BigNum
             return mod_exp(*this, y, m);
         }
 
+        // Modular Inverse ((x * ret) % m == 1) (0 if no number exists)
         static BigNum mod_inv(const BigNum& x, const BigNum& m);
         BigNum mod_inv(const BigNum& m) const {
             return mod_inv(*this, m);
@@ -198,7 +199,7 @@ class BigNum
             return bw_and(*this, y);
         }
 
-        // Bitwise Or (x & y)
+        // Bitwise Or (x | y)
         static BigNum bw_or(const BigNum& x, const BigNum& y);
         BigNum bw_or(const BigNum& y) const {
             return bw_or(*this, y);
@@ -224,32 +225,37 @@ class BigNum
 
     //* Comparison
 
-        // Less than (x<y)
+        // Less than (x < y)
         static bool less_than(const BigNum& x, const BigNum& y, bool remove_sign = false);
         bool less_than(const BigNum& y, bool remove_sign = false) const {
             return less_than(*this, y, remove_sign);
         }
 
+        // Less Equal (x <= y)
         static bool less_equal(const BigNum& x, const BigNum& y, bool remove_sign = false);
         bool less_equal(const BigNum& y, bool remove_sign) const {
             return less_equal(*this, y, remove_sign);
         }
 
+        // Equal to (x == y)
         static bool equal_to(const BigNum& x, const BigNum& y, bool remove_sign = false);
         bool equal_to(const BigNum& y, bool remove_sign) const {
             return equal_to(*this, y);
         }
 
+        // Not Equal (x != y)
         static bool not_equal(const BigNum& x, const BigNum& y, bool remove_sign = false);
         bool not_equal(const BigNum& y) const {
             return not_equal(*this, y);
         }
 
+        // Greater than (x > y)
         static bool greater_than(const BigNum& x, const BigNum& y, bool remove_sign = false);
         bool greater_than(const BigNum& y, bool remove_sign) const {
             return greater_than(*this, y, remove_sign);
         }
 
+        // Greater Equal (x >= y)
         static bool greater_equal(const BigNum& x, const BigNum& y, bool remove_sign = false);
         bool greater_equal(const BigNum& y, bool remove_sign) const {
             return greater_equal(*this, y, remove_sign);
@@ -257,11 +263,14 @@ class BigNum
 
     //* Output
 
-        // Print the internal num array to console.
+        // Print the base 2^32 number to console.
         void print_debug(const char* name = "Number", bool show_size = false) const;
 
+        // Print the internal num array to console.
+        void print_internal(const char* name = "Number", bool show_size = false) const;
+
         // Print the number in base 10.
-        void print(const char* name) const;
+        void print(const char* name = "Number") const;
 
     //* Operators
 

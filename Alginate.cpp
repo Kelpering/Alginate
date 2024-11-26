@@ -1267,17 +1267,36 @@ void BigNum::print_debug(const char* name, bool show_size) const
     return;
 }
 
+void print_internal(const char* name, bool show_size) const 
+{
+    // Formatting
+    if (show_size)
+        std::cout << name << " (size: " << num_size << "): " << ((sign) ? '-' : '+');
+    else
+        std::cout << name << ": " << ((sign) ? '-' : '+');
+
+    // Digit array
+    std::cout << "{";
+    for (size_t i = 1; i < num_size-1; i++)
+        std::cout << num[i] << ", ";
+    std::cout << num[num_size-1] << "}\n";
+}
+
 void BigNum::print(const char* name) const
 {
-    std::cout << name << ": " << ((sign) ? '-' : '+');
-    
-    // Use this temp, access only digit for *this%10
-    // Use this remainder digit as the first part of string, repeat.
-    // Divide *this (in other temp var) by 10 until done.
-    std::cout << "UNFINISHED";
+    // Working output string.
+    std::string output;
 
-    std::cout << '\n';
+    // Formatting
+    output += name += ": " += ((sign) ? '-' : '+');
 
+    while (*this != 0)
+    {
+        // Convert 0-9 (int) remainder into 0-9 (char) character
+        output += ((uint64_t) (*this % 10)) + '0';
+        *this /= 10;
+    }
+    std::cout << output << '\n';
     return;
 }
 
