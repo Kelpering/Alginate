@@ -1,5 +1,35 @@
-cmake_minimum_required(VERSION 3.10)
-
+# Set project and minimum version
+cmake_minimum_required(VERSION 3.2)
 project(Alginate)
 
-add_library(Alginate Alginate.cpp)
+# Mark Alginate as a static library
+add_library(Alginate STATIC
+    src/Alginate.cpp
+)
+
+# Include Alginate header (including linked projects)
+target_include_directories(Alginate
+    PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+)
+
+# Enable extensive compile errors
+target_compile_options(Alginate
+    PRIVATE
+        -Wall
+        -Wpedantic
+        -Werror
+)
+
+
+# Add test executable
+
+add_executable(Test_binary
+    src/main.cpp
+)
+
+# Link alginate
+target_link_libraries(Test_binary
+    PRIVATE
+        Alginate
+)
