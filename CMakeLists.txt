@@ -20,16 +20,3 @@ target_compile_options(Alginate
         -Wpedantic
         -Werror
 )
-
-
-# Add test executable
-
-add_executable(Test_binary
-    src/main.cpp
-)
-
-# Link alginate
-target_link_libraries(Test_binary
-    PRIVATE
-        Alginate
-)
