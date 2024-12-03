@@ -1344,6 +1344,12 @@ void BigNum::print_debug(const char* name, bool show_size) const
         std::cout << name << " (size: " << num_size << "): " << ((sign) ? '-' : '+');
     else
         std::cout << name << ": " << ((sign) ? '-' : '+');
+
+    if (num_size == 0)
+    {
+        std::cout << " 0\n";
+        return;
+    }
     
     // Digit array
     for (size_t i = num_size; i > 0; i--)
@@ -1381,11 +1387,19 @@ void BigNum::print(const char* name) const
     BigNum temp = {*this, false};
     BigNum remainder;
 
-    // Convert base 2^32 (digit) into base 10 (string) array
-    while (temp != 0)
+    // Prevent empty char string
+    if (num == 0)
     {
-        temp = div(temp, 10, remainder);
-        working += ((uint64_t) remainder.num[0]) + '0';
+        working += "0";
+    }
+    else
+    {
+        // Convert base 2^32 (digit) into base 10 (string) array
+        while (temp != 0)
+        {
+            temp = div(temp, 10, remainder);
+            working += ((uint64_t) remainder.num[0]) + '0';
+        }
     }
 
     // String array
