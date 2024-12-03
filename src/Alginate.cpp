@@ -1095,10 +1095,10 @@ BigNum BigNum::bw_and(const BigNum& x, const BigNum& y)
     const BigNum& big = (x.num_size > y.num_size) ? x : y;
     const BigNum& sml = (x.num_size > y.num_size) ? y : x;
 
-    BigNum z = big;
+    BigNum z = sml;
 
     for (size_t i = 0; i < sml.num_size; i++)
-        z.num[i] &= sml.num[i];
+        z.num[i] &= big.num[i];
     z.trunc();
 
     return z;
