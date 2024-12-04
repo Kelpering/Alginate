@@ -236,10 +236,32 @@ class BigNum
         // Print the number in base 10.
         void print(const char* name = "Number") const;
 
+        // Return the uint64_t equivalent (ignores sign).
+        uint64_t convert_uint64_t() const;
+
+        // Return the internal num array as a uint32_t vector.
+        std::vector<uint32_t> convert_vector_32() const;
+
+        // Return the internal num array as a uint8_t vector.
+        std::vector<uint8_t> convert_vector_8() const;
+
+
     //* Operators
 
-        // Conversion operator
-        explicit operator uint64_t() const;
+        // uint64_t conversion operator
+        explicit operator uint64_t() const {
+            return convert_uint64_t();
+        }
+
+        // std::vector<uint32_t> conversion operator
+        operator std::vector<uint32_t>() const {
+            return convert_vector_32();
+        }
+
+        // std::vector<uint8_t> conversion operator
+        operator std::vector<uint8_t>() const {
+            return convert_vector_8();
+        }
 
         // Copy operator
         BigNum& operator=(const BigNum& y) {

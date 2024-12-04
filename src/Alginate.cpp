@@ -1411,10 +1411,7 @@ void BigNum::print(const char* name) const
     return;
 }
 
-
-//* Misc
-
-BigNum::operator uint64_t() const
+uint64_t BigNum::convert_uint64_t() const
 {
     // Prevent reading OoB with this switch
     switch (num_size)
@@ -1426,4 +1423,47 @@ BigNum::operator uint64_t() const
     default:
         return num[0] | ((uint64_t) num[1] << 32);
     }
+}
+
+std::vector<uint32_t> BigNum::convert_vector_32() const
+{
+    std::vector<uint32_t> ret_vec;
+    
+    // Handle num_size == 0
+    if (num_size == 0)
+        return {0};
+
+    // Copy internal num array into ret_vec
+    for (size_t i = 0; i < num_size; i++)
+        ret_vec.push_back(num[i]);
+
+    // Remove leading zeroes (size changes each pop_back).
+    while ((ret_vec.size() > 1) && (ret_vec[ret_vec.size() - 1] == 0))
+        ret_vec.pop_back();
+
+    return ret_vec;
+}
+
+std::vector<uint8_t> BigNum::convert_vector_8() const
+{
+    std::vector<uint8_t> ret_vec;
+    
+    // Handle num_size == 0
+    if (num_size == 0)
+        return {0};
+
+    // Copy internal num array into ret_vec
+    for (size_t i = 0; i < num_size; i++)
+    {
+        ret_vec.push_back((num[i] >>  0) & 0xFF);
+        ret_vec.push_back((num[i] >>  8) & 0xFF);
+        ret_vec.push_back((num[i] >> 16) & 0xFF);
+        ret_vec.push_back((num[i] >> 24) & 0xFF);
+    }
+
+    // Remove leading zeroes (size changes each pop_back).
+    while ((ret_vec.size() > 1) && (ret_vec[ret_vec.size() - 1] == 0))
+        ret_vec.pop_back();
+
+    return ret_vec;
 }
