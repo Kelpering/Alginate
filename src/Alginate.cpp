@@ -695,12 +695,10 @@ BigNum BigNum::div(const BigNum& x, const BigNum& y)
     q.resize(x_temp.num_size);
 
     // While y's most significant digit is less than 2^32/2 (2^31)
-    size_t d = 0;
     while (y_temp.num[y.num_size-1] < 1ULL<<31)
     {
         x_temp <<= 1;
         y_temp <<= 1;
-        d++;
     }
     // Guarantee a digit at x_temp[x.num_size]
     if (x_temp.num_size <= x.num_size)

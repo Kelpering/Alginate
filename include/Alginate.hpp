@@ -236,6 +236,11 @@ class BigNum
         // Print the number in base 10.
         void print(const char* name = "Number") const;
 
+        // Return num_size
+        size_t get_size() const {
+            return num_size;
+        }
+
         // Return the uint64_t equivalent (ignores sign).
         uint64_t convert_uint64_t() const;
 
