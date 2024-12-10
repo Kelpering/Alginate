@@ -20,3 +20,9 @@ target_compile_options(Alginate
         -Wpedantic
         -Werror
 )
+
+
+# Temporary testing executable
+
+add_executable(Test src/main.cpp)
+target_link_libraries(Test Alginate)

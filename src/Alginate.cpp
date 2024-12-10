@@ -1,4 +1,5 @@
 #include "Alginate.hpp"
+#include <stdexcept>
 
 
 //? Macros
@@ -979,6 +980,65 @@ BigNum BigNum::mod_exp(const BigNum& x, const BigNum& y, const BigNum& m)
         
         x_temp = (x_temp * x_temp) % m;
     }
+
+    return z;
+}
+
+BigNum BigNum::mod_exp_mont(const BigNum& x, const BigNum& y, const BigNum& m)
+{
+
+    if ((m.num[0] & 1) == 0)
+        throw std::invalid_argument("mod_exp (montgomery) currently does not support even m.");
+
+    BigNum x_temp = x;
+    BigNum q;
+    BigNum z = 1;
+    BigNum temp;
+
+    // Calculate montgomery num R and useful intermediates
+    size_t r_power = (m.num_size-1) * 32;   // For divisons
+    while (BigNum(1)<<r_power < m)
+        r_power++;
+    BigNum r = BigNum(1) << r_power;        //! For ??
+    BigNum r_sub = BigNum(1) << r_power - 1;                   // For modulus (bitwise AND (2^x-1) == mod (2^x))
+    //* if (r < m)
+    //*     throw std::runtime_error("This shouldn't be happening");
+
+
+    // Calculate the modulus's "inverse" (R*R' + M*M' == 1) (where R' is R*R' == 1 (mod m))
+    BigNum m_prime = (r * r.mod_inv(m) - 1) / m;
+    m_prime.sign = true;
+
+
+
+    // Conversion into montgomery space
+    BigNum x_mont = (x * r) % m;
+    z = (z * r) % m;
+
+    for (size_t i = 0; i < y.num_size * 32; i++)
+    {
+        // If current y bit is 1
+        if ((y.num[i>>5] >> (i & 0x1F)) & 0x1)
+        {
+            z = (z * x_mont);
+            q = ((z & r_sub) * m_prime) & r_sub;
+            z = (z - q * m) >> r_power;
+            if (z.sign)
+                z += m;
+        }
+        
+        x_mont = (x_mont * x_mont);
+        q = ((x_mont & r_sub) * m_prime) & r_sub;
+        x_mont = (x_mont - q * m) >> r_power;
+        if (x_mont.sign)
+            x_mont += m;
+    }
+
+    // Final montgomery reduction (to convert back to normal space)
+    q = ((z & r_sub) * m_prime) & r_sub;
+    z = (z - q * m) >> r_power;
+    if (z.sign)
+        z += m;
 
     return z;
 }

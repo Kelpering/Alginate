@@ -135,6 +135,12 @@ class BigNum
             return mod_exp(*this, y, m);
         }
 
+        // Montgomery Modular Exponentiation ((x ^ y) % m)
+        static BigNum mod_exp_mont(const BigNum& x, const BigNum& y, const BigNum& m);
+        BigNum mod_exp_mont(const BigNum& y, const BigNum& m) const {
+            return mod_exp_mont(*this, y, m);
+        }
+
         // Modular Inverse ((x * ret) % m == 1) (0 if no number exists)
         static BigNum mod_inv(const BigNum& x, const BigNum& m);
         BigNum mod_inv(const BigNum& m) const {
