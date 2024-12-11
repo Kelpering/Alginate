@@ -4,12 +4,17 @@
 
 int main()
 {
-    BigNum x = 42;
-    BigNum y = 24;
-    BigNum m = 313;
+    BigNum x = {rand, 4224, false};
+    BigNum y = {rand, 200, false};
+    BigNum m = {rand, 64, false};
+    if (m % 2 == 0)
+        m += 1;
 
-    x.mod_exp(y,m).print_debug("x_reg ");
-    x.mod_exp_mont(y,m).print_debug("x_mont");
+    std::cout << "Start exponentiation\n\n";
+    std::cout << "Montgomery\n";
+    x.mod_exp_mont(y,m);
+    std::cout << "Regular\n";
+    x.mod_exp(y,m);
 
     return 0;
 }

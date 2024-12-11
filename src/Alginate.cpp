@@ -862,17 +862,28 @@ BigNum BigNum::exp(const BigNum& x, const BigNum& y)
 {
     // Handle sign
     if (y.sign)
-        return div(1,exp(x,{y, false}));
+        throw std::invalid_argument("exp does not support negative exponent.");
 
-    // x^0 == 1
-    if (y == 0)
-        return 1;
+    BigNum x_temp = x;
+    BigNum z = 1;
 
-    // If y%2 == 0
-    if ((y.num[0] & 1) == 0)
-        return exp(x*x, y>>1);
-    else
-        return x * exp(x*x, y>>1);
+    // Calculate what position y's final bit is at.
+    uint32_t temp = y.num[y.num_size-1];
+    size_t y_bits = 0;
+    while (temp>>y_bits)
+        y_bits++;
+
+    // Perform exponentiation on each individual 1 bit.
+    for (size_t i = 0; i < (y.num_size-1) * 32 + y_bits; i++)
+    {
+        // If current y bit is 1
+        if ((y.num[i>>5] >> (i & 0x1F)) & 0x1)
+            z = z * x_temp;
+        
+        x_temp = x_temp * x_temp;
+    }
+
+    return z;
 }
 
 
@@ -968,17 +979,27 @@ BigNum BigNum::mod(const BigNum& x, const BigNum& y)
 
 BigNum BigNum::mod_exp(const BigNum& x, const BigNum& y, const BigNum& m)
 {
+    // Handle sign
+    if (y.sign || m.sign)
+        throw std::invalid_argument("mod_exp does not support negative exponent or mod");
+
     BigNum x_temp = x;
     BigNum z = 1;
-    BigNum temp;
 
-    for (size_t i = 0; i < y.num_size * 32; i++)
+    // Calculate what position y's final bit is at.
+    uint32_t temp = y.num[y.num_size-1];
+    size_t y_bits = 0;
+    while (temp>>y_bits)
+        y_bits++;
+
+    // Perform exponentiation on each individual 1 bit.
+    for (size_t i = 0; i < (y.num_size-1) * 32 + y_bits; i++)
     {
         // If current y bit is 1
         if ((y.num[i>>5] >> (i & 0x1F)) & 0x1)
-            z = (z * x_temp) % m;
+            z = z * x_temp % m;
         
-        x_temp = (x_temp * x_temp) % m;
+        x_temp = x_temp * x_temp % m;
     }
 
     return z;
@@ -986,61 +1007,68 @@ BigNum BigNum::mod_exp(const BigNum& x, const BigNum& y, const BigNum& m)
 
 BigNum BigNum::mod_exp_mont(const BigNum& x, const BigNum& y, const BigNum& m)
 {
+    // Handle sign
+    if (y.sign || m.sign)
+        throw std::runtime_error("mod_exp_mont does not support negative exponent or mod");
 
     if ((m.num[0] & 1) == 0)
-        throw std::invalid_argument("mod_exp (montgomery) currently does not support even m.");
+        throw std::invalid_argument("mod_exp_mont does not support even modulus");
 
-    BigNum x_temp = x;
+
+    // Calculate montgomery r and useful intermediates
+    size_t r_power = (m.num_size+1) * 32;   // Used for faster divisions
+    BigNum r = BigNum(1) << r_power;        // Used for intermediate calculations
+    BigNum r_sub = r - 1;                   // Used for fast modulus (r is a power of 2)
+
+    // m_prime satisfies (r * r^-1 + m * m' = 1) (mod r)
+    BigNum m_prime = ((r*r.mod_inv(m) - 1) / m);
+    m_prime = r - m_prime;
+
+    // Transform numbers into montgomery form
+    BigNum x_mont = x * r % m;
+    BigNum z_mont = BigNum(1) * r % m;
+
+    // Calculate what position y's final bit is at.
+    uint32_t temp = y.num[y.num_size-1];
+    size_t y_bits = 0;
+    while (temp>>y_bits)
+        y_bits++;
+
+    // Temporary for REDC
     BigNum q;
-    BigNum z = 1;
-    BigNum temp;
 
-    // Calculate montgomery num R and useful intermediates
-    size_t r_power = (m.num_size-1) * 32;   // For divisons
-    while (BigNum(1)<<r_power < m)
-        r_power++;
-    BigNum r = BigNum(1) << r_power;        //! For ??
-    BigNum r_sub = BigNum(1) << r_power - 1;                   // For modulus (bitwise AND (2^x-1) == mod (2^x))
-    //* if (r < m)
-    //*     throw std::runtime_error("This shouldn't be happening");
-
-
-    // Calculate the modulus's "inverse" (R*R' + M*M' == 1) (where R' is R*R' == 1 (mod m))
-    BigNum m_prime = (r * r.mod_inv(m) - 1) / m;
-    m_prime.sign = true;
-
-
-
-    // Conversion into montgomery space
-    BigNum x_mont = (x * r) % m;
-    z = (z * r) % m;
-
-    for (size_t i = 0; i < y.num_size * 32; i++)
+    // Perform exponentiation on each individual 1 bit.
+    for (size_t i = 0; i < (y.num_size-1) * 32 + y_bits; i++)
     {
         // If current y bit is 1
         if ((y.num[i>>5] >> (i & 0x1F)) & 0x1)
         {
-            z = (z * x_mont);
-            q = ((z & r_sub) * m_prime) & r_sub;
-            z = (z - q * m) >> r_power;
-            if (z.sign)
-                z += m;
+            z_mont *= x_mont;
+            
+            // x_mont *= r^-1 (mod m) aka REDC
+            q = ((z_mont & r_sub) * m_prime) & r_sub;
+            z_mont = (z_mont - q * m) >> r_power;
+            if (z_mont.sign)
+                z_mont += m;
         }
         
-        x_mont = (x_mont * x_mont);
+        // x_mont = x_mont * x_mont
+        x_mont *= x_mont;
+
+        // x_mont *= r^-1 (mod m) aka REDC
         q = ((x_mont & r_sub) * m_prime) & r_sub;
         x_mont = (x_mont - q * m) >> r_power;
         if (x_mont.sign)
             x_mont += m;
     }
 
-    // Final montgomery reduction (to convert back to normal space)
-    q = ((z & r_sub) * m_prime) & r_sub;
-    z = (z - q * m) >> r_power;
-    if (z.sign)
-        z += m;
+    // Reduce z_mont to integer space (REDC)
+    q = ((z_mont & r_sub) * m_prime) & r_sub;
+    z_mont = (z_mont - q * m) >> r_power;
+    if (z_mont.sign)
+        z_mont += m;
 
-    return z;
+    return z_mont;
 }
 
 BigNum BigNum::mod_inv(const BigNum& x, const BigNum& m)
