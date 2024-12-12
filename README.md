@@ -6,6 +6,12 @@ A simple arbitrary precision integer arithmetic library, primarily built for use
 - Various optimizations in BigNum::mod_exp
    - Montgomery
    - Squaring (x*x)
+   - Rewrite and optimize Multiplication (mul, mul_basecase, mul_karatsuba)
+     - basecase:
+       - addition unwrap
+       - Reduce temp usage
+       - etc
+   - Rewrite div functions (current -> combined_div, div, mod)
 - Rewrite to conform to style guide
    - Clarify variable names
    - Update comments
