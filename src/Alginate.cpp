@@ -245,34 +245,14 @@ void BigNum::mul_basecase(const BigNum& x, const BigNum& y, BigNum& temp, BigNum
 {
     const BigNum& big = (x.num_size > y.num_size) ? x : y;
     const BigNum& sml = (x.num_size > y.num_size) ? y : x;
-    ret = 0;
-
-    // Check for full zero numbers
-    bool is_zero;
-
-    is_zero = true;
-    for (size_t i = 0; i < big.num_size; i++)
-        if (big.num[i] != 0)
-            is_zero = false;
-    if (is_zero)
-        return;
-
-    is_zero = true;
-    for (size_t i = 0; i < sml.num_size; i++)
-        if (sml.num[i] != 0)
-            is_zero = false;
-    if (is_zero)
-        return;
+    temp.resize(big.num_size+1);
+    ret.resize(big.num_size + sml.num_size);
+    for (size_t i = 0; i < ret.num_size; i++)
+        ret.num[i] = 0;
 
     // Loop smaller number (bottom row)
     for (size_t i = 0; i < sml.num_size; i++)
     {
-        // Set temp's logical size (not num_size_real)
-        // offset + big.num_size + 1
-        temp.resize(i + big.num_size + 1);
-        for (size_t j = 0; j < temp.num_size; j++)
-            temp.num[j] = 0;
-
         // Loop larger number (top row)
         uint32_t carry = 0;
         for (size_t j = 0; j < big.num_size; j++)
@@ -281,19 +261,31 @@ void BigNum::mul_basecase(const BigNum& x, const BigNum& y, BigNum& temp, BigNum
             uint64_t calc = ((uint64_t) big.num[j] * (uint64_t) sml.num[i]) + (uint64_t) carry;
 
             // Save calculation to (zero offset) temp digit.
-            temp.num[i+j] = (uint32_t) calc;
+            temp.num[j] = (uint32_t) calc;
 
             // Set next carry
             carry = (uint32_t) (calc >> 32);
         }
 
-        // Handle final carry
+        // Handle final mult carry
         if (carry)
-            temp.num[i+big.num_size] = carry;
+            temp.num[big.num_size] = carry;
 
-        ret += temp;
+        // ret += (temp << (i*32))
+        // Simplified BigNum::add()
+        carry = 0;
+        for (size_t j = 0; j < temp.num_size; j++)
+        {
+            uint64_t calc = (uint64_t) ret.num[i+j] + (uint64_t) temp.num[j] + carry;
+
+            ret.num[i+j] =(uint32_t) calc;
+
+            carry = (calc >> 32) ? 1 : 0;
+        }
     }
 
+    ret.trunc();
+    
     return;
 }
 
@@ -347,6 +339,7 @@ void BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNu
         y_high.num[i] = y.num[i + digits];
     }
     mul_karatsuba(x_high, y_high, level-1, A);
+    
 
     //? D (Low half digits)
     for (size_t i = 0; i < digits; i++)
@@ -357,8 +350,17 @@ void BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNu
     mul_karatsuba(x_low, y_low, level-1, D);
 
     //? E (x_low-x_high) * (y_high-y_low) + a + d
+    x_high.trunc();
+    x_low.trunc();
+    y_high.trunc();
+    y_low.trunc();
+
     x_low = x_low - x_high;
     y_high = y_high - y_low;
+    
+    x_low.resize(digits);
+    y_high.resize(digits);
+    
     mul_karatsuba(x_low, y_high, level-1, E);
     E.sign = x_low.sign ^ y_high.sign;
     E += A + D;

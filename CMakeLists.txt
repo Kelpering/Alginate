@@ -19,6 +19,7 @@ target_compile_options(Alginate
         -Wall
         -Wpedantic
         -Werror
+        -ggdb
 )
 
 
