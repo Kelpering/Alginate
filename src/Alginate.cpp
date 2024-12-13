@@ -374,6 +374,10 @@ void BigNum::mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNu
 
 //! Works for the most part, some error with large numbers causes results to be off.
 //! Current fix: Use dynamic allocations during runtime.
+
+//! New idea: expand the BigNum temps (include the x_high/low)
+//! Then we allocate just the object and let the internal resizes handle the rest
+//! Most resizes are by (digits), so we might be able to allocate them in mul anyway
 // void BigNum::mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret)
 // {
 //     // If we reach the bottom of the karatsuba levels, call basecase instead.
@@ -592,6 +596,85 @@ BigNum BigNum::sub(const BigNum& x, const BigNum& y)
     return z;
 }
 
+// BigNum BigNum::mul(const BigNum& x, const BigNum& y)
+// {
+//     const BigNum& big = (x.num_size > y.num_size) ? x : y;
+//     const BigNum& sml = (x.num_size > y.num_size) ? y : x;
+//     BigNum z;
+    
+
+//     if (sml.num_size > KARATSUBA_DIGITS)
+//     {
+//         // Calculate number of karatsuba levels.
+//         size_t shifts = 0;
+//         while ((1ULL<<shifts) < big.num_size)
+//             shifts++;
+//         size_t branches = shifts-KARAT_SHIFT;
+
+
+//         // //? Branch structure 
+//         //     //? x   [0]
+//         //     //? y   [1]
+//         //     //? a   [2]
+//         //     //? d   [3]
+//         //     //? e   [4]
+//         //     //? ret [5]     digits*2
+//         // BigNum** workspace = new BigNum*[branches];
+//         // for (size_t i = 0; i < branches; i++)
+//         // {
+//         //     // Create each branch
+//         //     workspace[i] = new BigNum[6];
+
+//         //     // Individual BigNums
+//         //     workspace[i][0].resize(KARATSUBA_DIGITS<<(i+1));        // X
+//         //     workspace[i][1].resize(KARATSUBA_DIGITS<<(i+1));        // Y
+//         //     workspace[i][2].resize(KARATSUBA_DIGITS<<(i+1));        // A
+//         //     workspace[i][3].resize(KARATSUBA_DIGITS<<(i+1));        // D
+//         //     workspace[i][4].resize(KARATSUBA_DIGITS<<(i+1));        // E
+//         //     // Ret holds x.num_size + y.num_size digits (double in this case)
+//         //     workspace[i][5].resize(KARATSUBA_DIGITS<<(i+2));        // Ret
+//         // }
+
+//         BigNum big_temp = big;
+//         BigNum sml_temp = sml;
+//         big_temp.resize(KARATSUBA_DIGITS<<(branches));
+//         sml_temp.resize(KARATSUBA_DIGITS<<(branches));
+
+//         // Manually set largest workspace (zero-fills unused space)
+//         // for (size_t i = 0; i < big.num_size; i++)
+//         //     workspace[branches-1][0].num[i] = big.num[i];   // X
+//         // for (size_t i = 0; i < sml.num_size; i++)
+//         //     workspace[branches-1][1].num[i] = sml.num[i];   // Y
+
+//         // Perform multiplication
+//         // mul_karatsuba(workspace, branches-1, z);
+//         mul_karatsuba(big_temp, sml_temp, branches-1, z);
+//         z.sign = x.sign ^ y.sign;
+//         z.trunc();
+
+//         // Deallocate workspace
+//         // for (size_t i = 0; i < branches; i++)
+//         //     delete[] workspace[i];
+//         // delete[] workspace;
+
+//         return z;
+//     }
+//     else
+//     {
+//         // Base multiplication
+//         BigNum temp;
+//         temp.resize(big.num_size<<1);
+//         z.resize(big.num_size<<1);
+
+//         // Perform multiplication
+//         mul_basecase(x, y, temp, z);
+//         z.sign = x.sign ^ y.sign;
+//         z.trunc();
+
+//         return z;
+//     }
+// }
+
 BigNum BigNum::mul(const BigNum& x, const BigNum& y)
 {
     const BigNum& big = (x.num_size > y.num_size) ? x : y;
@@ -608,13 +691,14 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
         size_t branches = shifts-KARAT_SHIFT;
 
 
-        // //? Branch structure 
+        // //? make a struct for this
         //     //? x   [0]
         //     //? y   [1]
         //     //? a   [2]
         //     //? d   [3]
         //     //? e   [4]
-        //     //? ret [5]     digits*2
+        //     //? x_low, x_high, y_low, y_high
+        //     //? ret [9]     digits*2
         // BigNum** workspace = new BigNum*[branches];
         // for (size_t i = 0; i < branches; i++)
         // {
