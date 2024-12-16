@@ -401,7 +401,6 @@ void BigNum::mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret)
     size_t digits = KARATSUBA_DIGITS<<level;
 
     // Create temp variables
-    // BigNum x_low, y_low, x_high, y_high
     workspace[level-1][0].resize(digits<<1);
     workspace[level-1][1].resize(digits<<1);
     
@@ -736,9 +735,6 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
         BigNum sml_temp = sml;
         big_temp.resize(KARATSUBA_DIGITS<<(branches));
         sml_temp.resize(KARATSUBA_DIGITS<<(branches));
-
-        workspace[branches-1][0].resize(KARATSUBA_DIGITS<<(branches));
-        workspace[branches-1][1].resize(KARATSUBA_DIGITS<<(branches));
 
 
         // Manually set largest workspace (zero-fills unused space)

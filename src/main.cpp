@@ -4,7 +4,7 @@
 
 int main()
 {
-    BigNum x = {rand, 400, false};
+    BigNum x = {rand, 40, false};
     BigNum y = {rand, 50, false};
     BigNum m = {rand, 100, false};
     if (m % 2 == 0)
