@@ -5,8 +5,8 @@
 int main()
 {
     BigNum x = {rand, 400, false};
-    BigNum y = {rand, 5, false};
-    BigNum m = {rand, 80, false};
+    BigNum y = {rand, 50, false};
+    BigNum m = {rand, 100, false};
     if (m % 2 == 0)
         m += 1;
 

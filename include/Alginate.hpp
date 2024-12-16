@@ -43,8 +43,8 @@ class BigNum
 
         // Multiplication helper functions
         static void mul_basecase(const BigNum& x, const BigNum& y, BigNum& temp, BigNum& ret);
-        // static void mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret);
-        static void mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNum& ret);
+        static void mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret);
+        // static void mul_karatsuba(const BigNum& x, const BigNum& y, size_t level, BigNum& ret);
 
         static BigNum short_combined_div(BigNum x, const BigNum& y, BigNum* ret_mod);
 
