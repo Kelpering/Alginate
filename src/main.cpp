@@ -1,20 +1,21 @@
-#include "Alginate.hpp"
-
 #include <iostream>
+#include "Alginate.hpp"
 
 int main()
 {
-    BigNum x = {rand, 40, false};
-    BigNum y = {rand, 50, false};
-    BigNum m = {rand, 100, false};
-    if (m % 2 == 0)
-        m += 1;
+    uint32_t* num_array1 = new uint32_t[4] {0, 1, 2, 0xFFFFFFFF};
+    uint32_t* num_array2 = new uint32_t[4] {0, 1, 0xFFFFFFFF, 3};
+    uint32_t* num_array3 = new uint32_t[5] {0};
+    AlgInt test1 = {num_array1, 4, false};
+    AlgInt test2 = {num_array2, 4, false};
+    AlgInt test3 = {num_array3, 5, false};
 
-    std::cout << "Start exponentiation\n\n";
-    // std::cout << "Montgomery\n";
-    // x.mod_exp_mont(y,m);
-    std::cout << "Regular\n";
-    x.mod_exp(y,m).print_debug();
+    test1.print_debug("test1");
+    test2.print_debug("test2");
+    test3.print_debug("test3");
+    AlgInt::internal_sub(test1, test2, test3);
+    test3.print_debug("test3");
+    
 
     return 0;
 }
