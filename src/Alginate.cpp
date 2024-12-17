@@ -87,6 +87,32 @@ for (size_t i = y.num_size; i > 0; i--)
 }
 */
 
+// -1 (x<y)
+// 0 (x==y)
+// +1 (x>y)
+int AlgInt::unsigned_compare(const AlgInt& x, const AlgInt& y)
+{
+    AlgInt& big = (x.size > y.size) ? x : y;
+    AlgInt& sml = (x.size > y.size) ? y : x;
+
+    // Check for non-zero in the larger integer
+    for (size_t i = big.size; i > sml.size; i--)
+    {
+        if (big.num[i-1] > 0)
+            return 1;
+    }
+
+    for (size_t i = sml.size; i > 0; i--)
+    {
+        if (big.num[i-1] > sml.num[i-1])
+            return 1;
+        else if (big.num[i-1] < sml.num[i-1])
+            return -1;
+    }
+
+    return 0;
+}
+
 void AlgInt::print_debug(const char* name, bool show_size) const
 {
     // Formatting
