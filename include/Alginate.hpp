@@ -25,7 +25,7 @@ class AlgInt
 
     public:
     //* Variables
-    struct k_leaf
+    struct k_branch
     {
         AlgInt* x;
         AlgInt* y;
@@ -93,7 +93,9 @@ class AlgInt
          * @param workspace The workspace array to prepare (caller must de-allocate both workspace & k_leafs).
          * @returns The workspace's corresponding level variable. 
          */
-        static size_t prepare_mul_workspace(const AlgInt& x, const AlgInt& y, struct k_leaf**& workspace);
+        static size_t prepare_mul_workspace(const AlgInt& x, const AlgInt& y, struct k_branch**& workspace);
+
+        static void destroy_mul_workspace(struct k_branch**& workspace, size_t level);
 
         /**
          * @brief Unsigned multiplication of two AlgInts.
@@ -104,7 +106,7 @@ class AlgInt
                     are expected to contain the required numbers to multiply. All AlgInts are
                     expected to be properly allocated beforehand.
          */
-        static void internal_mul(struct k_leaf** workspace, size_t level);
+        static void internal_mul(struct k_branch** workspace, size_t level);
 
         /**
          * @brief Unsigned comparison of two AlgInts.

@@ -65,7 +65,7 @@ void AlgInt::internal_sub(const AlgInt& big, const AlgInt& sml, AlgInt& ret)
     return;
 }
 
-size_t AlgInt::prepare_mul_workspace(const AlgInt& x, const AlgInt& y, k_leaf**& workspace)
+size_t AlgInt::prepare_mul_workspace(const AlgInt& x, const AlgInt& y, k_branch**& workspace)
 {
     // Prepare pre-allocated workspace variable to contain the correct values.
 
@@ -79,16 +79,19 @@ size_t AlgInt::prepare_mul_workspace(const AlgInt& x, const AlgInt& y, k_leaf**&
 
     if (power <= KARATSUBA_POWER)
     {
-        workspace = new k_leaf* [1];
-        workspace[0] = new k_leaf;
+        workspace = new k_branch* [1];
+        workspace[0] = new k_branch;
 
         size_t std_size = KARATSUBA_SIZE;
 
+        // Make dummy workspace (A, D, E, t1, and t2 are unused in basecase code path)
         workspace[0]->x = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
         workspace[0]->y = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
         workspace[0]->A = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
         workspace[0]->D = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
         workspace[0]->E = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
+        workspace[0]->t1 = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
+        workspace[0]->t2 = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
         workspace[0]->ret = new AlgInt(new uint32_t[std_size<<1] {0}, std_size<<1, false);
 
         for (size_t i = 0; i < big.size; i++)
@@ -101,12 +104,12 @@ size_t AlgInt::prepare_mul_workspace(const AlgInt& x, const AlgInt& y, k_leaf**&
     
     size_t level = power - KARATSUBA_POWER;
     
-    workspace = new k_leaf* [level+1];
+    workspace = new k_branch* [level+1];
 
     for (size_t i = 0; i < level+1; i++)
     {
         // Allocate one branch of workspace
-        workspace[i] = new k_leaf;
+        workspace[i] = new k_branch;
 
         size_t std_size = KARATSUBA_SIZE<<i;
 
@@ -132,7 +135,48 @@ size_t AlgInt::prepare_mul_workspace(const AlgInt& x, const AlgInt& y, k_leaf**&
     return level;
 }
 
-void AlgInt::internal_mul(struct k_leaf** workspace, size_t level)
+void AlgInt::destroy_mul_workspace(struct k_branch**& workspace, size_t level)
+{
+    // For each branch
+        // For each AlgInt
+            // Delete anonymous num array
+            // Delete AlgInt
+        // Delete workspace branch
+    for (size_t i = 0; i < level+1; i++)
+    {
+        workspace[i]->x->destroy();
+        delete workspace[i]->x;
+
+        workspace[i]->y->destroy();
+        delete workspace[i]->y;
+
+        workspace[i]->A->destroy();
+        delete workspace[i]->A;
+
+        workspace[i]->D->destroy();
+        delete workspace[i]->D;
+
+        workspace[i]->E->destroy();
+        delete workspace[i]->E;
+
+        workspace[i]->t1->destroy();
+        delete workspace[i]->t1;
+
+        workspace[i]->t2->destroy();
+        delete workspace[i]->t2;
+
+        workspace[i]->ret->destroy();
+        delete workspace[i]->ret;
+
+        // Delete workspace branch
+        delete workspace[i];
+    }
+
+    // Delete entire workspace tree.
+    delete[] workspace;
+}
+
+void AlgInt::internal_mul(struct k_branch** workspace, size_t level)
 { 
     //! Temporary(?) clears
     for (size_t i = 0; i < KARATSUBA_SIZE<<1; i++)
@@ -214,55 +258,52 @@ void AlgInt::internal_mul(struct k_leaf** workspace, size_t level)
         workspace[level]->D->num[i] = workspace[level-1]->ret->num[i];
 
 
-    //! The issue is here (assumedly after mult operation)
-    //! We just need to figure out if its the mult or the add/sub
-    //? Intermediate digits (E)
+    //? Preliminary E calculations
+
+    //* x_low - x_high
     // t1 = x_low, t2 = x_high
     for (size_t i = 0; i < digits>>1; i++)
     {
         workspace[level-1]->t1->num[i] = workspace[level]->x->num[i];
         workspace[level-1]->t2->num[i] = workspace[level]->x->num[i+(digits>>1)];
     }
-
-    //* x_low - x_high
-    // If x_high > x_low
-    cmp = AlgInt::unsigned_compare(*workspace[level-1]->t2, *workspace[level-1]->t1);
-
+    
+    // Clear ret AlgInt [level-1]->x
     for (size_t i = 0; i < workspace[level-1]->x->size; i++)
         workspace[level-1]->x->num[i] = 0;
-    
+
     // x = x_low - x_high (accounting for x_high > x_low)
+    cmp = AlgInt::unsigned_compare(*workspace[level-1]->t2, *workspace[level-1]->t1);
     if (cmp == 1)
         AlgInt::internal_sub(*workspace[level-1]->t2, *workspace[level-1]->t1, *workspace[level-1]->x);
     else
         AlgInt::internal_sub(*workspace[level-1]->t1, *workspace[level-1]->t2, *workspace[level-1]->x);
-    // (cmp == 1) ? true : false;
-    workspace[level-1]->x->sign = (bool) (cmp+1);
+    workspace[level-1]->x->sign = (bool) (cmp+1);   // (cmp == 1) ? true : false;
 
 
+    //* y_high - y_low
     // t1 = y_high, t2 = y_low
     for (size_t i = 0; i < digits>>1; i++)
     {
         workspace[level-1]->t1->num[i] = workspace[level]->y->num[i+(digits>>1)];
         workspace[level-1]->t2->num[i] = workspace[level]->y->num[i];
     }
-    
-    //* y_high - y_low
-    // If y_low > y_high
-    cmp = AlgInt::unsigned_compare(*workspace[level-1]->t2, *workspace[level-1]->t1);
 
+    // Clear ret AlgInt [level-1]->y
     for (size_t i = 0; i < workspace[level-1]->y->size; i++)
         workspace[level-1]->y->num[i] = 0;
 
     // y = y_high - y_low (accounting for y_low > y_high)
+    cmp = AlgInt::unsigned_compare(*workspace[level-1]->t2, *workspace[level-1]->t1);
     if (cmp == 1)
         AlgInt::internal_sub(*workspace[level-1]->t2, *workspace[level-1]->t1, *workspace[level-1]->y);
     else
         AlgInt::internal_sub(*workspace[level-1]->t1, *workspace[level-1]->t2, *workspace[level-1]->y);
-    // (cmp == 1) ? true : false;
-    workspace[level-1]->y->sign = (bool) (cmp+1);
+    workspace[level-1]->y->sign = (bool) (cmp+1);   // (cmp == 1) ? true : false;
 
-    // ret = (x_low - x_high) * (y_high - y_low)
+
+    //? Intermediate digits (E)
+    //* x = (x_low - x_high) * (y_high - y_low)
     internal_mul(workspace, level-1);
     
     // Transfer the result to x (ret.size == digits)
@@ -286,10 +327,9 @@ void AlgInt::internal_mul(struct k_leaf** workspace, size_t level)
     {
         workspace[level]->ret->num[digits + i] = workspace[level]->A->num[i];
         workspace[level]->ret->num[i] = workspace[level]->D->num[i];
-
     }
 
-    // ret += E<<(digits/2) (digitwise)
+    // ret += E<<(digits/2) (shifts are digitwise)
     internal_add(*workspace[level]->ret, *workspace[level]->E, *workspace[level]->ret, digits>>1);
 
     return;

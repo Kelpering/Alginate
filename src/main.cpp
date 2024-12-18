@@ -22,7 +22,7 @@ int main()
     test1.print_debug();
     test2.print_debug();
 
-    AlgInt::k_leaf** workspace;
+    AlgInt::k_branch** workspace;
     size_t level = AlgInt::prepare_mul_workspace(test1, test2, workspace);
 
     std::cout << "level: " << level << "\n";
@@ -38,31 +38,7 @@ int main()
     test2.destroy();
     // test3.destroy();
 
-    // Workspace de-allocation
-    for (size_t i = 0; i < level+1; i++)
-    {
-        workspace[i]->x->destroy();
-        delete workspace[i]->x;
-
-        workspace[i]->y->destroy();
-        delete workspace[i]->y;
-
-        workspace[i]->A->destroy();
-        delete workspace[i]->A;
-
-        workspace[i]->D->destroy();
-        delete workspace[i]->D;
-
-        workspace[i]->E->destroy();
-        delete workspace[i]->E;
-
-        workspace[i]->ret->destroy();
-        delete workspace[i]->ret;
-
-        delete workspace[i];
-    }
-    
-    delete[] workspace;
+    AlgInt::destroy_mul_workspace(workspace, level);
     
 
     return 0;
