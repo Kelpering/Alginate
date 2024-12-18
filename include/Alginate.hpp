@@ -29,13 +29,11 @@ class AlgInt
     {
         AlgInt* x;
         AlgInt* y;
-        AlgInt* ret;
-
         AlgInt* A;
         AlgInt* D;
         AlgInt* E;
 
-
+        AlgInt* ret;
     };
 
     //* Init functions
@@ -51,6 +49,14 @@ class AlgInt
         num(array), 
         size(size), 
         sign(sign) {};
+
+        /**
+         * @brief Destroys the num array (use in anonymous allocations)
+         * 
+         */
+        void destroy() {
+            delete[] num;
+        }
 
     //* Fundamental
 
@@ -85,7 +91,7 @@ class AlgInt
          * @param workspace The workspace array to prepare (caller must de-allocate both workspace & k_leafs).
          * @returns The workspace's corresponding level variable. 
          */
-        static size_t prepare_mul_workspace(const AlgInt& x, const AlgInt& y, AlgInt& ret, struct k_leaf** workspace);
+        static size_t prepare_mul_workspace(const AlgInt& x, const AlgInt& y, struct k_leaf**& workspace);
 
         /**
          * @brief Unsigned multiplication of two AlgInts.

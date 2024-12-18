@@ -392,6 +392,7 @@ void BigNum::mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret)
     //? 8 -> y_high
     //? 9 -> ret
 
+
     // If we reach the bottom of the karatsuba levels, call basecase instead.
     // mul_basecase(x, y, a, ret)
     if (level == 0)
@@ -433,8 +434,8 @@ workspace[level-1][0].resize(digits<<1);
     {
         workspace[level-1][0].num[i] = workspace[level][0].num[i];
         workspace[level-1][1].num[i] = workspace[level][1].num[i];
-        workspace[level][7].num[i] = workspace[level][0].num[i + digits];
-        workspace[level][8].num[i] = workspace[level][1].num[i + digits];
+        workspace[level][7].num[i] = workspace[level][0].num[i];
+        workspace[level][8].num[i] = workspace[level][1].num[i];
     }
     mul_karatsuba(workspace, level-1, workspace[level][3]);
 
@@ -452,8 +453,11 @@ workspace[level-1][0].resize(digits<<1);
     workspace[level][7].trunc();
     workspace[level][8].trunc();
 
-    workspace[level][0] = workspace[level][5] - workspace[level][7];
-    workspace[level][1] = workspace[level][8] - workspace[level][6];
+    workspace[level][0] = workspace[level][7] - workspace[level][5];
+    workspace[level][1] = workspace[level][6] - workspace[level][8];
+
+    workspace[level][0].print_debug("x_merg");
+    workspace[level][1].print_debug("y_merg");
     
     workspace[level][0].resize(digits);
     workspace[level][1].resize(digits);
@@ -462,11 +466,18 @@ workspace[level-1][0].resize(digits<<1);
     workspace[level][4].sign = workspace[level][0].sign ^ workspace[level][1].sign;
     workspace[level][4] += workspace[level][2] + workspace[level][3];
 
-
     //? Res = A.shl(digits<<6) + E.shl(digits<<5) + D
     ret = workspace[level][2].bw_shl(digits << 6) + \
     workspace[level][4].bw_shl(digits << 5) + \
     workspace[level][3];
+
+    BigNum ret_temp;
+    mul_basecase(workspace[level][0], workspace[level][1], workspace[level][2], ret_temp);
+    ret_temp.print_debug("ret_temp");
+
+    workspace[level][2].print_debug("A", true);
+    workspace[level][3].print_debug("D", true);
+    workspace[level][4].print_debug("E", true);
 
     return;
 }

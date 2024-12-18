@@ -1,7 +1,7 @@
 #include "Alginate.hpp"
 
-#define KARATSUBA_POWER 4
-#define KARATSUBA_SIZE 16
+#define KARATSUBA_POWER (5)
+#define KARATSUBA_SIZE (1ULL<<KARATSUBA_POWER)
 
 void AlgInt::internal_add(const AlgInt& big, const AlgInt& sml, AlgInt& ret, size_t digit_shift)
 {
@@ -65,7 +65,7 @@ void AlgInt::internal_sub(const AlgInt& big, const AlgInt& sml, AlgInt& ret)
     return;
 }
 
-size_t AlgInt::prepare_mul_workspace(const AlgInt& x, const AlgInt& y, AlgInt& ret, struct k_leaf** workspace)
+size_t AlgInt::prepare_mul_workspace(const AlgInt& x, const AlgInt& y, k_leaf**& workspace)
 {
     // Prepare pre-allocated workspace variable to contain the correct values.
 
@@ -80,12 +80,21 @@ size_t AlgInt::prepare_mul_workspace(const AlgInt& x, const AlgInt& y, AlgInt& r
     if (power <= KARATSUBA_POWER)
     {
         workspace = new k_leaf* [1];
+        workspace[0] = new k_leaf;
 
         size_t std_size = KARATSUBA_SIZE;
 
         workspace[0]->x = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
         workspace[0]->y = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
+        workspace[0]->A = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
+        workspace[0]->D = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
+        workspace[0]->E = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
         workspace[0]->ret = new AlgInt(new uint32_t[std_size<<1] {0}, std_size<<1, false);
+
+        for (size_t i = 0; i < big.size; i++)
+            workspace[0]->x->num[i] = big.num[i];
+        for (size_t i = 0; i < sml.size; i++)
+            workspace[0]->y->num[i] = sml.num[i];
 
         return 0;
     }
@@ -96,6 +105,9 @@ size_t AlgInt::prepare_mul_workspace(const AlgInt& x, const AlgInt& y, AlgInt& r
 
     for (size_t i = 0; i < level+1; i++)
     {
+        // Allocate one branch of workspace
+        workspace[i] = new k_leaf;
+
         size_t std_size = KARATSUBA_SIZE<<i;
 
         // Allocate std_size variables
@@ -118,24 +130,61 @@ size_t AlgInt::prepare_mul_workspace(const AlgInt& x, const AlgInt& y, AlgInt& r
     return level;
 }
 
-
 void AlgInt::internal_mul(struct k_leaf** workspace, size_t level)
 { 
+    //! Temporary(?) clears
+    for (size_t i = 0; i < KARATSUBA_SIZE<<1; i++)
+            workspace[0]->ret->num[i] = 0;
+    for (size_t i = 0; i < KARATSUBA_SIZE; i++)
+            workspace[0]->A->num[i] = 0;
+    for (size_t i = 0; i < KARATSUBA_SIZE; i++)
+            workspace[0]->D->num[i] = 0;
+    for (size_t i = 0; i < KARATSUBA_SIZE; i++)
+            workspace[0]->E->num[i] = 0;
+
+    // Perform basecase multiplication
     if (level == 0)
     {
-        // mul_basecase, return workspace[0]->ret to iteration
+        for (size_t i = 0; i < KARATSUBA_SIZE; i++)
+        {
+            uint32_t carry = 0;
+            for (size_t j = 0; j < KARATSUBA_SIZE; j++)
+            {
+                // Perform single digit mult operation + previous carry
+                uint64_t calc = (uint64_t) workspace[0]->x->num[j] * (uint64_t) workspace[0]->y->num[i] + (uint64_t) carry;
+
+                // Save calculation to (zero offset) temp digit.
+                workspace[0]->A->num[j] = (uint32_t) calc;
+
+                // Set next carry
+                carry = (uint32_t) (calc >> 32);
+            }
+
+            // Ret += A<<i (digitwise)
+            AlgInt::internal_add(*workspace[0]->ret, *workspace[0]->A, *workspace[0]->ret, i);
+            
+            // Ret += carry<<(i+A.size) (equivalent to carry being the largest digit in A)
+            // This prevents the size of the temporary from being KARATSUBA_SIZE+1
+            size_t pos = i+KARATSUBA_SIZE;
+            while (carry)
+            {
+                uint64_t calc = (uint64_t) workspace[0]->ret->num[pos] + (uint64_t) carry;
+
+                workspace[0]->ret->num[pos] = (uint32_t) calc;
+                pos++;
+
+                carry = (calc >> 32) ? 1 : 0;
+            }
+        }
+        
         return;
     }
 
-    // Current digit size for std_size workspace variables
+    // Used for AlgInt::unsigned_compare
     int cmp = 0;
+    // Current digit size for std_size workspace variables
     size_t digits = KARATSUBA_SIZE<<level;
 
-    // x, y, ret
-
-    // E, tmp_ret
-
-    // Remember we can use any temporaries stored in lower workspaces until next internal_mul call
 
     //? High Half digits (A)
     for (size_t i = 0; i < digits>>1; i++)
@@ -162,6 +211,9 @@ void AlgInt::internal_mul(struct k_leaf** workspace, size_t level)
     for (size_t i = 0; i < digits; i++)
         workspace[level]->D->num[i] = workspace[level-1]->ret->num[i];
 
+
+    //! The issue is here (assumedly after mult operation)
+    //! We just need to figure out if its the mult or the add/sub
     //? Intermediate digits (E)
     // x = x_low, y = x_high
     for (size_t i = 0; i < digits>>1; i++)
@@ -192,6 +244,8 @@ void AlgInt::internal_mul(struct k_leaf** workspace, size_t level)
         workspace[level-1]->x->num[i] = workspace[level]->y->num[i+(digits>>1)];
         workspace[level-1]->y->num[i] = workspace[level]->y->num[i];
     }
+
+    workspace[level]->x->print_debug("abc");
     
     //* y_high - y_low
     // If y_low > y_high
@@ -226,7 +280,17 @@ void AlgInt::internal_mul(struct k_leaf** workspace, size_t level)
     if (workspace[level]->x->sign)
         internal_sub(*workspace[level]->ret, *workspace[level]->x, *workspace[level]->E);
     else
-        internal_add(*workspace[level]->x, *workspace[level]->ret, *workspace[level]->E);
+        internal_add(*workspace[level]->ret, *workspace[level]->x, *workspace[level]->E);
+    
+    workspace[level]->A->print_debug("A");
+    workspace[level]->D->print_debug("D");
+    workspace[level]->E->print_debug("E");
+
+/*
+A (size: 1): + 1
+D (size: 63): + 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1
+E (size: 63): + 2 4 6 8 10 12 14 16 18 20 22 24 26 28 30 32 34 36 38 40 42 44 46 48 50 52 54 56 58 60 62 64 62 60 58 56 54 52 50 48 46 44 42 40 38 36 34 32 30 28 26 24 22 20 18 16 14 12 10 8 6 4 3
+*/
 
     
     // Once we reach here:
