@@ -12,11 +12,11 @@
 
 int main()
 {
-    uint32_t* num_array1 = new uint32_t[33] {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-    uint32_t* num_array2 = new uint32_t[33] {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    uint32_t* num_array1 = new uint32_t[2] {0, 0xFFFFFFFF};
+    uint32_t* num_array2 = new uint32_t[2] {0, 0xFFFFFFFF};
     // uint32_t* num_array3 = new uint32_t[2] {0};
-    AlgInt test1 = {num_array1, 33, false};
-    AlgInt test2 = {num_array2, 33, false};
+    AlgInt test1 = {num_array1, 2, false};
+    AlgInt test2 = {num_array2, 2, false};
     // AlgInt test3 = {num_array3, 2, false};
 
     test1.print_debug();

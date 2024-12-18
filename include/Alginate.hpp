@@ -32,6 +32,8 @@ class AlgInt
         AlgInt* A;
         AlgInt* D;
         AlgInt* E;
+        AlgInt* t1;
+        AlgInt* t2;
 
         AlgInt* ret;
     };

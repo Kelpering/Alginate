@@ -116,6 +116,8 @@ size_t AlgInt::prepare_mul_workspace(const AlgInt& x, const AlgInt& y, k_leaf**&
         workspace[i]->A = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
         workspace[i]->D = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
         workspace[i]->E = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
+        workspace[i]->t1 = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
+        workspace[i]->t2 = new AlgInt(new uint32_t[std_size] {0}, std_size, false);
 
         // Allocate larger sized variables
         workspace[i]->ret = new AlgInt(new uint32_t[std_size<<1] {0}, std_size<<1, false);
@@ -215,54 +217,51 @@ void AlgInt::internal_mul(struct k_leaf** workspace, size_t level)
     //! The issue is here (assumedly after mult operation)
     //! We just need to figure out if its the mult or the add/sub
     //? Intermediate digits (E)
-    // x = x_low, y = x_high
+    // t1 = x_low, t2 = x_high
     for (size_t i = 0; i < digits>>1; i++)
     {
-        workspace[level-1]->x->num[i] = workspace[level]->x->num[i];
-        workspace[level-1]->y->num[i] = workspace[level]->x->num[i+(digits>>1)];
+        workspace[level-1]->t1->num[i] = workspace[level]->x->num[i];
+        workspace[level-1]->t2->num[i] = workspace[level]->x->num[i+(digits>>1)];
     }
 
     //* x_low - x_high
     // If x_high > x_low
-    cmp = AlgInt::unsigned_compare(*workspace[level-1]->y, *workspace[level-1]->x);
-    if (cmp == 1)
-    {
-        // x = - (x_high - x_low)
-        AlgInt::internal_sub(*workspace[level-1]->y, *workspace[level-1]->x, *workspace[level]->x);
-        workspace[level]->x->sign = true;
-    }
-    else
-    {
-        // x = x_low - x_high
-        AlgInt::internal_sub(*workspace[level-1]->x, *workspace[level-1]->y, *workspace[level]->x);
-        workspace[level]->x->sign = false;
-    }
+    cmp = AlgInt::unsigned_compare(*workspace[level-1]->t2, *workspace[level-1]->t1);
 
-    // x = y_high, y = y_low
+    for (size_t i = 0; i < workspace[level-1]->x->size; i++)
+        workspace[level-1]->x->num[i] = 0;
+    
+    // x = x_low - x_high (accounting for x_high > x_low)
+    if (cmp == 1)
+        AlgInt::internal_sub(*workspace[level-1]->t2, *workspace[level-1]->t1, *workspace[level-1]->x);
+    else
+        AlgInt::internal_sub(*workspace[level-1]->t1, *workspace[level-1]->t2, *workspace[level-1]->x);
+    // (cmp == 1) ? true : false;
+    workspace[level-1]->x->sign = (bool) (cmp+1);
+
+
+    // t1 = y_high, t2 = y_low
     for (size_t i = 0; i < digits>>1; i++)
     {
-        workspace[level-1]->x->num[i] = workspace[level]->y->num[i+(digits>>1)];
-        workspace[level-1]->y->num[i] = workspace[level]->y->num[i];
+        workspace[level-1]->t1->num[i] = workspace[level]->y->num[i+(digits>>1)];
+        workspace[level-1]->t2->num[i] = workspace[level]->y->num[i];
     }
-
-    workspace[level]->x->print_debug("abc");
     
     //* y_high - y_low
     // If y_low > y_high
-    cmp = AlgInt::unsigned_compare(*workspace[level-1]->y, *workspace[level-1]->x);
+    cmp = AlgInt::unsigned_compare(*workspace[level-1]->t2, *workspace[level-1]->t1);
+
+    for (size_t i = 0; i < workspace[level-1]->y->size; i++)
+        workspace[level-1]->y->num[i] = 0;
+
+    // y = y_high - y_low (accounting for y_low > y_high)
     if (cmp == 1)
-    {
-        // y = - (y_low - x_high)
-        AlgInt::internal_sub(*workspace[level-1]->y, *workspace[level-1]->x, *workspace[level]->y);
-        workspace[level]->y->sign = true;
-    }
+        AlgInt::internal_sub(*workspace[level-1]->t2, *workspace[level-1]->t1, *workspace[level-1]->y);
     else
-    {
-        // y = y_high - y_low
-        AlgInt::internal_sub(*workspace[level-1]->x, *workspace[level-1]->y, *workspace[level]->y);
-        workspace[level]->y->sign = false;
-    }
-    
+        AlgInt::internal_sub(*workspace[level-1]->t1, *workspace[level-1]->t2, *workspace[level-1]->y);
+    // (cmp == 1) ? true : false;
+    workspace[level-1]->y->sign = (bool) (cmp+1);
+
     // ret = (x_low - x_high) * (y_high - y_low)
     internal_mul(workspace, level-1);
     
@@ -271,7 +270,7 @@ void AlgInt::internal_mul(struct k_leaf** workspace, size_t level)
         workspace[level]->x->num[i] = workspace[level-1]->ret->num[i];
 
     // Account for sign after unsigned multiplication
-    workspace[level]->x->sign = workspace[level]->x->sign ^ workspace[level]->y->sign;
+    workspace[level]->x->sign = workspace[level-1]->x->sign ^ workspace[level-1]->y->sign;
 
     // ret = A+D (ret is used as a temporary here)
     internal_add(*workspace[level]->A, *workspace[level]->D, *workspace[level]->ret);
@@ -281,43 +280,17 @@ void AlgInt::internal_mul(struct k_leaf** workspace, size_t level)
         internal_sub(*workspace[level]->ret, *workspace[level]->x, *workspace[level]->E);
     else
         internal_add(*workspace[level]->ret, *workspace[level]->x, *workspace[level]->E);
-    
-    workspace[level]->A->print_debug("A");
-    workspace[level]->D->print_debug("D");
-    workspace[level]->E->print_debug("E");
 
-/*
-A (size: 1): + 1
-D (size: 63): + 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1
-E (size: 63): + 2 4 6 8 10 12 14 16 18 20 22 24 26 28 30 32 34 36 38 40 42 44 46 48 50 52 54 56 58 60 62 64 62 60 58 56 54 52 50 48 46 44 42 40 38 36 34 32 30 28 26 24 22 20 18 16 14 12 10 8 6 4 3
-*/
-
-    
-    // Once we reach here:
-    // A = (x_high * y_high)
-    // D = (x_low * y_low)
-    // E = (x_low - x_high) * (y_high - y_low) + A + D
-
-    // digits << 2; (A)
-    // digits << 1; (E)
-    // digits << 0; (D)
-
-    // ret = A<<(digits<<2) (digitwise)
+    // ret = A<<(digits<<1) + (D<<0) (shifts are digitwise)
     for (size_t i = 0; i < workspace[level]->A->size; i++)
+    {
         workspace[level]->ret->num[digits + i] = workspace[level]->A->num[i];
+        workspace[level]->ret->num[i] = workspace[level]->D->num[i];
 
-    // ret += E<<(digits<<1) (digitwise)
+    }
+
+    // ret += E<<(digits/2) (digitwise)
     internal_add(*workspace[level]->ret, *workspace[level]->E, *workspace[level]->ret, digits>>1);
-
-    // ret += D
-    internal_add(*workspace[level]->ret, *workspace[level]->D, *workspace[level]->ret);
-
-    //! A, D, E should all match at the end (especially if we match the KARATSUBA_DIGITS to KARATSUBA_SIZE)
-    //! If they do, then its certainly the shoddy shift attempts in the ret+= chain.
-    //! Especially check internal_adds untested digit_shift parameter
-
-    //! We could also check if there is carry over between function calls after additions/subtractions
-    //! This could be fixed by zero filling directly before a set or return (probably)
 
     return;
 }
