@@ -84,6 +84,14 @@ class AlgInt
          */
         static void internal_sub(const AlgInt& big, const AlgInt& sml, AlgInt& ret);
 
+        /**
+         * @brief Unsigned multiplication of an AlgInt and a uint32_t
+         * 
+         * @param x An AlgInt
+         * @param y A uint32_t variable
+         * @param ret The result, must hold at most x.size+1 digits.
+         */
+        static void internal_short_mul(const AlgInt& x, uint32_t y, AlgInt& ret);
 
         /**
          * @brief Prepare the workspace array for internal_mul.

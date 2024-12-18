@@ -176,17 +176,37 @@ void AlgInt::destroy_mul_workspace(struct k_branch**& workspace, size_t level)
     delete[] workspace;
 }
 
+void AlgInt::internal_short_mul(const AlgInt& x, uint32_t y, AlgInt& ret)
+{
+    // Loop x digits
+    uint32_t carry = 0;
+    for (size_t i = 0; i < x.size; i++)
+    {
+        uint64_t calc = (uint64_t) x.num[i] * y + carry;
+
+        ret.num[i] = (uint32_t) calc;
+
+        carry = (uint32_t) (calc >> 32);
+    }
+
+    // Handle final carry
+    if (carry)
+        ret.num[x.size] = carry;
+
+    return;
+}
+
 void AlgInt::internal_mul(struct k_branch** workspace, size_t level)
 { 
     //! Temporary(?) clears
     for (size_t i = 0; i < KARATSUBA_SIZE<<1; i++)
             workspace[0]->ret->num[i] = 0;
-    for (size_t i = 0; i < KARATSUBA_SIZE; i++)
-            workspace[0]->A->num[i] = 0;
-    for (size_t i = 0; i < KARATSUBA_SIZE; i++)
-            workspace[0]->D->num[i] = 0;
-    for (size_t i = 0; i < KARATSUBA_SIZE; i++)
-            workspace[0]->E->num[i] = 0;
+    // for (size_t i = 0; i < KARATSUBA_SIZE; i++)
+    //         workspace[0]->A->num[i] = 0;
+    // for (size_t i = 0; i < KARATSUBA_SIZE; i++)
+    //         workspace[0]->D->num[i] = 0;
+    // for (size_t i = 0; i < KARATSUBA_SIZE; i++)
+    //         workspace[0]->E->num[i] = 0;
 
     // Perform basecase multiplication
     if (level == 0)
@@ -226,10 +246,13 @@ void AlgInt::internal_mul(struct k_branch** workspace, size_t level)
         return;
     }
 
-    // Used for AlgInt::unsigned_compare
-    int cmp = 0;
-    // Current digit size for std_size workspace variables
-    size_t digits = KARATSUBA_SIZE<<level;
+    // Perform karatsuba optimization
+    
+    int cmp;        // Used for unsigned_compare
+    bool e_sign;    // used to preserve e's sign after internal_mul context switch
+    
+    // Current digit size for most workspace variables (ret = digits*2)
+    size_t digits = KARATSUBA_SIZE<<level; 
 
 
     //? High Half digits (A)
@@ -301,6 +324,9 @@ void AlgInt::internal_mul(struct k_branch** workspace, size_t level)
         AlgInt::internal_sub(*workspace[level-1]->t1, *workspace[level-1]->t2, *workspace[level-1]->y);
     workspace[level-1]->y->sign = (bool) (cmp+1);   // (cmp == 1) ? true : false;
 
+    // Preserve sign after internal_mul
+    e_sign = workspace[level-1]->x->sign ^ workspace[level-1]->y->sign;
+
 
     //? Intermediate digits (E)
     //* x = (x_low - x_high) * (y_high - y_low)
@@ -311,7 +337,7 @@ void AlgInt::internal_mul(struct k_branch** workspace, size_t level)
         workspace[level]->x->num[i] = workspace[level-1]->ret->num[i];
 
     // Account for sign after unsigned multiplication
-    workspace[level]->x->sign = workspace[level-1]->x->sign ^ workspace[level-1]->y->sign;
+    workspace[level]->x->sign = e_sign;
 
     // ret = A+D (ret is used as a temporary here)
     internal_add(*workspace[level]->A, *workspace[level]->D, *workspace[level]->ret);
@@ -331,6 +357,7 @@ void AlgInt::internal_mul(struct k_branch** workspace, size_t level)
 
     // ret += E<<(digits/2) (shifts are digitwise)
     internal_add(*workspace[level]->ret, *workspace[level]->E, *workspace[level]->ret, digits>>1);
+    workspace[level]->ret->print_debug("r", true);
 
     return;
 }
