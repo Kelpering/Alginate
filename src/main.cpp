@@ -53,38 +53,29 @@
 
 int main()
 {
-    uint32_t* num_array1 = new uint32_t[64] {0, 0xFFFFFFFF, 1};
-    uint32_t* num_array2 = new uint32_t[65] {0};
-    // uint32_t* num_array3 = new uint32_t[2] {0};
-    AlgInt test1 = {num_array1, 64, false};
-    AlgInt test2 = {num_array2, 65, false};
-    // AlgInt test3 = {num_array3, 2, false};
+    uint32_t* num_array1 = new uint32_t[3] {4, 5, 0};
+    uint32_t* num_array2 = new uint32_t[2] {4, 4};
+    uint32_t* num_array3 = new uint32_t[3] {0};
+    uint32_t* num_array5 = new uint32_t[3] {0};
+    AlgInt x = {num_array1, 3, false};
+    AlgInt y = {num_array2, 2, false};
+    AlgInt q = {num_array3, 3, false};
+    AlgInt temp = {num_array5, 3, false};
 
-    test1.print_debug();
-    test2.print_debug();
+    x.print_debug("x");
+    y.print_debug("y");
 
-    AlgInt::internal_short_mul(test1, 42, test2);
+    AlgInt::internal_div(x, y, temp, q);
 
-    test2.print_debug();
-
-    // AlgInt::k_branch** workspace;
-    // size_t level = AlgInt::prepare_mul_workspace(test1, test2, workspace);
-
-    // std::cout << "level: " << level << "\n";
-
-    // AlgInt::internal_mul(workspace, level);
-
-    // workspace[level]->ret->print_debug("ret", true);
+    q.print_debug("quotient ");
+    x.print_debug("remainder");
 
 
-
-    // Variable de-allocation
-    test1.destroy();
-    test2.destroy();
-    // test3.destroy();
-
-    // AlgInt::destroy_mul_workspace(workspace, level);
-    
+    //? Memory cleanup (for valgrind)
+    x.destroy();
+    y.destroy();
+    q.destroy();
+    temp.destroy();
 
     return 0;
 }

@@ -68,9 +68,8 @@ class AlgInt
          * @param big The bigger (big.size >= sml.size) number.
          * @param sml The smaller (sml.size <= big.size) number.
          * @param ret The result, must hold at most big.size+1 digits.
-         * @param digit_shift Shifts sml by that many digits with no overhead internally.
-         * @note The ret array can smaller if the addition does not overflow.
-         * @note The big and ret arrays must not overflow if using digit_shift.
+         * @param digit_shift Shifts sml by digit_shift digits with no overhead internally.
+         * @note The Digit_shift, if used, must not change the (big.size >= sml.size) relation.
          */
         static void internal_add(const AlgInt& big, const AlgInt& sml, AlgInt& ret, size_t digit_shift = 0);
 
@@ -79,10 +78,11 @@ class AlgInt
          * 
          * @param big The bigger (big>=sml) number.
          * @param sml The smaller (sml<=big) number.
+         * @param digit_shift Shifts sml by digit_shift digits with no overhead internally.
          * @param ret The result, must hold at most big.size digits.
-         * @note ret can be smaller if the subtraction does not overflow.
+         * @note The Digit_shift, if used, must not change the (big.size >= sml.size) relation.
          */
-        static void internal_sub(const AlgInt& big, const AlgInt& sml, AlgInt& ret);
+        static void internal_sub(const AlgInt& big, const AlgInt& sml, AlgInt& ret, size_t digit_shift = 0);
 
         /**
          * @brief Unsigned multiplication of an AlgInt and a uint32_t
@@ -117,13 +117,38 @@ class AlgInt
         static void internal_mul(struct k_branch** workspace, size_t level);
 
         /**
+         * @brief Unsigned division of an AlgInt and a uint32_t
+         * 
+         * @param x The Dividend
+         * @param y The divisor
+         * @param quotient The quotient of the result, must be x.size.
+         * @returns The remainder of the result.
+         */
+        static uint32_t internal_short_div(const AlgInt& x, uint32_t y, AlgInt& quotient);
+
+        /**
+         * @brief Unsigned division of two AlgInts
+         * 
+         * @param x_temp The dividend, will be destroyed. Contains remainder after call. MSW must be 0
+         * @param y_temp The divisor, will be destroyed. The MSW must be >0
+         * @param temp A temporary variable, must be exactly y.size+1
+         * @param quotient The quotient of the result, must be x.size.
+         */
+        static void internal_div(AlgInt& x_temp, AlgInt& y_temp, AlgInt& temp, AlgInt& quotient);
+
+
+        static void internal_shl(AlgInt& x, size_t shift);
+
+        static void internal_shr(AlgInt& x, size_t shift);
+
+        /**
          * @brief Unsigned comparison of two AlgInts.
          * 
-         * @param big The bigger (big.size >= sml.size) number.
-         * @param sml The smaller (sml.size <= big.size) number.
+         * @param x The number being compared.
+         * @param y The number to compare to.
          * @returns (x > y | 1) (x == y | 0) (x < y | -1)
          */
-        static int unsigned_compare(const AlgInt& big, const AlgInt& sml);
+        static int unsigned_compare(const AlgInt& x, const AlgInt& y);
 
 
     //* Print
