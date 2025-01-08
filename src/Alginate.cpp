@@ -374,6 +374,7 @@ void BigNum::mul_basecase(const BigNum& x, const BigNum& y, BigNum& temp, BigNum
 
 //! Works for the most part, some error with large numbers causes results to be off.
 //! Current fix: Use dynamic allocations during runtime.
+<<<<<<< HEAD
 
 //! New idea: expand the BigNum temps (include the x_high/low)
 //! Then we allocate just the object and let the internal resizes handle the rest
@@ -470,6 +471,87 @@ workspace[level-1][0].resize(digits<<1);
 
     return;
 }
+=======
+// void BigNum::mul_karatsuba(BigNum** workspace, size_t level, BigNum& ret)
+// {
+//     // If we reach the bottom of the karatsuba levels, call basecase instead.
+//     // mul_basecase(x, y, a, ret)
+//     if (level == 0)
+//         return mul_basecase(workspace[0][0], workspace[0][1], workspace[0][2], ret);
+//     // Zero check x and y (optimization for uneven x*y)
+//     bool is_zero;
+//     is_zero = true;
+//     for (size_t i = 0; i < workspace[level][0].num_size; i++)
+//         if (workspace[level][0].num[i] != 0)
+//             is_zero = false;
+//     if (is_zero)
+//     {
+//         workspace[level][5] = 0;
+//         return;
+//     }
+//     is_zero = true;
+//     for (size_t i = 0; i < workspace[level][1].num_size; i++)
+//         if (workspace[level][1].num[i] != 0)
+//             is_zero = false;
+//     if (is_zero)
+//     {
+//         workspace[level][5] = 0;
+//         return;
+//     }
+//     // Number of digits in the current workspace halved
+//     size_t digits = KARATSUBA_DIGITS<<level;
+//     //? A (High half digits)
+//     workspace[level-1][0].resize(digits);
+//     workspace[level-1][1].resize(digits);
+//     for (size_t i = 0; i < digits; i++)
+//     {
+//         workspace[level-1][0].num[i] = workspace[level][0].num[i + digits];
+//         workspace[level-1][1].num[i] = workspace[level][1].num[i + digits];
+//     }
+//     mul_karatsuba(workspace, level-1, workspace[level][2]);
+//     //? D (Low half digits)
+//     workspace[level-1][0].resize(digits);
+//     workspace[level-1][1].resize(digits);
+//     for (size_t i = 0; i < digits; i++)
+//     {
+//         workspace[level-1][0].num[i] = workspace[level][0].num[i];
+//         workspace[level-1][1].num[i] = workspace[level][1].num[i];
+//     }
+//     mul_karatsuba(workspace, level-1, workspace[level][3]);
+//     //? x_low - x_high = [level-1][x]
+//     workspace[level-1][0].resize(digits);
+//     workspace[level-1][2].resize(digits);
+//     workspace[level-1][3].resize(digits);
+//     for (size_t i = 0; i < digits; i++)
+//     {
+//         workspace[level-1][2].num[i] = workspace[level][0].num[i];
+//         workspace[level-1][3].num[i] = workspace[level][0].num[i + digits];
+//     }
+//     workspace[level-1][0] = workspace[level-1][2] - workspace[level-1][3];
+//     //? y_high - y_low = [level-1][y]
+//     workspace[level-1][0].resize(digits);
+//     workspace[level-1][2].resize(digits);
+//     workspace[level-1][3].resize(digits);
+//     for (size_t i = 0; i < digits; i++)
+//     {
+//         workspace[level-1][2].num[i] = workspace[level][1].num[i];
+//         workspace[level-1][3].num[i] = workspace[level][1].num[i + digits];
+//     }
+//     workspace[level-1][1] =  workspace[level-1][3] - workspace[level-1][2];
+//     //? E (x_low-x_high) * (y_high-y_low) + a + d
+//     mul_karatsuba(workspace, level-1, workspace[level][4]);
+//     workspace[level][4].sign = workspace[level-1][0].sign ^ workspace[level-1][1].sign;
+//     workspace[level][4] += (workspace[level][2] + workspace[level][3]);
+//     if (workspace[level][2].sign || workspace[level][4].sign || workspace[level][3].sign)
+//         throw std::runtime_error("Error Karatsuba");
+//     //? Res = A.shl(digits<<6) + E.shl(digits<<5) + D
+//     ret =
+//     workspace[level][2].bw_shl(digits << 6) +
+//     workspace[level][4].bw_shl(digits << 5) +
+//     workspace[level][3];
+//     return;
+// }
+>>>>>>> parent of bf218ce (planning)
 
 BigNum BigNum::short_combined_div(BigNum x, const BigNum& y, BigNum* ret_mod)
 {
@@ -609,85 +691,6 @@ BigNum BigNum::sub(const BigNum& x, const BigNum& y)
     return z;
 }
 
-// BigNum BigNum::mul(const BigNum& x, const BigNum& y)
-// {
-//     const BigNum& big = (x.num_size > y.num_size) ? x : y;
-//     const BigNum& sml = (x.num_size > y.num_size) ? y : x;
-//     BigNum z;
-    
-
-//     if (sml.num_size > KARATSUBA_DIGITS)
-//     {
-//         // Calculate number of karatsuba levels.
-//         size_t shifts = 0;
-//         while ((1ULL<<shifts) < big.num_size)
-//             shifts++;
-//         size_t branches = shifts-KARAT_SHIFT;
-
-
-//         // //? Branch structure 
-//         //     //? x   [0]
-//         //     //? y   [1]
-//         //     //? a   [2]
-//         //     //? d   [3]
-//         //     //? e   [4]
-//         //     //? ret [5]     digits*2
-//         // BigNum** workspace = new BigNum*[branches];
-//         // for (size_t i = 0; i < branches; i++)
-//         // {
-//         //     // Create each branch
-//         //     workspace[i] = new BigNum[6];
-
-//         //     // Individual BigNums
-//         //     workspace[i][0].resize(KARATSUBA_DIGITS<<(i+1));        // X
-//         //     workspace[i][1].resize(KARATSUBA_DIGITS<<(i+1));        // Y
-//         //     workspace[i][2].resize(KARATSUBA_DIGITS<<(i+1));        // A
-//         //     workspace[i][3].resize(KARATSUBA_DIGITS<<(i+1));        // D
-//         //     workspace[i][4].resize(KARATSUBA_DIGITS<<(i+1));        // E
-//         //     // Ret holds x.num_size + y.num_size digits (double in this case)
-//         //     workspace[i][5].resize(KARATSUBA_DIGITS<<(i+2));        // Ret
-//         // }
-
-//         BigNum big_temp = big;
-//         BigNum sml_temp = sml;
-//         big_temp.resize(KARATSUBA_DIGITS<<(branches));
-//         sml_temp.resize(KARATSUBA_DIGITS<<(branches));
-
-//         // Manually set largest workspace (zero-fills unused space)
-//         // for (size_t i = 0; i < big.num_size; i++)
-//         //     workspace[branches-1][0].num[i] = big.num[i];   // X
-//         // for (size_t i = 0; i < sml.num_size; i++)
-//         //     workspace[branches-1][1].num[i] = sml.num[i];   // Y
-
-//         // Perform multiplication
-//         // mul_karatsuba(workspace, branches-1, z);
-//         mul_karatsuba(big_temp, sml_temp, branches-1, z);
-//         z.sign = x.sign ^ y.sign;
-//         z.trunc();
-
-//         // Deallocate workspace
-//         // for (size_t i = 0; i < branches; i++)
-//         //     delete[] workspace[i];
-//         // delete[] workspace;
-
-//         return z;
-//     }
-//     else
-//     {
-//         // Base multiplication
-//         BigNum temp;
-//         temp.resize(big.num_size<<1);
-//         z.resize(big.num_size<<1);
-
-//         // Perform multiplication
-//         mul_basecase(x, y, temp, z);
-//         z.sign = x.sign ^ y.sign;
-//         z.trunc();
-
-//         return z;
-//     }
-// }
-
 BigNum BigNum::mul(const BigNum& x, const BigNum& y)
 {
     const BigNum& big = (x.num_size > y.num_size) ? x : y;
@@ -704,12 +707,13 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
         size_t branches = shifts-KARAT_SHIFT;
 
 
-        // //? make a struct for this
+        // //? Branch structure 
         //     //? x   [0]
         //     //? y   [1]
         //     //? a   [2]
         //     //? d   [3]
         //     //? e   [4]
+<<<<<<< HEAD
         //     //? x_low, x_high, y_low, y_high
         //     //? ret [9]     digits*2
         BigNum** workspace = new BigNum*[branches];
@@ -717,6 +721,14 @@ BigNum BigNum::mul(const BigNum& x, const BigNum& y)
         {
             // Create each branch
             workspace[i] = new BigNum[10];
+=======
+        //     //? ret [5]     digits*2
+        // BigNum** workspace = new BigNum*[branches];
+        // for (size_t i = 0; i < branches; i++)
+        // {
+        //     // Create each branch
+        //     workspace[i] = new BigNum[6];
+>>>>>>> parent of bf218ce (planning)
 
             // Individual BigNums
             workspace[i][0].resize(KARATSUBA_DIGITS<<(i+1));        // X
