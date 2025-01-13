@@ -3,165 +3,55 @@
 
 #include <cstdint>
 #include <cstddef>
-
-// I want to remove this and replace it with a better output function eventually
 #include <iostream>
-
-// Final try
-
-//^ Alginate is too slow, we need a completely new design to prevent issues.
-//^ Allocations are costly, so we are going to replace them with pre-allocated arrays
-//^ We will use VERY basic objects (sign, num_array (pre-allocated in init), num_size (pre-set in init))
-//^ Our goal is going to be to work from low->high level, starting with functions.
-//^ Functions will contain no allocations internally, and provided return objects will be required
-//^ Any functions that require temporaries will be provided via function parameters as well
 
 class AlgInt
 {
     private:
-        uint32_t* num;
-        size_t size;
-        bool sign;
+        uint32_t* num = nullptr;
+        size_t size = 0;
+        bool sign = false;
 
-    public:
-    //* Variables
-    struct k_branch
-    {
-        AlgInt* x;
-        AlgInt* y;
-        AlgInt* A;
-        AlgInt* D;
-        AlgInt* E;
-        AlgInt* t1;
-        AlgInt* t2;
+        void resize(size_t new_size);
 
-        AlgInt* ret;
-    };
+        //! Probably temporary (deletes default methods to prevent hidden issues)
+        AlgInt() = delete;
+        AlgInt(AlgInt const & other) = delete;
+        AlgInt& operator=(AlgInt const & other) = delete;
+        AlgInt& operator=(const AlgInt&& other) = delete;
+    public: 
+        //* Basic constructor/destructors
+        AlgInt(const uint32_t* num, size_t size, bool sign);
+        ~AlgInt();
 
-    //* Init functions
-
-        /**
-         * @brief Construct a new AlgInt number.
-         * 
-         * @param array The internal array used to construct the number.
-         * @param size The size of the internal array.
-         * @param sign The sign of the number.
-         */
-        AlgInt(uint32_t* array, size_t size, bool sign) : 
-        num(array), 
-        size(size), 
-        sign(sign) {};
-
-        /**
-         * @brief Destroys the num array (use in anonymous allocations)
-         * 
-         */
-        void destroy() {
-            delete[] num;
-        }
-
-    //* Fundamental
-
-        /**
-         * @brief Unsigned addition of two AlgInts.
-         * 
-         * @param big The bigger (big.size >= sml.size) number.
-         * @param sml The smaller (sml.size <= big.size) number.
-         * @param ret The result, must hold at most big.size+1 digits.
-         * @param digit_shift Shifts sml by digit_shift digits with no overhead internally.
-         * @note The Digit_shift, if used, must not change the (big.size >= sml.size) relation.
-         */
-        static void internal_add(const AlgInt& big, const AlgInt& sml, AlgInt& ret, size_t digit_shift = 0);
-
-        /**
-         * @brief Unsigned subtraction of two AlgInts.
-         * 
-         * @param big The bigger (big>=sml) number.
-         * @param sml The smaller (sml<=big) number.
-         * @param digit_shift Shifts sml by digit_shift digits with no overhead internally.
-         * @param ret The result, must hold at most big.size digits.
-         * @note The Digit_shift, if used, must not change the (big.size >= sml.size) relation.
-         */
-        static void internal_sub(const AlgInt& big, const AlgInt& sml, AlgInt& ret, size_t digit_shift = 0);
-
-        /**
-         * @brief Unsigned multiplication of an AlgInt and a uint32_t
-         * 
-         * @param x An AlgInt
-         * @param y A uint32_t variable
-         * @param ret The result, must hold at most x.size+1 digits.
-         */
-        static void internal_short_mul(const AlgInt& x, uint32_t y, AlgInt& ret);
-
-        /**
-         * @brief Prepare the workspace array for internal_mul.
-         * 
-         * @param x The first number to multiply.
-         * @param y The second number to multiply.
-         * @param workspace The workspace array to prepare (caller must de-allocate both workspace & k_leafs).
-         * @returns The workspace's corresponding level variable. 
-         */
-        static size_t prepare_mul_workspace(const AlgInt& x, const AlgInt& y, struct k_branch**& workspace);
-
-        static void destroy_mul_workspace(struct k_branch**& workspace, size_t level);
-
-        /**
-         * @brief Unsigned multiplication of two AlgInts.
-         * 
-         * @param workspace An array of k_leaf structs.
-         * @param level Size of accessible workspace
-         * @note This uses a karatsuba method of recursion. X and Y in the largest workspace 
-                    are expected to contain the required numbers to multiply. All AlgInts are
-                    expected to be properly allocated beforehand.
-         */
-        static void internal_mul(struct k_branch** workspace, size_t level);
-
-        /**
-         * @brief Unsigned division of an AlgInt and a uint32_t
-         * 
-         * @param x The Dividend
-         * @param y The divisor
-         * @param quotient The quotient of the result, must be x.size.
-         * @returns The remainder of the result.
-         */
-        static uint32_t internal_short_div(const AlgInt& x, uint32_t y, AlgInt& quotient);
-
-        /**
-         * @brief Unsigned division of two AlgInts
-         * 
-         * @param x_temp The dividend, will be destroyed. Contains remainder after call. MSW must be 0
-         * @param y_temp The divisor, will be destroyed. The MSW must be >0
-         * @param temp A temporary variable, must be exactly y.size+1
-         * @param quotient The quotient of the result, must be x.size.
-         */
-        static void internal_div(AlgInt& x_temp, AlgInt& y_temp, AlgInt& temp, AlgInt& quotient);
-
-
-        static void internal_shl(AlgInt& x, size_t shift);
-
-        static void internal_shr(AlgInt& x, size_t shift);
-
-        /**
-         * @brief Unsigned comparison of two AlgInts.
-         * 
-         * @param x The number being compared.
-         * @param y The number to compare to.
-         * @returns (x > y | 1) (x == y | 0) (x < y | -1)
-         */
-        static int unsigned_compare(const AlgInt& x, const AlgInt& y);
-
-
-    //* Print
-
-        /**
-         * @brief Prints the internal array and other useful info to stdout.
-         * 
-         * @param name The name of the variable to print
-         * @param show_size Whether or not to show the size in digits of the number.
-         */
+        //* Basic print
         void print_debug(const char* name = "Number", bool show_size = false) const;
+
+        //! Keep everything very basic to speed up development/debugging
+        //! Work with signed integers throughout the process
+        //! Reduce number of function calls
+        //! Log all "alias calls" (ex: add(x,y) where y is negative is actually sub(x,y))
+
+        //^ Comparison signed (x ? y)
+            //^ 1 if x > y
+            //^ 0 if x == y
+            //^ -1 if x < y
+            //^ Overrideable bool for ignore sign
+            //^ Works with unmatched sizes
+            //^ O(N) goal (iterate over larger N digits only, then iterate over equal N & M digits)
+        
+        //^ add signed (x, y, ret)
+            //^ returns into ret
+            //^ ret cannot be the same as x or y
+            //^ No carry variable because ret is only allocated once (might be shrunk, no alloc)
+
+        
+        //^ self_add signed (x, y)
+            //^ returns into x
+            //^ Should be more space and time efficient than add (1 less number to create, except resize)
+            //^ Use carry variable to prevent unnecessary re-alloc in resize
+
+
 };
-
-
 
 #endif // __ALGINATE_HPP__
