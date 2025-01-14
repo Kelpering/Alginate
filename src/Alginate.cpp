@@ -110,14 +110,14 @@ void AlgInt::print_debug(const char* name, bool show_size) const
     return;
 }
 
-int AlgInt::compare(const AlgInt& x, const AlgInt& y)
+int AlgInt::cmp(const AlgInt& x, const AlgInt& y, bool ignore_sign)
 {
     //! Temporary?
     if (x.size < y.size)
-        throw std::exception();
+        return -(cmp(y,x,false));
 
     // If only one number is negative, then the non-negative is larger
-    if (x.sign ^ y.sign)
+    if ((x.sign ^ y.sign) && !ignore_sign)
         return (x.sign) ? -1 : 1;
     
     bool sign_flip = x.sign && y.sign;
@@ -148,10 +148,21 @@ int AlgInt::compare(const AlgInt& x, const AlgInt& y)
     return 0;
 }
 
-void AlgInt::add(const AlgInt& x, const AlgInt& y, AlgInt& ret)
+void AlgInt::add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign)
 {
-    //! Currently ignores signs
-    //! Write logic here to reroute numbers to other functions
+    // Handle signs
+    uint8_t switch_sign = (ignore_sign) ? 0 : (x.sign << 1) | y.sign;
+    switch (switch_sign) 
+    {
+        case 0b00:  // x + y
+            ret.sign = false;
+        case 0b01:  // x + (-y) == x - y
+            return sub(x,y,ret, true);
+        case 0b10:  // (-x) + y == y - x
+            return sub(y,x,ret, true);
+        case 0b11:  // (-x) + (-y) == -(x+y)
+            ret.sign = true;
+    }
 
     const AlgInt& big = (x.size > y.size) ? x : y;
     const AlgInt& sml = (x.size > y.size) ? y : x;
@@ -175,16 +186,41 @@ void AlgInt::add(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     return;
 }
 
-void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret)
+void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign)
 {
-    // Handle signs here
+    // Handle signs
+    uint8_t switch_sign = (ignore_sign) ? 0 : (x.sign << 1) | y.sign;
+    switch (switch_sign) 
+    {
+        case 0b00:  // x - y
+            ret.sign = false;
+            break;
+        case 0b01:  // x - (-y) == x + y
+            return add(x, y, ret, true);
+        case 0b10:  // (-x) - y == -(x+y)
+            sub(y, x, ret, true);
+            ret.sign = true;
+            return;
+        case 0b11:  // (-x) - (-y) == y - x
+            return sub(y, x, ret, true);
+    }
 
-    // Handle negative answer here.
+    // Handle y > x here.
         // In a comparison check, every x == y digit can be zero'd out in the future calculation.
+        // We don't have to set a size for ret until we finish this "zeroing"
+        // Then we can specify the smaller via reference
+        // Set ret to the bigger
+        // We can also speed up this check with x.size vs y.size comparison w/ zero check
+
+    
 
     //! Temporary (and slow) comparison
-    if (compare(x,y) == -1)
-        throw std::exception();
+    if (cmp(x,y) == -1)
+    {
+        sub(y, x, ret, true);
+        ret.sign = true;
+        return;
+    }
 
     // ret = x;
     ret.resize(x.size);

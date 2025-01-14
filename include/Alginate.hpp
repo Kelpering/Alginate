@@ -39,21 +39,21 @@ class AlgInt
          * @return 1: (x > y) ||| 0: (x == y) ||| -1: (x < y)
          * @note Assumes that x.size >= y.size. Throws error if x.size < y.size. 
          */
-        static int compare(const AlgInt& x, const AlgInt& y);
+        static int cmp(const AlgInt& x, const AlgInt& y, bool ignore_sign = false);
 
         /**
          * @brief ret = x + y
          * 
          * @param ret Cannot be x or y
          */
-        static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign = false);
 
         /**
          * @brief ret = x - y
          * 
          * @param ret Cannot be x or y
          */
-        static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign = false);
 
 
         //* Comparison signed (x ? y)
