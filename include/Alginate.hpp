@@ -1,6 +1,7 @@
 #ifndef __ALGINATE_HPP__
 #define __ALGINATE_HPP__
 
+#include <bit>
 #include <cstdint>
 #include <cstddef>
 #include <iostream>
@@ -10,6 +11,7 @@ class AlgInt
     private:
         uint32_t* num = nullptr;
         size_t size = 0;
+        size_t cap = 0;
         bool sign = false;
 
         void resize(size_t new_size);
@@ -32,12 +34,34 @@ class AlgInt
         //! Reduce number of function calls
         //! Log all "alias calls" (ex: add(x,y) where y is negative is actually sub(x,y))
 
-        //^ Comparison signed (x ? y)
-            //^ 1 if x > y
-            //^ 0 if x == y
-            //^ -1 if x < y
+        /**
+         * @brief Compares x to y.
+         * @return 1: (x > y) ||| 0: (x == y) ||| -1: (x < y)
+         * @note Assumes that x.size >= y.size. Throws error if x.size < y.size. 
+         */
+        static int compare(const AlgInt& x, const AlgInt& y);
+
+        /**
+         * @brief ret = x + y
+         * 
+         * @param ret Cannot be x or y
+         */
+        static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+
+        /**
+         * @brief ret = x - y
+         * 
+         * @param ret Cannot be x or y
+         */
+        static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+
+
+        //* Comparison signed (x ? y)
+            //* 1 if x > y
+            //* 0 if x == y
+            //* -1 if x < y
             //^ Overrideable bool for ignore sign
-            //^ Works with unmatched sizes
+            //* Works with unmatched sizes
             //^ O(N) goal (iterate over larger N digits only, then iterate over equal N & M digits)
         
         //^ add signed (x, y, ret)

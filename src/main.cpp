@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <iostream>
 #include "Alginate.hpp"
 #include "Alginate_old.hpp"
@@ -53,10 +54,21 @@
 
 int main()
 {
-    uint32_t x_temp[] = {1,2,3};
+    uint32_t x_temp[] = {1,2};
     AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t), false};
+    uint32_t y_temp[] = {1,2};
+    AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t), false};
+    AlgInt ret = {NULL, 0, false};
 
-    x.print_debug("test");
+    x.print_debug("X", true);
+    y.print_debug("Y", true);
+    ret.print_debug("ret", true);
+    AlgInt::add(x,y,ret);
+    ret.print_debug("ret", true);
+    AlgInt::sub(ret, y, x);
+    x.print_debug("ret", true);
+
+    
 
     return 0;
 }
