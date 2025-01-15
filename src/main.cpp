@@ -63,10 +63,8 @@ int main()
     x.print_debug("X  ", true);
     y.print_debug("Y  ", true);
     ret.print_debug("ret", true);
-    std::cout << "Rem: " << AlgInt::div_digit(x,4,ret) << "\n";
+    AlgInt::add_digit(x,4,ret);
     ret.print_debug("ret", true);
-    AlgInt::mul_digit(ret, 4, x);
-    x.print_debug("ret");
 
     
 

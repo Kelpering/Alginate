@@ -44,6 +44,14 @@ class AlgInt
         /**
          * @brief ret = x + y
          * 
+         * @param x Cannot be negative
+         * @param ret Cannot be x
+         */
+        static void add_digit(const AlgInt& x, uint32_t y, AlgInt& ret);
+
+        /**
+         * @brief ret = x + y
+         * 
          * @param ret Cannot be x or y
          */
         static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign = false);

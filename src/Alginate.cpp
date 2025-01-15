@@ -148,6 +148,35 @@ int AlgInt::cmp(const AlgInt& x, const AlgInt& y, bool ignore_sign)
     return 0;
 }
 
+void AlgInt::add_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
+{
+    ret.resize(x.size + 1);
+    //! unsigned for now
+    ret.sign = false;
+
+    uint64_t calc = y;
+
+    for (size_t i = 0; i < x.size; i++)
+    {
+        calc += x.num[i];
+        ret.num[i] = (uint32_t) calc;
+        calc >>= 32;
+    }
+
+    if (calc)
+        ret.num[ret.size-1] = 1;
+    else
+        ret.resize(ret.size-1);
+
+    // Remove leading zeroes from ret
+    size_t temp_size = ret.size;
+    while (ret.num[temp_size-1] == 0)
+        temp_size--;
+    ret.resize(temp_size);
+
+    return;
+}
+
 void AlgInt::add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign)
 {
     // Handle signs
