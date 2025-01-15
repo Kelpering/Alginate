@@ -54,19 +54,19 @@
 
 int main()
 {
-    uint32_t x_temp[] = {1,2};
+    uint32_t x_temp[] = {33, 27};
     AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t), false};
-    uint32_t y_temp[] = {1,2};
+    uint32_t y_temp[] = {1, 1};
     AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t), false};
     AlgInt ret = {NULL, 0, false};
 
-    x.print_debug("X", true);
-    y.print_debug("Y", true);
+    x.print_debug("X  ", true);
+    y.print_debug("Y  ", true);
     ret.print_debug("ret", true);
-    AlgInt::add(x,y,ret);
+    std::cout << "Rem: " << AlgInt::div_digit(x,4,ret) << "\n";
     ret.print_debug("ret", true);
-    AlgInt::sub(ret, y, x);
-    x.print_debug("ret", true);
+    AlgInt::mul_digit(ret, 4, x);
+    x.print_debug("ret");
 
     
 

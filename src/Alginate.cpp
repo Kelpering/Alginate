@@ -156,12 +156,14 @@ void AlgInt::add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign
     {
         case 0b00:  // x + y
             ret.sign = false;
+            break;
         case 0b01:  // x + (-y) == x - y
             return sub(x,y,ret, true);
         case 0b10:  // (-x) + y == y - x
             return sub(y,x,ret, true);
         case 0b11:  // (-x) + (-y) == -(x+y)
             ret.sign = true;
+            break;
     }
 
     const AlgInt& big = (x.size > y.size) ? x : y;
@@ -173,7 +175,7 @@ void AlgInt::add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign
 
     for (size_t i = 0; i < big.size; i++)
     {
-        uint64_t calc = big.num[i] + sml.num[i] + carry;
+        uint64_t calc = (uint64_t) big.num[i] + sml.num[i] + carry;
         ret.num[i] = (uint32_t) calc;
         carry = calc >> 32;
     }
@@ -182,6 +184,12 @@ void AlgInt::add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign
         ret.num[ret.size-1] = 1;
     else
         ret.resize(ret.size-1);
+
+    // Remove leading zeroes from ret
+    size_t temp_size = ret.size;
+    while (ret.num[temp_size-1] == 0)
+        temp_size--;
+    ret.resize(temp_size);
 
     return;
 }
@@ -255,11 +263,126 @@ void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign
         ret.num[i-1] = calc;
     }
 
-    //? Remove excess zeroes from ret?
-    // size_t temp_size = ret.size;
-    // while (ret.num[temp_size-1] == 0)
-    //     temp_size--;
-    // ret.resize(temp_size);
+    // Remove leading zeroes from ret
+    size_t temp_size = ret.size;
+    while (ret.num[temp_size-1] == 0)
+        temp_size--;
+    ret.resize(temp_size);
 
     return;
+}
+
+void AlgInt::mul_digit(const AlgInt& x, uint32_t y, AlgInt& ret, bool ignore_sign)
+{
+    ret.resize(x.size+1);
+    ret.sign = (ignore_sign) ? 0 : x.sign;
+
+    // Prevent previous calculations from affecting first digit.
+    ret.num[0] = 0;
+
+    // mul_add loop
+    for (size_t i = 0; i < x.size; i++)
+    {
+        uint64_t calc = (uint64_t) x.num[i] * y;
+        
+        // = instead of += to prevent previous calculations from interfering.
+        ret.num[i+1] = (uint32_t) (calc >> 32);
+        ret.num[i] +=  (uint32_t) calc;
+    }
+
+    // Remove leading zeroes from ret
+    size_t temp_size = ret.size;
+    while (ret.num[temp_size-1] == 0)
+        temp_size--;
+    ret.resize(temp_size);
+
+    return;
+}
+
+void AlgInt::mul(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign)
+{
+    ret.resize(x.size+y.size);
+    ret.sign = (ignore_sign) ? 0 : (x.sign ^ y.sign);
+
+    const AlgInt& big = (x.size > y.size) ? x : y;
+    const AlgInt& sml = (x.size > y.size) ? y : x;
+
+    for (size_t i = 0; i < sml.size; i++)
+    {
+        for (size_t j = 0; j < big.size; j++)
+        {
+            uint64_t calc1 = (uint64_t) big.num[j] * sml.num[i];
+
+            // Add calc to ret from offset i+j
+            size_t t = i+j;
+            uint64_t calc2 = ret.num[t] + (uint32_t) calc1;
+
+            // First carry
+            ret.num[t++] = (uint32_t) calc2;
+
+            // Merge first digit carry into other carry.
+            calc2 = (calc1>>32) + (calc2>>32);
+
+            // Second carry
+            calc2 += ret.num[t];
+            ret.num[t++] = (uint32_t) calc2;
+
+            while (calc2 > UINT32_MAX)
+            {
+                calc2 >>= 32;
+                calc2 += ret.num[t];
+                ret.num[t++] = (uint32_t) calc2;
+            }
+        }
+    }
+
+    // Remove leading zeroes from ret
+    size_t temp_size = ret.size;
+    while (ret.num[temp_size-1] == 0)
+        temp_size--;
+    ret.resize(temp_size);
+
+    return;
+}
+
+uint32_t AlgInt::div_digit(const AlgInt& x, uint32_t y, AlgInt& ret, bool ignore_sign)
+{
+    // Single digit is required for Knuth division (due to the q_hat)
+    // This is euclidean division (so no decimal)
+    // We can make this combined division if we want.
+        // div digit can just be combined (return will fit remainder)
+        // div regular (div no mod)
+        // div combine (div && mod)
+        // mod regular (mod no div)
+        // All temp info can be stored in ret (if we expand its size at the beginning)
+        // This counts for mod as well (ret = y.size + 1 w/ temp variable to store single intermediate)
+
+    ret.resize(x.size);
+    ret.sign = (ignore_sign) ? 0 : x.sign;
+
+    // Prevent OoB with x.size == 1
+    if (x.size == 1)
+    {
+        ret.num[0] = x.num[0] / y;
+        return x.num[0] % y;
+    }
+
+    // First rollover's MSW is a 0 (because of implicit leading zeroes).
+    uint64_t x_both = 0;
+
+    for (size_t i = x.size+1; i > 1; i--)
+    {
+        // Rolls x_both over to the next digit (keeping remainder)
+        x_both <<= 32;
+        x_both |= x.num[i-2];
+
+        // ret = x / y
+        ret.num[i-2] = x_both / y;
+        
+        // Keep remainder for next rollover
+        x_both %= y;
+    }
+
+    // Final rollover is the remainder
+    return (uint32_t) x_both;
 }

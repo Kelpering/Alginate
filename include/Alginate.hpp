@@ -55,16 +55,35 @@ class AlgInt
          */
         static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign = false);
 
+        /**
+         * @brief ret = x * y
+         * 
+         * @param ret Cannot be x.
+         */
+        static void mul_digit(const AlgInt& x, uint32_t y, AlgInt& ret, bool ignore_sign = false);
 
-        //* Comparison signed (x ? y)
-            //* 1 if x > y
-            //* 0 if x == y
-            //* -1 if x < y
-            //^ Overrideable bool for ignore sign
-            //* Works with unmatched sizes
-            //^ O(N) goal (iterate over larger N digits only, then iterate over equal N & M digits)
+        /**
+         * @brief ret = x * y
+         * 
+         * @param ret Cannot be x or y.
+         */
+        static void mul(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign = false);
+
+        /**
+         * @brief ret = x / y (euclidean)
+         * 
+         * @param ret Cannot be x, contains quotient.
+         * @returns The remainder.
+         */
+        static uint32_t div_digit(const AlgInt& x, uint32_t y, AlgInt& ret, bool ignore_sign = false);
         
-        //^ add signed (x, y, ret)
+    //? Basic function types?
+        //^ add public (x, y, ret)
+            //^ returns into ret
+            //^ ret CAN be x or y
+            //^ Chooses between add, self_add, and add_digit
+
+        //^ add (x, y, ret)
             //^ returns into ret
             //^ ret cannot be the same as x or y
             //^ No carry variable because ret is only allocated once (might be shrunk, no alloc)
@@ -74,6 +93,19 @@ class AlgInt
             //^ returns into x
             //^ Should be more space and time efficient than add (1 less number to create, except resize)
             //^ Use carry variable to prevent unnecessary re-alloc in resize
+
+        //^ add digit (x, int, ret)
+            //^ returns into ret
+            //^ ret can be x
+            //^ int must be a uint32_t
+            //^ Much faster than temp w/ conversion + add
+
+
+        // Mul and Div are next
+        // Signs are easier (ret.sign = x.sign ^ y.sign)
+        // Mul is faster if we implement addition directly in the step by step
+        // Div is faster if we implement a mul_digit function 
+        // Barrett Reduction might be useful for modular exponentiation
 
 
 };
