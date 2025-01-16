@@ -54,19 +54,22 @@
 
 int main()
 {
-    uint32_t x_temp[] = {33, 27};
-    AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t), false};
+    uint32_t x_temp[] = {312, 27};
+    AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
     uint32_t y_temp[] = {1, 1};
-    AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t), false};
-    AlgInt ret = {NULL, 0, false};
+    AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t)};
+    AlgInt ret = {NULL, 0};
 
-    x.print_debug("X  ", true);
-    y.print_debug("Y  ", true);
-    ret.print_debug("ret", true);
-    AlgInt::add_digit(x,4,ret);
-    ret.print_debug("ret", true);
-
-    
+    // Barrett and Montgomery are both for the same reduction.
+    // Montgomery is faster.
+    // Montgomery only works on odd numbers, but that is a VERY simple check/optimization
+    // So two mod_exp funcs (normal & montgomery)
+    // montgomery should be pre-calculated if possible.
+    // We can probably save the space with a special struct
+    // The struct can be default static in c++ if unspecified
+    //  If we specify the struct, then it saves pre-computed data to the struct
+    //  for future calculations.
+    // Add some checksum (1 if static, 0 otherwise) to speed up pre-comp.
 
     return 0;
 }

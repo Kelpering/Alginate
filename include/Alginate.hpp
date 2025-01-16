@@ -12,7 +12,7 @@ class AlgInt
         uint32_t* num = nullptr;
         size_t size = 0;
         size_t cap = 0;
-        bool sign = false;
+        // bool sign = false;
 
         void resize(size_t new_size);
 
@@ -23,7 +23,7 @@ class AlgInt
         AlgInt& operator=(const AlgInt&& other) = delete;
     public: 
         //* Basic constructor/destructors
-        AlgInt(const uint32_t* num, size_t size, bool sign);
+        AlgInt(const uint32_t* num, size_t size);
         ~AlgInt();
 
         //* Basic print
@@ -39,12 +39,11 @@ class AlgInt
          * @return 1: (x > y) ||| 0: (x == y) ||| -1: (x < y)
          * @note Assumes that x.size >= y.size. Throws error if x.size < y.size. 
          */
-        static int cmp(const AlgInt& x, const AlgInt& y, bool ignore_sign = false);
+        static int cmp(const AlgInt& x, const AlgInt& y);
 
         /**
          * @brief ret = x + y
          * 
-         * @param x Cannot be negative
          * @param ret Cannot be x
          */
         static void add_digit(const AlgInt& x, uint32_t y, AlgInt& ret);
@@ -54,28 +53,29 @@ class AlgInt
          * 
          * @param ret Cannot be x or y
          */
-        static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign = false);
+        static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret);
 
         /**
          * @brief ret = x - y
          * 
          * @param ret Cannot be x or y
+         * @note If x < y, then the result will be the absolute of the result.
          */
-        static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign = false);
+        static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret);
 
         /**
          * @brief ret = x * y
          * 
          * @param ret Cannot be x.
          */
-        static void mul_digit(const AlgInt& x, uint32_t y, AlgInt& ret, bool ignore_sign = false);
+        static void mul_digit(const AlgInt& x, uint32_t y, AlgInt& ret);
 
         /**
          * @brief ret = x * y
          * 
          * @param ret Cannot be x or y.
          */
-        static void mul(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign = false);
+        static void mul(const AlgInt& x, const AlgInt& y, AlgInt& ret);
 
         /**
          * @brief ret = x / y (euclidean)
@@ -83,7 +83,12 @@ class AlgInt
          * @param ret Cannot be x, contains quotient.
          * @returns The remainder.
          */
-        static uint32_t div_digit(const AlgInt& x, uint32_t y, AlgInt& ret, bool ignore_sign = false);
+        static uint32_t div_digit(const AlgInt& x, uint32_t y, AlgInt& ret);
+
+        static void div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r);
+
+        static void bw_shl(const AlgInt& x, size_t y, AlgInt& ret);
+        static void bw_shr(const AlgInt& x, size_t y, AlgInt& ret);
         
     //? Basic function types?
         //^ add public (x, y, ret)
