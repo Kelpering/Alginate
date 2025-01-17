@@ -339,6 +339,10 @@ void AlgInt::mul(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     ret.resize(x.size+y.size);
     // ret.sign = (ignore_sign) ? 0 : (x.sign ^ y.sign);
 
+    // Prevent previous calculations from affecting digits.
+    for (size_t i = 0; i < ret.size; i++)
+        ret.num[i] = 0;
+
     const AlgInt& big = (x.size > y.size) ? x : y;
     const AlgInt& sml = (x.size > y.size) ? y : x;
 
@@ -350,7 +354,7 @@ void AlgInt::mul(const AlgInt& x, const AlgInt& y, AlgInt& ret)
 
             // Add calc to ret from offset i+j
             size_t t = i+j;
-            uint64_t calc2 = ret.num[t] + (uint32_t) calc1;
+            uint64_t calc2 = (uint64_t) ret.num[t] + (uint32_t) calc1;
 
             // First carry
             ret.num[t++] = (uint32_t) calc2;
@@ -468,49 +472,82 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r)
     r.resize(y.size+1); // Will be used for temporary values
 
 
-    size_t n = x.size - y.size;
+    size_t n = y.size;
     for (size_t i = x_norm.size-n; i > 0; i--)
     {
-        uint64_t q_h = (uint64_t) x_norm.num[n+i-1]<<32 | x_norm.num[n+i-2];
+        uint64_t q_h = (uint64_t) x_norm.num[n+(i-1)]<<32 | x_norm.num[n+(i-1)-1];
         uint64_t r_h = q_h % y_norm.num[n-1];   // Unrelated remainder
         q_h /= y_norm.num[n-1];     // Quotient approximation
 
+
         // Reduce q_h if we estimated too high (never too low)
-        bool check_bool = true;
         check_label:
-        if ((q_h >= (1ULL<<32)) || (q_h*y_norm.num[n-2] > (1ULL<<32) * r_h + x_norm.num[n+i-3]))
+        if ((q_h >= (1ULL<<32)) || (q_h*y_norm.num[n-2] > (1ULL<<32) * r_h + x_norm.num[n+(i-1)-2]))
         {
             q_h--;
             r_h += y_norm.num[n-1];
 
-            // recheck q_h only once
-            if (r_h < (1ULL<<32) && check_bool)
-            {
-                check_bool = false;
+            // recheck q_h
+            if (r_h < (1ULL<<32))
                 goto check_label;
-            }
         }
 
-        // q_h is now either 0 or 1 too large.
-        // We use ret rem to hold temporary q_h*y.
-        // Do offset subtraction, keep in mind possibiliy of negative
-        // later, we will perform add back.
+        AlgInt::mul_digit(y_norm,q_h,r);
 
-        // Basically, what the "true value" means is this:
-            // q_hat = q + 1
-            // x_norm - y * q_h will attempt to carry from "OoB"
-            // If it does this in the argument, then we can ignore the carry and
-            //  leave it AS IS (Its going to be the range's complement (~x_norm)  )
-            // Then, when we reach the add_back, we add y to x_norm and ignore THAT carry
-            // This fixes the number.
+        uint8_t sub_carry = 0;
+        uint64_t x_digit = 0;
+        uint64_t y_digit = 0;
+        for (size_t j = 0; j < r.size; j++)
+        {
+            x_digit = x_norm.num[(i-1)+j];
 
-            // This requires ultra precise bounds checking from both sub and add algs.
-            // Sub should have this bound checking w/ a carry, if still carry after alg, then add_back
-            // This is rare enough to not matter too much on efficiency.
-            // x_norm should also be zeroed after we exit range (by div definition).
+            y_digit = r.num[j];
+            y_digit += sub_carry;
+            sub_carry = 0;
+
+            // Memorize carry
+            if (x_digit < y_digit)
+            {
+                sub_carry = 1;
+                x_digit |= (1ULL<<32);
+            }
+
+            x_norm.num[(i-1)+j] = x_digit - y_digit;
+        }
+
+        // If we went OoB for carry (q_h > q)
+        if (sub_carry)
+        {
+            uint8_t add_carry = 0;
+            uint64_t calc = 0;
+            for (size_t j = 0; j < y_norm.size; j++)
+            {
+                calc = (uint64_t) x_norm.num[(i-1)+j] + y_norm.num[j] + add_carry;
+                add_carry = 0;
+
+                x_norm.num[(i-1)+j] = (uint32_t) calc;
+                if (calc >> 32)
+                    add_carry = 1;
+            }
+
+            // Final carry (We ignore the real last carry because we ignored it in the sub loop).
+            if (add_carry)
+                x_norm.num[(i-1)+x.size] += 1;
+
+            q_h--;
+        }
+
+        q.num[i-1] = q_h;
     }
 
+    // Unnormalize remainder.
+    bw_shr(x_norm, norm_shift, r);
 
+    // Remove leading zeroes from ret
+    size_t temp_size = q.size;
+    while (temp_size > 1 && q.num[temp_size-1] == 0)
+        temp_size--;
+    q.resize(temp_size);
 
     return;
 }
@@ -554,7 +591,7 @@ void AlgInt::bw_shl(const AlgInt& x, size_t y, AlgInt& ret)
 void AlgInt::bw_shr(const AlgInt& x, size_t y, AlgInt& ret)
 {
     // Maximum shift possible is x.size - y_digits
-    if (x.size < y)
+    if (x.size < (y>>5))
     {
         ret.resize(1);
         ret.num[0] = 0;

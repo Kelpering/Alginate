@@ -58,7 +58,8 @@ int main()
     AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
     uint32_t y_temp[] = {1, 1};
     AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t)};
-    AlgInt ret = {NULL, 0};
+    AlgInt q = {NULL, 0};
+    AlgInt r = {NULL, 0};
 
     // Barrett and Montgomery are both for the same reduction.
     // Montgomery is faster.
@@ -70,6 +71,19 @@ int main()
     //  If we specify the struct, then it saves pre-computed data to the struct
     //  for future calculations.
     // Add some checksum (1 if static, 0 otherwise) to speed up pre-comp.
+
+    x.print_debug("x");
+    y.print_debug("y");
+    AlgInt::div(x,y,q,r);
+    q.print_debug("q");
+    r.print_debug("r");
+
+    AlgInt::mul(q,y,x);
+    x.print_debug("chk1");
+
+    AlgInt::add(x,r,q);
+    q.print_debug("chk2");
+
 
     return 0;
 }
