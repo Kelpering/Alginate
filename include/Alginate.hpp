@@ -15,6 +15,7 @@ class AlgInt
         // bool sign = false;
 
         void resize(size_t new_size);
+        void trunc();
 
         //! Probably temporary (deletes default methods to prevent hidden issues)
         AlgInt() = delete;
@@ -28,6 +29,7 @@ class AlgInt
 
         //* Basic print
         void print_debug(const char* name = "Number", bool show_size = false) const;
+        void print_log(const char* name = "Number", bool show_size = false) const;
 
         //! Keep everything very basic to speed up development/debugging
         //! Work with signed integers throughout the process

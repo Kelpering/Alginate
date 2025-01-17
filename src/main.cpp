@@ -72,6 +72,8 @@ int main()
     //  for future calculations.
     // Add some checksum (1 if static, 0 otherwise) to speed up pre-comp.
 
+    std::cerr << "Main complete\n\n";
+
     x.print_debug("x");
     y.print_debug("y");
     AlgInt::div(x,y,q,r);

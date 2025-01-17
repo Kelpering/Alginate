@@ -1,5 +1,6 @@
 #include "Alginate.hpp"
 #include <cstdint>
+#include <iostream>
 
 void AlgInt::resize(size_t new_size)
 {
@@ -48,6 +49,17 @@ void AlgInt::resize(size_t new_size)
 
     //! Temporary logging
     std::cerr << "Resize (" << new_size << " [" << cap << "])\n";
+
+    return;
+}
+
+void AlgInt::trunc()
+{
+    // Removes all leading zeroes (except x.num[0] == 0).
+    size_t temp_size = size;
+    while (temp_size > 1 && num[temp_size-1] == 0)
+        temp_size--;
+    resize(temp_size);
 
     return;
 }
@@ -114,6 +126,32 @@ void AlgInt::print_debug(const char* name, bool show_size) const
     return;
 }
 
+void AlgInt::print_log(const char* name, bool show_size) const
+{
+    // Formatting
+    // if (show_size)
+    //     std::cout << name << " (size: " << size << "): " << ((sign) ? '-' : '+');
+    // else
+    //     std::cout << name << ": " << ((sign) ? '-' : '+');
+    if (show_size)
+        std::cerr << name << " (size: " << size << "): ";
+    else
+        std::cerr << name << ": ";
+
+    if (size == 0)
+    {
+        std::cerr << " 0\n";
+        return;
+    }
+    
+    // Digit array
+    for (size_t i = size; i > 0; i--)
+        std::cerr << ' ' << num[i-1];
+    std::cerr << '\n';
+
+    return;
+}
+
 int AlgInt::cmp(const AlgInt& x, const AlgInt& y)
 {
     //! Temporary?
@@ -176,10 +214,13 @@ void AlgInt::add_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
         ret.resize(ret.size-1);
 
     // Remove leading zeroes from ret
-    size_t temp_size = ret.size;
-    while (temp_size > 1 && ret.num[temp_size-1] == 0)
-        temp_size--;
-    ret.resize(temp_size);
+    ret.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "+\n" << "y: " << y << "\n=\n";
+    ret.print_log("ret");
+    std::cerr << "\n";
 
     return;
 }
@@ -222,10 +263,15 @@ void AlgInt::add(const AlgInt& x, const AlgInt& y, AlgInt& ret)
         ret.resize(ret.size-1);
 
     // Remove leading zeroes from ret
-    size_t temp_size = ret.size;
-    while (temp_size > 1 && ret.num[temp_size-1] == 0)
-        temp_size--;
-    ret.resize(temp_size);
+    ret.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "+\n";
+    y.print_log("y");
+    std::cerr << "=\n";
+    ret.print_log("ret");
+    std::cerr << "\n";
 
     return;
 }
@@ -270,6 +316,14 @@ void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     for (size_t i = 0; i < x.size; i++)
         ret.num[i] = x.num[i];
 
+
+    //! This algorithm is awful.
+    //! Take notes from div algorithm (right to left, remember borrow)
+    //! We can also properly bound check that subtraction
+    //! Might correctly check for negatives
+    //! With a small alg (~ operator?) we might be able to convert to proper negative (no cmp).
+        //! Its in twos complement if its negative. Might be equally as fast to just rerun.
+        //! Leave in twos complement for now.
     for (size_t i = y.size; i > 0; i--)
     {
         // Carry algorithm
@@ -299,10 +353,15 @@ void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     }
 
     // Remove leading zeroes from ret
-    size_t temp_size = ret.size;
-    while (temp_size > 1 && ret.num[temp_size-1] == 0)
-        temp_size--;
-    ret.resize(temp_size);
+    ret.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "-\n";
+    y.print_log("y");
+    std::cerr << "=\n";
+    ret.print_log("ret");
+    std::cerr << "\n";
 
     return;
 }
@@ -326,10 +385,13 @@ void AlgInt::mul_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
     }
 
     // Remove leading zeroes from ret
-    size_t temp_size = ret.size;
-    while (temp_size > 1 && ret.num[temp_size-1] == 0)
-        temp_size--;
-    ret.resize(temp_size);
+    ret.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "*\n" << "y: " << y << "\n=\n";
+    ret.print_log("ret");
+    std::cerr << "\n";
 
     return;
 }
@@ -376,10 +438,15 @@ void AlgInt::mul(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     }
 
     // Remove leading zeroes from ret
-    size_t temp_size = ret.size;
-    while (temp_size > 1 && ret.num[temp_size-1] == 0)
-        temp_size--;
-    ret.resize(temp_size);
+    ret.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "*\n";
+    y.print_log("y");
+    std::cerr << "=\n";
+    ret.print_log("ret");
+    std::cerr << "\n";
 
     return;
 }
@@ -421,6 +488,15 @@ uint32_t AlgInt::div_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
         // Keep remainder for next rollover
         x_both %= y;
     }
+
+    // Remove leading zeroes
+    ret.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "/\n" << "y: " << y << "\n=\n";
+    ret.print_log("q");
+    std::cerr << "r: " << (uint32_t) x_both << "\n\n";
 
     // Final rollover is the remainder
     return (uint32_t) x_both;
@@ -543,11 +619,18 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r)
     // Unnormalize remainder.
     bw_shr(x_norm, norm_shift, r);
 
-    // Remove leading zeroes from ret
-    size_t temp_size = q.size;
-    while (temp_size > 1 && q.num[temp_size-1] == 0)
-        temp_size--;
-    q.resize(temp_size);
+    // Remove leading zeroes
+    q.trunc();
+    r.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "/\n";
+    y.print_log("y");
+    std::cerr << "=\n";
+    q.print_log("q");
+    r.print_log("r");
+    std::cerr << "\n";
 
     return;
 }
@@ -580,10 +663,13 @@ void AlgInt::bw_shl(const AlgInt& x, size_t y, AlgInt& ret)
     }
 
     // Remove leading zeroes from ret
-    size_t temp_size = ret.size;
-    while (temp_size > 1 && ret.num[temp_size-1] == 0)
-        temp_size--;
-    ret.resize(temp_size);
+    ret.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "<<\n" << "y: " << y << "\n=\n";
+    ret.print_log("ret");
+    std::cerr << "\n";
 
     return;
 }
@@ -624,10 +710,13 @@ void AlgInt::bw_shr(const AlgInt& x, size_t y, AlgInt& ret)
     }
 
     // Remove leading zeroes from ret
-    size_t temp_size = ret.size;
-    while (temp_size > 1 && ret.num[temp_size-1] == 0)
-        temp_size--;
-    ret.resize(temp_size);
+    ret.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << ">>\n" << "y: " << y << "\n=\n";
+    ret.print_log("ret");
+    std::cerr << "\n";
 
     return;
 }
