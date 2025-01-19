@@ -8,6 +8,9 @@ void AlgInt::resize(size_t new_size)
     //! Currently, it would already be a large optimization to
     //!  allocate larger arrays to handle data.
 
+    //! Temporary logvar
+    size_t prev_cap = cap;
+
     
     if (new_size < size)
     {
@@ -48,7 +51,10 @@ void AlgInt::resize(size_t new_size)
     }
 
     //! Temporary logging
-    std::cerr << "Resize (" << new_size << " [" << cap << "])\n";
+    if (prev_cap != cap)
+        std::cerr << "Resize (" << new_size << " [" << cap << "])\n";
+    else
+        std::cerr << "Resize (" << new_size << " ["<< prev_cap << " -> " << cap << "])\n";
 
     return;
 }

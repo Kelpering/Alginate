@@ -19,8 +19,8 @@ class AlgInt
 
         //! Probably temporary (deletes default methods to prevent hidden issues)
         AlgInt() = delete;
-        AlgInt(AlgInt const & other) = delete;
-        AlgInt& operator=(AlgInt const & other) = delete;
+        AlgInt(AlgInt& other) = delete;
+        AlgInt& operator=(AlgInt& other) = delete;
         AlgInt& operator=(const AlgInt&& other) = delete;
     public: 
         //* Basic constructor/destructors
