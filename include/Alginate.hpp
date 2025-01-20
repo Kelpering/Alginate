@@ -92,6 +92,9 @@ class AlgInt
         static void bw_shl(const AlgInt& x, size_t y, AlgInt& ret);
         static void bw_shr(const AlgInt& x, size_t y, AlgInt& ret);
         
+        static void exp2(const AlgInt& x, AlgInt& ret);
+        static void exp(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        
     //? Basic function types?
         //^ add public (x, y, ret)
             //^ returns into ret

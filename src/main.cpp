@@ -55,11 +55,11 @@
 int main()
 {
     uint32_t x_temp[] = {312, 27};
+    uint32_t y_temp[] = {67};
+
     AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
-    uint32_t y_temp[] = {1, 1};
     AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t)};
-    AlgInt q = {NULL, 0};
-    AlgInt r = {NULL, 0};
+    AlgInt ret = {NULL, 0};
 
     // Barrett and Montgomery are both for the same reduction.
     // Montgomery is faster.
@@ -74,17 +74,10 @@ int main()
 
     std::cerr << "Main complete\n\n";
 
-    x.print_debug("x");
-    y.print_debug("y");
-    AlgInt::div(x,y,q,r);
-    q.print_debug("q");
-    r.print_debug("r");
-
-    AlgInt::mul(q,y,x);
-    x.print_debug("chk1");
-
-    AlgInt::add(x,r,q);
-    q.print_debug("chk2");
+    x.print_debug("x  ");
+    y.print_debug("y  ");
+    AlgInt::exp(x,y,ret);
+    ret.print_debug("exp");
 
 
     return 0;

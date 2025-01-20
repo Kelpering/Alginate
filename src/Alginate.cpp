@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <iostream>
 
+#define bitarr_32(arr, i) (((arr)[(i)>>5] >> ((i) & 0x1F)) & 1)
+
 void AlgInt::resize(size_t new_size)
 {
     // Make no assumptions currently, just aim to minimize resizes.
@@ -51,7 +53,7 @@ void AlgInt::resize(size_t new_size)
     }
 
     //! Temporary logging
-    if (prev_cap != cap)
+    if (prev_cap == cap)
         std::cerr << "Resize (" << new_size << " [" << cap << "])\n";
     else
         std::cerr << "Resize (" << new_size << " ["<< prev_cap << " -> " << cap << "])\n";
@@ -723,6 +725,68 @@ void AlgInt::bw_shr(const AlgInt& x, size_t y, AlgInt& ret)
     std::cerr << ">>\n" << "y: " << y << "\n=\n";
     ret.print_log("ret");
     std::cerr << "\n";
+
+    return;
+}
+
+void AlgInt::exp2(const AlgInt& x, AlgInt& ret)
+{
+    //! This works, but can be significantly sped up with a faster algorithm
+    mul(x, x, ret);
+
+    return;
+}
+
+void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret)
+{
+    // The most significant y bit.
+    size_t y_bit = y.size * 32 - 1;
+    while (y_bit > 0 && bitarr_32(y.num, y_bit) == 0)
+        y_bit--;
+    // Adjust for the for loop
+    y_bit++;
+
+    // If we were to use resizes as (x.size * y_bit) we might reduce total allocs.
+
+    AlgInt temp = {NULL, 0};
+    temp.resize(x.size);
+
+    AlgInt sqr_temp = {NULL, 0};
+    sqr_temp.resize(x.size);
+    for (size_t i = 0; i < sqr_temp.size; i++)
+        sqr_temp.num[i] = x.num[i];
+
+    ret.resize(x.size);
+    for (size_t i = 0; i < ret.size; i++)
+        ret.num[i] = 0;
+    ret.num[0] = 1;
+
+    for (size_t i = 0; i < y_bit; i++)
+    {
+
+        // If the current bit is 1
+        if (bitarr_32(y.num, i) == 1)
+        {
+            // temp = ret
+            temp.resize(ret.size);
+            for (size_t j = 0; j < ret.size; j++)
+                temp.num[j] = ret.num[j];
+
+            // ret = ret * sqr_temp
+            mul(temp, sqr_temp, ret);
+        }
+        
+        
+        // temp = sqr_temp
+        temp.resize(sqr_temp.size);
+        for (size_t j = 0; j < sqr_temp.size; j++)
+            temp.num[j] = sqr_temp.num[j];
+        
+        // sqr_temp = sqr_temp^2
+        exp2(temp, sqr_temp);
+    }
+
+    ret.trunc();    
 
     return;
 }
