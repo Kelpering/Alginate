@@ -54,9 +54,9 @@
 
 int main()
 {
-    uint32_t x_temp[] = {312, 27, 312};
-    uint32_t y_temp[] = {66};
-    uint32_t m_temp[] = {54, 2, 2, 4};
+    uint32_t x_temp[] = {63,0,0,0,0,0,0,256,256,0,0,256,0,256};
+    uint32_t y_temp[] = {66, 432, 234, 423, 234, 432, 754, 456, 54};
+    uint32_t m_temp[] = {54, 24, 42, 44, 342, 432, 132};
 
     AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
     AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t)};
@@ -76,11 +76,12 @@ int main()
 
     std::cerr << "Main complete\n\n";
 
-    x.print_debug("x  ");
-    y.print_debug("y  ");
-    m.print_debug("m  ");
-    AlgInt::mod_exp(x, y, m, ret);
+    x.print_debug("x");
+    m.print_debug("m");
+    AlgInt::div(x,m,y,ret);
+    y.print_debug("y");
     ret.print_debug("ret");
+
 
     //^ Modulus and adjacent functions (div contains most of this).
     //^ Mod exp
@@ -92,6 +93,7 @@ int main()
     //^ During prime checking, we can commit multiple small-prime trial divisions
     //^ This can drastically speed up the normal prime check
     //^ Then a few (64 or so) MR-Tests will confirm.
+
 
 
     return 0;

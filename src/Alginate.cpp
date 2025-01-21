@@ -550,9 +550,9 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r)
         q.resize(1);
         q.num[0] = 0;
 
-        r.resize(y.size);
-        for (size_t i = 0; i < y.size; i++)
-            r.num[i] = y.num[i];
+        r.resize(x.size);
+        for (size_t i = 0; i < x.size; i++)
+            r.num[i] = x.num[i];
         
         return;
     }
@@ -584,7 +584,7 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r)
 
         // Reduce q_h if we estimated too high (never too low)
         check_label:
-        if ((q_h >= (1ULL<<32)) || (q_h*y_norm.num[n-2] > (1ULL<<32) * r_h + x_norm.num[n+(i-1)-2]))
+        if ((q_h >= (1ULL<<32)) || (q_h*y_norm.num[n-2] > (r_h<<32) + x_norm.num[n+(i-1)-2]))
         {
             q_h--;
             r_h += y_norm.num[n-1];
@@ -594,12 +594,30 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r)
                 goto check_label;
         }
 
+        //! Knuth --SEEMS-- to agree that q_h is correct here, so why is it too SMALL (not large)
+        //! Fact check mul_digit (and mul alg) for inconsistency
+        //! Cursory checks on mul_digit return expected behavior.
+        //! So q_h MUST be the issue, right?
+        //! Try 2564 / 24 (on paper) with just muls, either we need a x10, or to subtract w/
+        //!  a hanging number (0). Is this the problem?
+        AlgInt::mul_digit(y_norm,q_h+2,r);
         AlgInt::mul_digit(y_norm,q_h,r);
+
+        if (q_h == 4034666241)
+        {
+            std::cerr << "IAMERROR";
+            AlgInt::mul_digit(y_norm, q_h+2, r);
+        }
+
+        x_norm.print_log("=== CALC ===\nx");
+        std::cerr << "-\n";
+        r.print_log("y");
+        std::cerr << "=\n";
 
         uint8_t sub_carry = 0;
         uint64_t x_digit = 0;
         uint64_t y_digit = 0;
-        for (size_t j = 0; j < r.size; j++)
+        for (size_t j = 0; j < x.size+1; j++)
         {
             x_digit = x_norm.num[(i-1)+j];
 
@@ -638,6 +656,8 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r)
 
             q_h--;
         }
+
+        x_norm.print_log("ret");
 
         q.num[i-1] = q_h;
     }
@@ -804,7 +824,15 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret)
         exp2(temp, sqr_temp);
     }
 
-    ret.trunc();    
+    ret.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "^\n";
+    y.print_log("y");
+    std::cerr << "=\n";
+    ret.print_log("ret");
+    std::cerr << "\n";
 
     return;
 }
@@ -842,9 +870,7 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
         {
             // temp = ret * sqr_temp
             mul(ret, sqr_temp, temp1);
-            ret.print_debug("\nret");
-            sqr_temp.print_debug("sqr");
-            temp1.print_debug("tmp");
+
             // ret = temp % m
             div(temp1, m, temp2, ret);
         }
@@ -854,9 +880,27 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
 
         // sqr_temp = temp % m
         div(temp1, m, temp2, sqr_temp);
+
+        if (cmp(sqr_temp, m) == 1)
+        {
+            temp1.print_debug("prv_temp");
+            sqr_temp.print_debug("sqr_temp");
+            m.print_debug("mod");
+            throw std::exception();
+        }
     }
 
     ret.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "^\n";
+    y.print_log("y");
+    std::cerr << "%\n";
+    m.print_log("m");
+    std::cerr << "=\n";
+    ret.print_log("ret");
+    std::cerr << "\n";
 
     return;
 }
