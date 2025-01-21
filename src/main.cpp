@@ -54,11 +54,13 @@
 
 int main()
 {
-    uint32_t x_temp[] = {312, 27, 312, 312,3, 124,4, 543};
-    uint32_t y_temp[] = {67};
+    uint32_t x_temp[] = {312, 27, 312};
+    uint32_t y_temp[] = {66};
+    uint32_t m_temp[] = {54, 2, 2, 4};
 
     AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
     AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t)};
+    AlgInt m = {m_temp, sizeof(m_temp)/sizeof(uint32_t)};
     AlgInt ret = {NULL, 0};
 
     // Barrett and Montgomery are both for the same reduction.
@@ -74,14 +76,17 @@ int main()
 
     std::cerr << "Main complete\n\n";
 
-    uint32_t chk1 = AlgInt::mod_digit(x, 37);
-    uint32_t chk2 = AlgInt::div_digit(x, 37, ret);
-
-    std::cout << "Check: " << ((chk1 == chk2) ? "True" : "False") << "\n";
+    x.print_debug("x  ");
+    y.print_debug("y  ");
+    m.print_debug("m  ");
+    AlgInt::mod_exp(x, y, m, ret);
+    ret.print_debug("ret");
 
     //^ Modulus and adjacent functions (div contains most of this).
     //^ Mod exp
         //^ Montgomery functions
+        //^ Additions can be done with a (cmp(ret, m) ? ret - m : ret)
+        //^ Multiplication requires a modulo.
     //^ Miller-Rabin primality tests
     
     //^ During prime checking, we can commit multiple small-prime trial divisions

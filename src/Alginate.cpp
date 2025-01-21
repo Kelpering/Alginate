@@ -808,3 +808,55 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret)
 
     return;
 }
+
+void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret)
+{
+    // The most significant y bit.
+    size_t y_bit = y.size * 32 - 1;
+    while (y_bit > 0 && bitarr_32(y.num, y_bit) == 0)
+        y_bit--;
+    // Adjust for the for loop
+    y_bit++;
+
+    AlgInt temp1 = {NULL, 0};
+    temp1.resize(x.size);
+
+    AlgInt temp2 = {NULL, 0};
+    temp2.resize(x.size);
+
+    AlgInt sqr_temp = {NULL, 0};
+    sqr_temp.resize(x.size);
+    for (size_t i = 0; i < sqr_temp.size; i++)
+        sqr_temp.num[i] = x.num[i];
+
+    ret.resize(x.size);
+    for (size_t i = 0; i < ret.size; i++)
+        ret.num[i] = 0;
+    ret.num[0] = 1;
+
+    for (size_t i = 0; i < y_bit; i++)
+    {
+
+        // If the current bit is 1
+        if (bitarr_32(y.num, i) == 1)
+        {
+            // temp = ret * sqr_temp
+            mul(ret, sqr_temp, temp1);
+            ret.print_debug("\nret");
+            sqr_temp.print_debug("sqr");
+            temp1.print_debug("tmp");
+            // ret = temp % m
+            div(temp1, m, temp2, ret);
+        }
+        
+        // temp = sqr_temp^2
+        exp2(sqr_temp, temp1);
+
+        // sqr_temp = temp % m
+        div(temp1, m, temp2, sqr_temp);
+    }
+
+    ret.trunc();
+
+    return;
+}
