@@ -461,16 +461,6 @@ void AlgInt::mul(const AlgInt& x, const AlgInt& y, AlgInt& ret)
 
 uint32_t AlgInt::div_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
 {
-    // Single digit is required for Knuth division (due to the q_hat)
-    // This is euclidean division (so no decimal)
-    // We can make this combined division if we want.
-        // div digit can just be combined (return will fit remainder)
-        // div regular (div no mod)
-        // div combine (div && mod)
-        // mod regular (mod no div)
-        // All temp info can be stored in ret (if we expand its size at the beginning)
-        // This counts for mod as well (ret = y.size + 1 w/ temp variable to store single intermediate)
-
     ret.resize(x.size);
     // ret.sign = (ignore_sign) ? 0 : x.sign;
 
@@ -504,6 +494,34 @@ uint32_t AlgInt::div_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
     x.print_log("\n== CALC ==\nx");
     std::cerr << "/\n" << "y: " << y << "\n=\n";
     ret.print_log("q");
+    std::cerr << "r: " << (uint32_t) x_both << "\n\n";
+
+    // Final rollover is the remainder
+    return (uint32_t) x_both;
+}
+
+uint32_t AlgInt::mod_digit(const AlgInt& x, uint32_t y)
+{
+    // Prevent OoB with x.size == 1
+    if (x.size == 1)
+        return x.num[0] % y;
+
+    // First rollover's MSW is a 0 (because of implicit leading zeroes).
+    uint64_t x_both = 0;
+
+    for (size_t i = x.size+1; i > 1; i--)
+    {
+        // Rolls x_both over to the next digit (keeping remainder)
+        x_both <<= 32;
+        x_both |= x.num[i-2];
+        
+        // Keep remainder for next rollover
+        x_both %= y;
+    }
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "%\ny: " << y << "\n=\n";
     std::cerr << "r: " << (uint32_t) x_both << "\n\n";
 
     // Final rollover is the remainder

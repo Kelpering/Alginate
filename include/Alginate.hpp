@@ -87,6 +87,9 @@ class AlgInt
          */
         static uint32_t div_digit(const AlgInt& x, uint32_t y, AlgInt& ret);
 
+        // Benefit: Doesn't require a ret (temp) variable
+        static uint32_t mod_digit(const AlgInt& x, uint32_t y);
+
         static void div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r);
 
         static void bw_shl(const AlgInt& x, size_t y, AlgInt& ret);

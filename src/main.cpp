@@ -54,7 +54,7 @@
 
 int main()
 {
-    uint32_t x_temp[] = {312, 27};
+    uint32_t x_temp[] = {312, 27, 312, 312,3, 124,4, 543};
     uint32_t y_temp[] = {67};
 
     AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
@@ -74,10 +74,19 @@ int main()
 
     std::cerr << "Main complete\n\n";
 
-    x.print_debug("x  ");
-    y.print_debug("y  ");
-    AlgInt::exp(x,y,ret);
-    ret.print_debug("exp");
+    uint32_t chk1 = AlgInt::mod_digit(x, 37);
+    uint32_t chk2 = AlgInt::div_digit(x, 37, ret);
+
+    std::cout << "Check: " << ((chk1 == chk2) ? "True" : "False") << "\n";
+
+    //^ Modulus and adjacent functions (div contains most of this).
+    //^ Mod exp
+        //^ Montgomery functions
+    //^ Miller-Rabin primality tests
+    
+    //^ During prime checking, we can commit multiple small-prime trial divisions
+    //^ This can drastically speed up the normal prime check
+    //^ Then a few (64 or so) MR-Tests will confirm.
 
 
     return 0;
