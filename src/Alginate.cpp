@@ -1,6 +1,7 @@
 #include "Alginate.hpp"
 #include <cstdint>
 #include <iostream>
+#include <type_traits>
 
 #define bitarr_32(arr, i) (((arr)[(i)>>5] >> ((i) & 0x1F)) & 1)
 
@@ -69,6 +70,18 @@ void AlgInt::trunc()
         temp_size--;
     resize(temp_size);
 
+    return;
+}
+
+void AlgInt::swap(AlgInt& x, AlgInt& y)
+{
+    if (&x == &y)
+        return;
+        
+    std::swap(x.num, y.num);
+    std::swap(x.size, y.size);
+    std::swap(x.cap, y.cap);
+    
     return;
 }
 
@@ -370,6 +383,32 @@ void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     std::cerr << "=\n";
     ret.print_log("ret");
     std::cerr << "\n";
+
+    return;
+}
+
+void AlgInt::sub_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
+{
+    // ret = x;
+    ret.resize(x.size);
+    for (size_t i = 0; i < x.size; i++)
+        ret.num[i] = x.num[i];
+
+    // Quick subtraction
+    if (ret.num[0] >= y)
+    {
+        ret.num[0] -= y;
+        return;
+    }
+    
+    // If carry required
+    ret.num[0] = (1ULL<<32) - y;
+
+    // Find 0 (expects ret >= y)
+    size_t i = 1;
+    while (ret.num[i] == 0)
+        ret.num[i++] = UINT32_MAX;
+    ret.num[i]--;
 
     return;
 }
@@ -880,4 +919,57 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
     std::cerr << "\n";
 
     return;
+}
+
+bool AlgInt::prime_check(const AlgInt& candidate, const AlgInt& witness)
+{
+    // Witness must be within the range [2,candidate-1)
+    //! Checks are not currently ran.
+
+    // If candidate is even, it is not prime.
+    if ((candidate.num[0] & 1) == 0)
+        return false;
+
+    // candidate = (2^s * d + 1) for some (s,d).
+    size_t s = 0;
+    AlgInt temp = {NULL, 0};
+    AlgInt d = {NULL, 0};
+    AlgInt::sub_digit(candidate, 1, temp);
+
+    // while (d >> s) is even, s++ 
+    while (bitarr_32(temp.num, s) == 0)
+        s++;
+    AlgInt::bw_shr(temp, s, d);
+
+
+    //* Check witness^d == 1 (modulo candidate)
+        //? temp is truncated, so if temp.size > 1, it must be larger than a single digit.
+    AlgInt::mod_exp(witness, d, candidate, temp);
+    if (temp.size == 1 && temp.num[0] == 1)
+        return true;
+    
+
+    //* Check witness^(2^r * d) == -1 (modulo candidate) for some value r [0, s)
+
+    // candidate - 1 == -1 (modulo candidate)
+    AlgInt cand_sub = {NULL, 0};
+    AlgInt::sub_digit(candidate, 1, cand_sub);
+
+    for (size_t r = 0; r < s; r++)
+    {
+        // witness^(2^r * d) (modulo candidate)
+        AlgInt::mod_exp(witness, d, candidate, temp);
+
+        // temp == candidate - 1
+        if (cmp(temp, cand_sub) == 0)
+            return true;
+
+        // 2^r * d simplifies to a left bitshift of 1 per loop (r+=1)
+        AlgInt::bw_shl(d, 1, temp);
+
+        // Swap d and temp (fast)
+        AlgInt::swap(d, temp);
+    }
+
+    return false;
 }

@@ -16,6 +16,7 @@ class AlgInt
 
         void resize(size_t new_size);
         void trunc();
+        static void swap(AlgInt& x, AlgInt& y);
 
         //! Probably temporary (deletes default methods to prevent hidden issues)
         AlgInt() = delete;
@@ -65,6 +66,8 @@ class AlgInt
          */
         static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret);
 
+        static void sub_digit(const AlgInt& x, uint32_t y, AlgInt& ret);
+
         /**
          * @brief ret = x * y
          * 
@@ -100,6 +103,11 @@ class AlgInt
 
         // X and Y are expected to already be modulo `m`
         static void mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret);
+
+        // False == candidate is NOT prime
+        // True  == prime OR witness strong liar
+        // witness must be [2, candidate-1) and completely random
+        static bool prime_check(const AlgInt& candidate, const AlgInt& witness);
         
     //? Basic function types?
         //^ add public (x, y, ret)

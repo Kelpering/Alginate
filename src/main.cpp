@@ -54,8 +54,8 @@
 
 int main()
 {
-    uint32_t x_temp[] = {1, 23, 2,  41, 123, 32, 3213, 235, 12, 421, 2312312, 56, 2354, 2, 423};
-    uint32_t y_temp[] = {321, 123, 43,3, 321, 321,5, 423, 3213, 123,123, 123, 321, 312,3, 13,};
+    uint32_t x_temp[] = {221};
+    uint32_t y_temp[] = {175};
     uint32_t m_temp[] = {12, 63,543,543,5, 43,5, 43,5, 23, 423, 423, 423, 423, 312, 643};
 
     AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
@@ -76,11 +76,7 @@ int main()
 
     std::cerr << "Main complete\n\n";
 
-    x.print_debug("x");
-    y.print_debug("y");
-    m.print_debug("m");
-    AlgInt::mod_exp(x,y,m,ret);
-    ret.print_debug("ret");
+    std::cout << "Prime: " << AlgInt::prime_check(x,y);
 
 
     //^ Modulus and adjacent functions (div contains most of this).
@@ -95,6 +91,15 @@ int main()
     //^ Then a few (64 or so) MR-Tests will confirm.
 
 
+    //! Confirmed problems:
+        //! No signs
+        //! No value checking or restrictions
+            //! Div (x,0)
+            //! *_mod (x,y,0)
+            //! prime_check
+            //! Sub returns inverse w/ no sign
+        //! MANY functions can be improved with self-assignment functions (no copy)
+        //! In general, external functions should not care if x == ret (copy required)
     //! Likely but unchecked problems:
         //! Add-back in the div function
         //! Poor (main) subtraction implementation
