@@ -79,16 +79,35 @@ int main()
     std::cout << "Prime: " << AlgInt::prime_check(x,y);
 
 
-    //^ Modulus and adjacent functions (div contains most of this).
-    //^ Mod exp
+    //* Modulus and adjacent functions (div contains most of this).
+    //* Mod exp
         //^ Montgomery functions
         //^ Additions can be done with a (cmp(ret, m) ? ret - m : ret)
         //^ Multiplication requires a modulo.
-    //^ Miller-Rabin primality tests
+    //* Miller-Rabin primality tests
+    //^ randfunc generator
+
+    // prime = randfunc(bitsize)
+        // prime[1st bit] = 1;
+        // prime[last bit] = 1;
+    // const wit = randfunc(bitsize/2) (so it works as a witness)
     
-    //^ During prime checking, we can commit multiple small-prime trial divisions
-    //^ This can drastically speed up the normal prime check
-    //^ Then a few (64 or so) MR-Tests will confirm.
+    // loop start
+    // prime += 2 )
+    
+    // mod check
+        // some single digit primes
+        // This is faster than mod_exp
+    
+    // MR primality
+        // Use the const witness (maybe 2?)
+        // This should filter out a lot more non-primes
+        // Using a constant witness doesn't lose security (due to extensive)
+        // Using a constant reduces required random and increases speed
+
+    // Extensive primality test
+        // This is where we test about 16-32 random witnesses
+        // If it passes this, it is likely prime
 
 
     //! Confirmed problems:
