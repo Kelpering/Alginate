@@ -380,15 +380,17 @@ void AlgInt::mul_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
     // ret.sign = (ignore_sign) ? 0 : x.sign;
 
     // Prevent previous calculations from affecting first digit.
-    ret.num[0] = 0;
+    for (size_t i = 0; i < x.size+1; i++)
+        ret.num[i] = 0;
 
     // mul_add loop
-    for (size_t i = 0; i < x.size; i++)
+    uint32_t carry = 0;
+    for (size_t i = 0; i < x.size+1; i++)
     {
-        uint64_t calc = (uint64_t) x.num[i] * y;
+        uint64_t calc = (uint64_t) x.num[i] * y + carry;
         
         // = instead of += to prevent previous calculations from interfering.
-        ret.num[i+1] = (uint32_t) (calc >> 32);
+        carry = (calc >> 32);
         ret.num[i] +=  (uint32_t) calc;
     }
 
@@ -571,8 +573,11 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r)
     AlgInt::bw_shl(y, norm_shift, y_norm);
     x_norm.resize(x.size+1);    // Guarantees expected digit.
     q.resize(x.size);
+    for (size_t i = 0; i < x.size; i++)
+        q.num[i] = 0;
     r.resize(y.size+1); // Will be used for temporary values
-
+    for (size_t i = 0; i < y.size+1; i++)
+            r.num[i] = 0;
 
     size_t n = y.size;
     for (size_t i = x_norm.size-n; i > 0; i--)
@@ -580,7 +585,6 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r)
         uint64_t q_h = (uint64_t) x_norm.num[n+(i-1)]<<32 | x_norm.num[n+(i-1)-1];
         uint64_t r_h = q_h % y_norm.num[n-1];   // Unrelated remainder
         q_h /= y_norm.num[n-1];     // Quotient approximation
-
 
         // Reduce q_h if we estimated too high (never too low)
         check_label:
@@ -594,30 +598,13 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r)
                 goto check_label;
         }
 
-        //! Knuth --SEEMS-- to agree that q_h is correct here, so why is it too SMALL (not large)
-        //! Fact check mul_digit (and mul alg) for inconsistency
-        //! Cursory checks on mul_digit return expected behavior.
-        //! So q_h MUST be the issue, right?
-        //! Try 2564 / 24 (on paper) with just muls, either we need a x10, or to subtract w/
-        //!  a hanging number (0). Is this the problem?
-        AlgInt::mul_digit(y_norm,q_h+2,r);
+        AlgInt::mul_digit(y_norm,q_h+1,r);
         AlgInt::mul_digit(y_norm,q_h,r);
-
-        if (q_h == 4034666241)
-        {
-            std::cerr << "IAMERROR";
-            AlgInt::mul_digit(y_norm, q_h+2, r);
-        }
-
-        x_norm.print_log("=== CALC ===\nx");
-        std::cerr << "-\n";
-        r.print_log("y");
-        std::cerr << "=\n";
 
         uint8_t sub_carry = 0;
         uint64_t x_digit = 0;
         uint64_t y_digit = 0;
-        for (size_t j = 0; j < x.size+1; j++)
+        for (size_t j = 0; j < y.size+1; j++)
         {
             x_digit = x_norm.num[(i-1)+j];
 
@@ -656,8 +643,6 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r)
 
             q_h--;
         }
-
-        x_norm.print_log("ret");
 
         q.num[i-1] = q_h;
     }
@@ -880,14 +865,6 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
 
         // sqr_temp = temp % m
         div(temp1, m, temp2, sqr_temp);
-
-        if (cmp(sqr_temp, m) == 1)
-        {
-            temp1.print_debug("prv_temp");
-            sqr_temp.print_debug("sqr_temp");
-            m.print_debug("mod");
-            throw std::exception();
-        }
     }
 
     ret.trunc();

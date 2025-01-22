@@ -54,9 +54,9 @@
 
 int main()
 {
-    uint32_t x_temp[] = {63,0,0,0,0,0,0,256,256,0,0,256,0,256};
-    uint32_t y_temp[] = {66, 432, 234, 423, 234, 432, 754, 456, 54};
-    uint32_t m_temp[] = {54, 24, 42, 44, 342, 432, 132};
+    uint32_t x_temp[] = {1, 23, 2,  41, 123, 32, 3213, 235, 12, 421, 2312312, 56, 2354, 2, 423};
+    uint32_t y_temp[] = {321, 123, 43,3, 321, 321,5, 423, 3213, 123,123, 123, 321, 312,3, 13,};
+    uint32_t m_temp[] = {12, 63,543,543,5, 43,5, 43,5, 23, 423, 423, 423, 423, 312, 643};
 
     AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
     AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t)};
@@ -77,9 +77,9 @@ int main()
     std::cerr << "Main complete\n\n";
 
     x.print_debug("x");
-    m.print_debug("m");
-    AlgInt::div(x,m,y,ret);
     y.print_debug("y");
+    m.print_debug("m");
+    AlgInt::mod_exp(x,y,m,ret);
     ret.print_debug("ret");
 
 
@@ -95,6 +95,10 @@ int main()
     //^ Then a few (64 or so) MR-Tests will confirm.
 
 
+    //! Likely but unchecked problems:
+        //! Add-back in the div function
+        //! Poor (main) subtraction implementation
+        //! mod_exp currently NOT montgomery
 
     return 0;
 }

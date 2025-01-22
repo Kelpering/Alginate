@@ -98,6 +98,7 @@ class AlgInt
         static void exp2(const AlgInt& x, AlgInt& ret);
         static void exp(const AlgInt& x, const AlgInt& y, AlgInt& ret);
 
+        // X and Y are expected to already be modulo `m`
         static void mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret);
         
     //? Basic function types?
