@@ -1,6 +1,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <stdexcept>
 #include "Alginate.hpp"
 #include "Alginate_old.hpp"
 
@@ -55,14 +56,6 @@
 
 int main()
 {
-    // uint32_t x_temp[] = {221};
-    // uint32_t y_temp[] = {175};
-    // uint32_t m_temp[] = {12, 63,543,543,5, 43,5, 43,5, 23, 423, 423, 423, 423, 312, 643};
-
-    // AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
-    // AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t)};
-    // AlgInt m = {m_temp, sizeof(m_temp)/sizeof(uint32_t)};
-    // AlgInt ret = {NULL, 0};
 
     // Barrett and Montgomery are both for the same reduction.
     // Montgomery is faster.
@@ -77,9 +70,60 @@ int main()
 
     std::cerr << "Main complete\n\n";
 
-    AlgInt test = 4354535345682;
+    //? Generate a large prime of size prime_size bits
+    AlgInt temp;
+    uint32_t short_primes[] = {3, 5, 7, 11, 13, 17, 19};
+    size_t prime_size = 64;
+    prime_size /= 8;
 
-    test.print("test");
+    // Init rand
+    srand(12);
+
+    // Create a random number (prime) with byte random
+    AlgInt prime = {(uint8_t (*)())rand, prime_size};
+    const AlgInt const_witness = {(uint8_t (*)())rand, prime_size/2};
+    
+    // Largest and smallest bits are set (big and even)
+    prime.print_debug("Prime");
+    prime.set_bit(0);
+    prime.set_bit(prime.get_bitsize()-1);
+    prime.print_debug("Prime");
+
+
+
+    //? Create prime
+    regen_prime:
+    
+    AlgInt::add_digit(prime, 2, temp);
+    AlgInt::swap(prime, temp);
+
+    // Trial short prime divide
+    for (size_t i = 0; i < sizeof(short_primes)/sizeof(uint32_t); i++)
+    {
+        if (AlgInt::mod_digit(prime, short_primes[i]) == 0)
+            goto regen_prime;
+    }
+
+    prime.print_debug("Prime");
+
+    // Const Miller-Rabin test
+    if (AlgInt::prime_check(prime, const_witness) == false)
+        goto regen_prime;
+
+    // Extensive (random) Miller-Rabin test
+    for (size_t i = 0; i < 64; i++)
+    {
+        AlgInt wit = {(uint8_t (*)())rand, prime_size-1};
+        if (AlgInt::prime_check(prime, wit) == false)
+            goto regen_prime;
+        std::cout << "Passed: " << i+1 << "/64\n";
+    }
+
+    prime.print_debug("Probable Prime");
+
+    //! Slow for logging
+
+
 
 
     //* Modulus and adjacent functions (div contains most of this).

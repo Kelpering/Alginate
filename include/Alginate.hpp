@@ -16,17 +16,21 @@ class AlgInt
 
         void resize(size_t new_size);
         void trunc();
-        static void swap(AlgInt& x, AlgInt& y);
         
     public: 
+        static void swap(AlgInt& x, AlgInt& y);
         //* Basic constructor/destructors
-        AlgInt() : AlgInt(NULL, 0) {}
+        AlgInt() : AlgInt((uint32_t*)NULL, 0) {}
         AlgInt(const AlgInt& other) : AlgInt(other.num, other.size) {};
         ~AlgInt();
 
         //* Complex constructors
         AlgInt(uint64_t num);
         AlgInt(const uint32_t* num, size_t size);
+            // Will not allow leading zeroes, might call randfunc more than size times
+        AlgInt(uint32_t (*randfunc)(), size_t size);
+            // Will not allow leading zeroes, might call randfunc more than size times
+        AlgInt(uint8_t (*randfunc)(), size_t size);
 
         //* Basic print
         void print_debug(const char* name = "Number", bool show_size = false) const;
@@ -109,6 +113,12 @@ class AlgInt
         // True  == prime OR witness strong liar
         // witness must be [2, candidate-1) and completely random
         static bool prime_check(const AlgInt& candidate, const AlgInt& witness);
+
+        bool get_bit(size_t bit) const;
+        void set_bit(size_t bit);
+        void clear_bit(size_t bit);
+        size_t get_size() const;
+        size_t get_bitsize() const;
 
         //^ gcd
         //^ Extended Euclidean

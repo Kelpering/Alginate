@@ -1,6 +1,7 @@
 #include "Alginate.hpp"
 #include <cstdint>
 #include <iostream>
+#include <stdexcept>
 
 #define bitarr_32(arr, i) (((arr)[(i)>>5] >> ((i) & 0x1F)) & 1)
 
@@ -63,6 +64,9 @@ void AlgInt::resize(size_t new_size)
 
 void AlgInt::trunc()
 {
+    //! Temporary logging (includes resize)
+    std::cerr << "Trunc\n";
+
     // Removes all leading zeroes (except x.num[0] == 0).
     size_t temp_size = size;
     while (temp_size > 1 && num[temp_size-1] == 0)
@@ -74,6 +78,9 @@ void AlgInt::trunc()
 
 void AlgInt::swap(AlgInt& x, AlgInt& y)
 {
+    //! Temporary logging
+    std::cerr << "Swap\n";
+
     if (&x == &y)
         return;
         
@@ -140,6 +147,60 @@ AlgInt::~AlgInt()
     return;
 }
 
+AlgInt::AlgInt(uint32_t (*randfunc)(), size_t size)
+{
+    //! Temporary logging (includes resize)
+    std::cerr << "Num Created + ";
+
+    resize(size);
+
+    // Set each digit to a random number
+    for (size_t i = 0; i < size; i++)
+        num[i] = randfunc();
+
+    // Prevent the last number from being zero.
+    while (num[size-1] == 0)
+        num[size-1] = randfunc();
+
+    return;
+}
+
+AlgInt::AlgInt(uint8_t (*randfunc)(), size_t size)
+{
+    //! Temporary logging (includes resize)
+    std::cerr << "Num Created + ";
+
+    // Increase size to the nearest power of 2, then divide
+    size_t temp_size = size;
+    if (size < 4)
+        temp_size = 4;
+    resize(std::__bit_ceil(temp_size) >> 2);
+
+    // All full digits
+    for (size_t i = 0; i < AlgInt::size; i++)
+    {
+        // Create full digit from 4 randfunc calls 
+        uint32_t digit = 0;
+        digit |= randfunc() << 0;
+        digit |= randfunc() << 8;
+        digit |= randfunc() << 16;
+        digit |= randfunc() << 24;
+
+        num[i] = digit;
+    }
+
+    // Clear any required bytes with a rightshift
+    if (size & 0x3)
+        num[AlgInt::size-1] >>= (4 - (size & 0x3))*8;
+
+
+    // Prevent leading zeroes, sets correct octet.
+    while (num[AlgInt::size-1] == 0)
+        num[AlgInt::size-1] = randfunc() << (size & 0x3)*8;
+
+    return;
+}
+
 void AlgInt::print_debug(const char* name, bool show_size) const
 {
     // Formatting
@@ -194,6 +255,9 @@ void AlgInt::print_log(const char* name, bool show_size) const
 
 void AlgInt::print(const char* name) const
 {
+    //! Temporary logging
+    std::cerr << "\n== Print ==\n";
+
     AlgInt temp = *this;
     AlgInt ret;
     std::string working_str;
@@ -209,7 +273,7 @@ void AlgInt::print(const char* name) const
     while (temp.size > 1 || temp.num[0] > 0)
     {
         working_str += div_digit(temp, 10, ret) + '0';
-        std::swap(temp, ret);
+        AlgInt::swap(temp, ret);
     }
 
     // Formatting
@@ -448,6 +512,10 @@ void AlgInt::sub_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
     if (ret.num[0] >= y)
     {
         ret.num[0] -= y;
+
+        //! Temporary logging
+        std::cerr << "Short Calc: " << x.num[0] << " - " << y << " = ";
+        std::cerr << ret.num[0] << "\n";
         return;
     }
     
@@ -459,6 +527,12 @@ void AlgInt::sub_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
     while (ret.num[i] == 0)
         ret.num[i++] = UINT32_MAX;
     ret.num[i]--;
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "-\n" << "y: " << y << "\n=\n";
+    ret.print_log("ret");
+    std::cerr << "\n";
 
     return;
 }
@@ -559,6 +633,10 @@ uint32_t AlgInt::div_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
     if (x.size == 1)
     {
         ret.num[0] = x.num[0] / y;
+
+        //! Temporary logging
+        std::cerr << "Short Calc: " << x.num[0] << " / " << y << " = ";
+        std::cerr << "(" << ret.num[0] << ", " << x.num[0] % y << ")\n";
         return x.num[0] % y;
     }
 
@@ -633,8 +711,8 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r)
         return;
     }
 
-    AlgInt x_norm = {NULL, 0};
-    AlgInt y_norm = {NULL, 0};
+    AlgInt x_norm;
+    AlgInt y_norm;
 
     if (x.size < y.size)
     {
@@ -860,10 +938,10 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret)
 
     // If we were to use resizes as (x.size * y_bit) we might reduce total allocs.
 
-    AlgInt temp = {NULL, 0};
+    AlgInt temp;
     temp.resize(x.size);
 
-    AlgInt sqr_temp = {NULL, 0};
+    AlgInt sqr_temp;
     sqr_temp.resize(x.size);
     for (size_t i = 0; i < sqr_temp.size; i++)
         sqr_temp.num[i] = x.num[i];
@@ -920,13 +998,13 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
     // Adjust for the for loop
     y_bit++;
 
-    AlgInt temp1 = {NULL, 0};
+    AlgInt temp1;
     temp1.resize(x.size);
 
-    AlgInt temp2 = {NULL, 0};
+    AlgInt temp2;
     temp2.resize(x.size);
 
-    AlgInt sqr_temp = {NULL, 0};
+    AlgInt sqr_temp;
     sqr_temp.resize(x.size);
     for (size_t i = 0; i < sqr_temp.size; i++)
         sqr_temp.num[i] = x.num[i];
@@ -978,12 +1056,14 @@ bool AlgInt::prime_check(const AlgInt& candidate, const AlgInt& witness)
 
     // If candidate is even, it is not prime.
     if ((candidate.num[0] & 1) == 0)
-        return false;
+        goto logging_false;
 
     // candidate = (2^s * d + 1) for some (s,d).
+//! Logging scope, remove when removing logging_false
+{    
     size_t s = 0;
-    AlgInt temp = {NULL, 0};
-    AlgInt d = {NULL, 0};
+    AlgInt temp;
+    AlgInt d;
     AlgInt::sub_digit(candidate, 1, temp);
 
     // while (d >> s) is even, s++ 
@@ -996,13 +1076,15 @@ bool AlgInt::prime_check(const AlgInt& candidate, const AlgInt& witness)
         //? temp is truncated, so if temp.size > 1, it must be larger than a single digit.
     AlgInt::mod_exp(witness, d, candidate, temp);
     if (temp.size == 1 && temp.num[0] == 1)
-        return true;
+        goto logging_true;
     
 
     //* Check witness^(2^r * d) == -1 (modulo candidate) for some value r [0, s)
 
     // candidate - 1 == -1 (modulo candidate)
-    AlgInt cand_sub = {NULL, 0};
+//! Required logging scope, can remove when removing logging_true    
+{
+    AlgInt cand_sub;
     AlgInt::sub_digit(candidate, 1, cand_sub);
 
     for (size_t r = 0; r < s; r++)
@@ -1012,7 +1094,7 @@ bool AlgInt::prime_check(const AlgInt& candidate, const AlgInt& witness)
 
         // temp == candidate - 1
         if (cmp(temp, cand_sub) == 0)
-            return true;
+            goto logging_true;
 
         // 2^r * d simplifies to a left bitshift of 1 per loop (r+=1)
         AlgInt::bw_shl(d, 1, temp);
@@ -1020,8 +1102,24 @@ bool AlgInt::prime_check(const AlgInt& candidate, const AlgInt& witness)
         // Swap d and temp (fast)
         AlgInt::swap(d, temp);
     }
+}
+}
+    //! Temporary logging
+    logging_false:
+    candidate.print_log("\n== Prime Check ==\nCandidate");
+    witness.print_log("Witness");
+    std::cerr << "Prime: False\n";
 
     return false;
+
+    //! Label for logging, replace with return true
+    logging_true:
+    //! Temporary logging
+    candidate.print_log("\n== Prime Check ==\nCandidate");
+    witness.print_log("Witness");
+    std::cerr << "Prime: True\n";
+
+    return true;
 }
 
 
@@ -1057,4 +1155,36 @@ AlgInt& AlgInt::operator=(AlgInt&& other)
     other.num = NULL;
 
     return *this;
+}
+
+bool AlgInt::get_bit(size_t bit) const
+{
+    if (bit>>5 < size)
+        return bitarr_32(num, bit);
+    return 0;
+}
+
+void AlgInt::set_bit(size_t bit)
+{
+    if (bit>>5 >= size)
+        resize((bit>>5)+1);
+    num[bit>>5] |= 1ULL << (bit & 0x1F);
+    return;
+}
+
+void AlgInt::clear_bit(size_t bit)
+{
+    if (bit>>5 < size)
+        num[bit>>5] &= ~(1ULL << (bit & 0x1F));
+    return;
+}
+
+size_t AlgInt::get_size() const
+{
+    return size;
+}
+
+size_t AlgInt::get_bitsize() const
+{
+    return size*32;
 }
