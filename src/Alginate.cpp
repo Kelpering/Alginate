@@ -1,7 +1,6 @@
 #include "Alginate.hpp"
 #include <cstdint>
 #include <iostream>
-#include <type_traits>
 
 #define bitarr_32(arr, i) (((arr)[(i)>>5] >> ((i) & 0x1F)) & 1)
 
@@ -109,6 +108,26 @@ AlgInt::AlgInt(const uint32_t* num, size_t size)
     return;
 }
 
+AlgInt::AlgInt(uint64_t num)
+{
+    //! Temporary logging (includes resize)
+    std::cerr << "Num Created + ";
+
+    if (num > UINT32_MAX)
+    {
+        resize(2);
+        AlgInt::num[1] = (uint32_t) (num>>32);
+        AlgInt::num[0] = (uint32_t) num;
+    }
+    else
+    {
+        resize(1);
+        AlgInt::num[0] = (uint32_t) num;
+    }
+
+    return;
+}
+
 AlgInt::~AlgInt()
 {
     //! Temporary logging
@@ -169,6 +188,37 @@ void AlgInt::print_log(const char* name, bool show_size) const
     for (size_t i = size; i > 0; i--)
         std::cerr << ' ' << num[i-1];
     std::cerr << '\n';
+
+    return;
+}
+
+void AlgInt::print(const char* name) const
+{
+    AlgInt temp = *this;
+    AlgInt ret;
+    std::string working_str;
+
+    // Remove leading zeroes
+    temp.trunc();
+
+    // Prevent null string if temp == 0
+    if (temp.size > 1 && temp.num[0] == 0)
+        working_str += "0";
+
+    // Convert base 2^32 into base 10 (reversed)
+    while (temp.size > 1 || temp.num[0] > 0)
+    {
+        working_str += div_digit(temp, 10, ret) + '0';
+        std::swap(temp, ret);
+    }
+
+    // Formatting
+    std::cout << name << ": ";
+
+    // Digit array (reversed)
+    for (size_t i = working_str.size(); i > 0; i--)
+        std::cout << working_str[i-1];
+    std::cout << '\n';
 
     return;
 }
@@ -972,4 +1022,39 @@ bool AlgInt::prime_check(const AlgInt& candidate, const AlgInt& witness)
     }
 
     return false;
+}
+
+
+
+AlgInt& AlgInt::operator=(AlgInt& other)
+{
+    // Prevent self-assignment
+    if (&other == this)
+        return *this;
+
+    // Create a seperate num array
+    resize(other.size);
+
+    // Deep copy the num array for other
+    for (size_t i = 0; i < other.size; i++)
+        num[i] = other.num[i];
+
+    return *this;
+}
+
+AlgInt& AlgInt::operator=(AlgInt&& other)
+{
+    // Prevent self-assignment
+    if (&other == this)
+        return *this;
+
+    // Move all values to this object.
+    num = other.num;
+    size = other.size;
+    cap = other.cap;
+
+    // Destroy other
+    other.num = NULL;
+
+    return *this;
 }

@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include "Alginate.hpp"
 #include "Alginate_old.hpp"
@@ -54,14 +55,14 @@
 
 int main()
 {
-    uint32_t x_temp[] = {221};
-    uint32_t y_temp[] = {175};
-    uint32_t m_temp[] = {12, 63,543,543,5, 43,5, 43,5, 23, 423, 423, 423, 423, 312, 643};
+    // uint32_t x_temp[] = {221};
+    // uint32_t y_temp[] = {175};
+    // uint32_t m_temp[] = {12, 63,543,543,5, 43,5, 43,5, 23, 423, 423, 423, 423, 312, 643};
 
-    AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
-    AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t)};
-    AlgInt m = {m_temp, sizeof(m_temp)/sizeof(uint32_t)};
-    AlgInt ret = {NULL, 0};
+    // AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
+    // AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t)};
+    // AlgInt m = {m_temp, sizeof(m_temp)/sizeof(uint32_t)};
+    // AlgInt ret = {NULL, 0};
 
     // Barrett and Montgomery are both for the same reduction.
     // Montgomery is faster.
@@ -76,7 +77,9 @@ int main()
 
     std::cerr << "Main complete\n\n";
 
-    std::cout << "Prime: " << AlgInt::prime_check(x,y);
+    AlgInt test = 4354535345682;
+
+    test.print("test");
 
 
     //* Modulus and adjacent functions (div contains most of this).

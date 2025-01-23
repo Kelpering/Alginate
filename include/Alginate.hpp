@@ -17,20 +17,21 @@ class AlgInt
         void resize(size_t new_size);
         void trunc();
         static void swap(AlgInt& x, AlgInt& y);
-
-        //! Probably temporary (deletes default methods to prevent hidden issues)
-        AlgInt() = delete;
-        AlgInt(AlgInt& other) = delete;
-        AlgInt& operator=(AlgInt& other) = delete;
-        AlgInt& operator=(const AlgInt&& other) = delete;
+        
     public: 
         //* Basic constructor/destructors
-        AlgInt(const uint32_t* num, size_t size);
+        AlgInt() : AlgInt(NULL, 0) {}
+        AlgInt(const AlgInt& other) : AlgInt(other.num, other.size) {};
         ~AlgInt();
+
+        //* Complex constructors
+        AlgInt(uint64_t num);
+        AlgInt(const uint32_t* num, size_t size);
 
         //* Basic print
         void print_debug(const char* name = "Number", bool show_size = false) const;
         void print_log(const char* name = "Number", bool show_size = true) const;
+        void print(const char* name = "Number") const;
 
         //! Keep everything very basic to speed up development/debugging
         //! Work with signed integers throughout the process
@@ -108,6 +109,11 @@ class AlgInt
         // True  == prime OR witness strong liar
         // witness must be [2, candidate-1) and completely random
         static bool prime_check(const AlgInt& candidate, const AlgInt& witness);
+
+        //^ gcd
+        //^ Extended Euclidean
+        //^ mod_inv (technically just Extended Euclidean)
+        //^ rand initializer
         
     //? Basic function types?
         //^ add public (x, y, ret)
@@ -138,6 +144,9 @@ class AlgInt
         // Mul is faster if we implement addition directly in the step by step
         // Div is faster if we implement a mul_digit function 
         // Barrett Reduction might be useful for modular exponentiation
+
+        AlgInt& operator=(AlgInt& other);
+        AlgInt& operator=(AlgInt&& other);
 
 
 };

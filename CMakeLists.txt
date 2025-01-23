@@ -29,6 +29,9 @@ target_compile_options(Alginate
 add_executable(Test src/main.cpp)
 target_compile_options(Test
     PRIVATE
+        -Wall
+        -Wpedantic
+        -Werror
         -ggdb
 )
 target_link_libraries(Test Alginate)
