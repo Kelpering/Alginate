@@ -12,25 +12,25 @@ class AlgInt
         uint32_t* num = nullptr;
         size_t size = 0;
         size_t cap = 0;
-        // bool sign = false;
+        bool sign = false;
 
         void resize(size_t new_size);
-        void trunc();
         
     public: 
+        void trunc();
         static void swap(AlgInt& x, AlgInt& y);
         //* Basic constructor/destructors
-        AlgInt() : AlgInt((uint32_t*)NULL, 0) {}
-        AlgInt(const AlgInt& other) : AlgInt(other.num, other.size) {};
+        AlgInt() : AlgInt((uint32_t*)NULL, 0, false) {}
+        AlgInt(const AlgInt& other) : AlgInt(other.num, other.size, other.sign) {};
         ~AlgInt();
 
         //* Complex constructors
-        AlgInt(uint64_t num);
-        AlgInt(const uint32_t* num, size_t size);
+        AlgInt(uint64_t num, bool sign = false);
+        AlgInt(const uint32_t* num, size_t size, bool sign = false);
             // Will not allow leading zeroes, might call randfunc more than size times
-        AlgInt(uint32_t (*randfunc)(), size_t size);
+        AlgInt(uint32_t (*randfunc)(), size_t size, bool sign = false);
             // Will not allow leading zeroes, might call randfunc more than size times
-        AlgInt(uint8_t (*randfunc)(), size_t size);
+        AlgInt(uint8_t (*randfunc)(), size_t size, bool sign = false);
 
         //* Basic print
         void print_debug(const char* name = "Number", bool show_size = false) const;
@@ -45,8 +45,8 @@ class AlgInt
         /**
          * @brief Compares x to y.
          * @return 1: (x > y) ||| 0: (x == y) ||| -1: (x < y)
-         * @note Assumes that x.size >= y.size. Throws error if x.size < y.size. 
          */
+         //! Currently unsigned
         static int cmp(const AlgInt& x, const AlgInt& y);
 
         /**
@@ -54,6 +54,7 @@ class AlgInt
          * 
          * @param ret Cannot be x
          */
+        //! Unsigned
         static void add_digit(const AlgInt& x, uint32_t y, AlgInt& ret);
 
         /**
@@ -61,7 +62,7 @@ class AlgInt
          * 
          * @param ret Cannot be x or y
          */
-        static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign = false);
 
         /**
          * @brief ret = x - y
@@ -69,8 +70,9 @@ class AlgInt
          * @param ret Cannot be x or y
          * @note If x < y, then the result will be the absolute of the result.
          */
-        static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign = false);
 
+        //! Unsigned
         static void sub_digit(const AlgInt& x, uint32_t y, AlgInt& ret);
 
         /**
@@ -93,13 +95,17 @@ class AlgInt
          * @param ret Cannot be x, contains quotient.
          * @returns The remainder.
          */
+        //! Currently (r ONLY) unsigned
         static uint32_t div_digit(const AlgInt& x, uint32_t y, AlgInt& ret);
 
         // Benefit: Doesn't require a ret (temp) variable
+        //! Currently unsigned
         static uint32_t mod_digit(const AlgInt& x, uint32_t y);
 
+        //! Currently (r ONLY) unsigned
         static void div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r);
 
+        //! Unsigned
         static void bw_shl(const AlgInt& x, size_t y, AlgInt& ret);
         static void bw_shr(const AlgInt& x, size_t y, AlgInt& ret);
         
@@ -108,6 +114,9 @@ class AlgInt
 
         // X and Y are expected to already be modulo `m`
         static void mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret);
+
+        // Same as mod_exp + m must be odd
+        static void mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret);
 
         // False == candidate is NOT prime
         // True  == prime OR witness strong liar
@@ -119,6 +128,9 @@ class AlgInt
         void clear_bit(size_t bit);
         size_t get_size() const;
         size_t get_bitsize() const;
+
+        // a*x + b*y = gcd(a,b)
+        static void eed(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y, AlgInt& gcd);
 
         //^ gcd
         //^ Extended Euclidean
@@ -155,7 +167,7 @@ class AlgInt
         // Div is faster if we implement a mul_digit function 
         // Barrett Reduction might be useful for modular exponentiation
 
-        AlgInt& operator=(AlgInt& other);
+        AlgInt& operator=(const AlgInt& other);
         AlgInt& operator=(AlgInt&& other);
 
 

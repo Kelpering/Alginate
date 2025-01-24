@@ -73,7 +73,7 @@ int main()
     //? Generate a large prime of size prime_size bits
     AlgInt temp;
     uint32_t short_primes[] = {3, 5, 7, 11, 13, 17, 19};
-    size_t prime_size = 64;
+    size_t prime_size = 1024;
     prime_size /= 8;
 
     // Init rand
@@ -121,7 +121,17 @@ int main()
 
     prime.print_debug("Probable Prime");
 
-    //! Slow for logging
+    //! The currently slow function is mod_exp, as expected
+    //! We need to highly optimize it if we want it to be effective.
+    //! Karatsuba is quite difficult, so we want to leave that for last.
+    //! I also suspect that the divisions are more intensive than the rarer multiplications
+    //! Fast square alg will probably be the easiest to implement.
+    //! Montgomery will probably give us the largest savings.
+    
+    //! Possible optimizations:
+        //! Montgomery (faster modulo)
+        //! Fast square alg
+        //! Karatsuba (faster multiplication)
 
 
 
