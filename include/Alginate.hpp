@@ -130,7 +130,7 @@ class AlgInt
         size_t get_bitsize() const;
 
         // a*x + b*y = gcd(a,b)
-        static void eed(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y, AlgInt& gcd);
+        static void ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y, AlgInt& gcd);
 
         //^ gcd
         //^ Extended Euclidean

@@ -68,58 +68,72 @@ int main()
     //  for future calculations.
     // Add some checksum (1 if static, 0 otherwise) to speed up pre-comp.
 
+
+    AlgInt x = 161;
+    AlgInt y = 28;
+    AlgInt a, b, gcd;
+
     std::cerr << "Main complete\n\n";
 
-    //? Generate a large prime of size prime_size bits
-    AlgInt temp;
-    uint32_t short_primes[] = {3, 5, 7, 11, 13, 17, 19};
-    size_t prime_size = 1024;
-    prime_size /= 8;
 
-    // Init rand
-    srand(12);
+    x.print_debug("x");
+    y.print_debug("y");
+    AlgInt::ext_gcd(x,y, a, b, gcd);
+    a.print_debug("a");
+    b.print_debug("b");
+    gcd.print_debug("gcd");
 
-    // Create a random number (prime) with byte random
-    AlgInt prime = {(uint8_t (*)())rand, prime_size};
-    const AlgInt const_witness = {(uint8_t (*)())rand, prime_size/2};
+
+    // //? Generate a large prime of size prime_size bits
+    // AlgInt temp;
+    // uint32_t short_primes[] = {3, 5, 7, 11, 13, 17, 19};
+    // size_t prime_size = 1024;
+    // prime_size /= 8;
+
+    // // Init rand
+    // srand(12);
+
+    // // Create a random number (prime) with byte random
+    // AlgInt prime = {(uint8_t (*)())rand, prime_size};
+    // const AlgInt const_witness = {(uint8_t (*)())rand, prime_size/2};
     
-    // Largest and smallest bits are set (big and even)
-    prime.print_debug("Prime");
-    prime.set_bit(0);
-    prime.set_bit(prime.get_bitsize()-1);
-    prime.print_debug("Prime");
+    // // Largest and smallest bits are set (big and even)
+    // prime.print_debug("Prime");
+    // prime.set_bit(0);
+    // prime.set_bit(prime.get_bitsize()-1);
+    // prime.print_debug("Prime");
 
 
 
-    //? Create prime
-    regen_prime:
+    // //? Create prime
+    // regen_prime:
     
-    AlgInt::add_digit(prime, 2, temp);
-    AlgInt::swap(prime, temp);
+    // AlgInt::add_digit(prime, 2, temp);
+    // AlgInt::swap(prime, temp);
 
-    // Trial short prime divide
-    for (size_t i = 0; i < sizeof(short_primes)/sizeof(uint32_t); i++)
-    {
-        if (AlgInt::mod_digit(prime, short_primes[i]) == 0)
-            goto regen_prime;
-    }
+    // // Trial short prime divide
+    // for (size_t i = 0; i < sizeof(short_primes)/sizeof(uint32_t); i++)
+    // {
+    //     if (AlgInt::mod_digit(prime, short_primes[i]) == 0)
+    //         goto regen_prime;
+    // }
 
-    prime.print_debug("Prime");
+    // prime.print_debug("Prime");
 
-    // Const Miller-Rabin test
-    if (AlgInt::prime_check(prime, const_witness) == false)
-        goto regen_prime;
+    // // Const Miller-Rabin test
+    // if (AlgInt::prime_check(prime, const_witness) == false)
+    //     goto regen_prime;
 
-    // Extensive (random) Miller-Rabin test
-    for (size_t i = 0; i < 64; i++)
-    {
-        AlgInt wit = {(uint8_t (*)())rand, prime_size-1};
-        if (AlgInt::prime_check(prime, wit) == false)
-            goto regen_prime;
-        std::cout << "Passed: " << i+1 << "/64\n";
-    }
+    // // Extensive (random) Miller-Rabin test
+    // for (size_t i = 0; i < 64; i++)
+    // {
+    //     AlgInt wit = {(uint8_t (*)())rand, prime_size-1};
+    //     if (AlgInt::prime_check(prime, wit) == false)
+    //         goto regen_prime;
+    //     std::cout << "Passed: " << i+1 << "/64\n";
+    // }
 
-    prime.print_debug("Probable Prime");
+    // prime.print_debug("Probable Prime");
 
     //! The currently slow function is mod_exp, as expected
     //! We need to highly optimize it if we want it to be effective.
