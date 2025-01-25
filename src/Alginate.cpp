@@ -268,7 +268,7 @@ void AlgInt::print(const char* name) const
     temp.trunc();
 
     // Prevent null string if temp == 0
-    if (temp.size > 1 && temp.num[0] == 0)
+    if (temp.size == 1 && temp.num[0] == 0)
         working_str += "0";
 
     // Convert base 2^32 into base 10 (reversed)
@@ -282,7 +282,7 @@ void AlgInt::print(const char* name) const
     std::cout << name << ": ";
 
     // Digit array (reversed)
-    std::cout << name << ": " << ((sign) ? '-' : '+');
+    std::cout << name << ": " << ((sign) ? '-' : '+') << " ";
     for (size_t i = working_str.size(); i > 0; i--)
         std::cout << working_str[i-1];
     std::cout << '\n';
@@ -859,17 +859,17 @@ void AlgInt::bw_shl(const AlgInt& x, size_t y, AlgInt& ret)
         ret.num[i + (y>>5)] = x.num[i];
 
     // Bits only
-    y &= 0x1F;
+    size_t ybits = y & 0x1F;
 
     // Bitwise shift
-    if (y)
+    if (ybits)
     {
         // All but last digit
         for (size_t i = ret.size-1; i > 0; i--)
-            ret.num[i] = (uint64_t) (ret.num[i] << y) | (uint64_t) (ret.num[i-1] >> (32-y));
+            ret.num[i] = (uint64_t) (ret.num[i] << ybits) | (uint64_t) (ret.num[i-1] >> (32-ybits));
 
         // Final digit
-        ret.num[0] <<= y;
+        ret.num[0] <<= ybits;
     }
 
     // Remove leading zeroes from ret
@@ -1081,6 +1081,29 @@ void AlgInt::mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt&
         //? a < 0: a += n
         //? return a
 
+    size_t bit_pos = y.size * 32 - 1;
+
+    while (bitarr_32(y.num, bit_pos) == 0)
+        bit_pos--;
+
+    AlgInt r, rInv, mPrime;
+    bw_shl(1, bit_pos+1, r);
+
+    AlgInt temp;
+    ext_gcd(r, m, rInv, mPrime, temp);
+    // If temp != 1, error.
+
+    r.print_debug("r");
+    rInv.print_debug("rInv");
+    m.print_debug("modulus");
+    mPrime.print_debug("mPrime");
+    temp.print_debug("gcd");
+
+    mul(r, rInv, temp);
+    temp.print_debug();
+    mul(m, mPrime, temp);
+    temp.print_debug();
+
 
 }
 
@@ -1258,12 +1281,20 @@ void AlgInt::ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y, Alg
         old_r = r;
         mul(q, r, temp2);
         sub(temp1, temp2, r);
+        r.print("\nr");
 
         // (old_s, s) = (s, old_s - q * s)
         temp1 = old_s;
         old_s = s;
         mul(q, s, temp2);
         sub(temp1, temp2, s);
+        s.print("s");
+
+        //! This step is broken.
+        // r: 
+        // r: + 1
+        // s: s: + 4294967296
+        // t: t: - 8589934589
 
 
         // (old_t, t) = (t, old_t - q * t)
@@ -1271,6 +1302,7 @@ void AlgInt::ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y, Alg
         old_t = t;
         mul(q, t, temp2);
         sub(temp1, temp2, t);
+        t.print("t");
 
 
         // Check r == 0 (rely on trunc)

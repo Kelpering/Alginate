@@ -68,20 +68,18 @@ int main()
     //  for future calculations.
     // Add some checksum (1 if static, 0 otherwise) to speed up pre-comp.
 
-
-    AlgInt x = 161;
-    AlgInt y = 28;
-    AlgInt a, b, gcd;
+    uint32_t x_temp[] = {1, 2};
+    uint32_t y_temp[] = {1, 2};
+    uint32_t m_temp[] = {1, 2};
+    AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
+    AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t)};
+    AlgInt m = {m_temp, sizeof(m_temp)/sizeof(uint32_t)};
+    AlgInt ret;
 
     std::cerr << "Main complete\n\n";
 
+    AlgInt::mont_exp(x, y, m, ret);
 
-    x.print_debug("x");
-    y.print_debug("y");
-    AlgInt::ext_gcd(x,y, a, b, gcd);
-    a.print_debug("a");
-    b.print_debug("b");
-    gcd.print_debug("gcd");
 
 
     // //? Generate a large prime of size prime_size bits
