@@ -115,6 +115,12 @@ class AlgInt
         // X and Y are expected to already be modulo `m`
         static void mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret);
 
+        // the reduce (redc) step in montgomery space
+        // r_sub = r - 1
+        // r_shift = 1 << r_shift == r
+        // r substitutes allow fast optimizations in mont_redc
+        static void mont_redc(const AlgInt& x, const AlgInt& rInv, const AlgInt& m, const AlgInt& mPrime, const AlgInt& r_sub, size_t r_shift, AlgInt& ret);
+
         // Same as mod_exp + m must be odd
         static void mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret);
 
@@ -131,6 +137,10 @@ class AlgInt
 
         // a*x + b*y = gcd(a,b)
         static void ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y, AlgInt& gcd);
+
+        static void bw_and(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        static void bw_or(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        static void bw_xor(const AlgInt& x, const AlgInt& y, AlgInt& ret);
 
         //^ gcd
         //^ Extended Euclidean

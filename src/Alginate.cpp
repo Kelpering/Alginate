@@ -853,6 +853,7 @@ void AlgInt::bw_shl(const AlgInt& x, size_t y, AlgInt& ret)
 {
     // Maximum shift possible is x.size + y_digits + 1
     ret.resize(x.size+(y>>5)+1);
+    ret.sign = x.sign;
 
     if (y == 0)
         for (size_t i = 0; i < x.size; i++)
@@ -890,6 +891,7 @@ void AlgInt::bw_shl(const AlgInt& x, size_t y, AlgInt& ret)
 
 void AlgInt::bw_shr(const AlgInt& x, size_t y, AlgInt& ret)
 {
+    ret.sign = x.sign;
     // Maximum shift possible is x.size - y_digits
     if (x.size < (y>>5))
     {
@@ -912,7 +914,7 @@ void AlgInt::bw_shr(const AlgInt& x, size_t y, AlgInt& ret)
     y &= 0x1F;
 
     // Bitwise shift
-    if (y)
+    if (y && ret.size > 0)
     {
         // All but last digit
         size_t i;
@@ -1003,8 +1005,8 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret)
 void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret)
 {
     // If m is odd, we can use the montgomery optimization
-    if (m.num[0] & 1)
-        mont_exp(x,y,m,ret);
+    // if (m.num[0] & 1)
+        // mont_exp(x,y,m,ret);
 
     // The most significant y bit.
     size_t y_bit = y.size * 32 - 1;
@@ -1064,6 +1066,34 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
     return;
 }
 
+void AlgInt::mont_redc(const AlgInt& x, const AlgInt& rInv, const AlgInt& m, const AlgInt& mPrime, const AlgInt& r_sub, size_t r_shift, AlgInt& ret)
+{
+    //! Extremely messy code (probably can remove a var)
+    //! Will leave alone until final revision
+    AlgInt q, a, temp;
+
+    std::cerr << "Start reduce\n";
+
+    //? q = ((x%r) * mPrime) % r
+    // x % r (bw_and when modulus is a power of 2)
+    bw_and(x, r_sub, q);
+    mul(q, mPrime, temp);
+    bw_and(temp, r_sub, q);
+
+    //? a = (x - q * m) / r
+    mul(q, m, a);
+    sub(x, a, temp);
+    // temp / r (bw_shr when denominator is a power of 2)
+    bw_shr(temp, r_shift, a);
+
+    if (a.sign)
+        add(a, m, ret);
+    else
+        ret = a;
+
+    return;
+}
+
 void AlgInt::mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret)
 {
     // We transform x and m into montgomery space
@@ -1072,43 +1102,89 @@ void AlgInt::mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt&
 
     // expect m to be trunc
     // take highest digit, find highest bit (bit_pos)
-    
-    //? r = 1<<(bit_pos+1)
-    //? r * r_inv + m * m_prime = 1
-    //* Implement extended euclidean divison alg (a, b == s, t, gcd) (a*s+b*t == gcd)
-    //? rInv = EED(s)
-    //? mPrime EED(t) (mod r)
-    //* Implement redc (this is fast because r is a power of 2)
-    //? x * rInv (mod m) == 
-        //? q = ((x % r) * mPrime) % r
-        //? a = (x - q * m) / r
-        //? a < 0: a += n
-        //? return a
 
-    size_t bit_pos = y.size * 32 - 1;
+    size_t bit_pos = x.size * 32 - 1;
 
-    while (bitarr_32(y.num, bit_pos) == 0)
+    while (bitarr_32(x.num, bit_pos) == 0)
         bit_pos--;
+    bit_pos++;
 
-    AlgInt r, rInv, mPrime;
-    bw_shl(1, bit_pos+1, r);
+    // r_sub is used for modulus (bitmask r_sub)
+    // bit_pos is used for multiplication (rshift bit_pos)
+    AlgInt r, r_sub;
+    bw_shl(1, bit_pos, r);
+    sub_digit(r, 1, r_sub);
 
-    AlgInt temp;
+    AlgInt rInv, mPrime, temp;
     ext_gcd(r, m, rInv, mPrime, temp);
     // If temp != 1, error.
 
-    r.print_debug("r");
-    rInv.print_debug("rInv");
-    m.print_debug("modulus");
-    mPrime.print_debug("mPrime");
-    temp.print_debug("gcd");
+    // Test to see if rInv can be negative, if so: just copy mPrime modulus
+    if (rInv.sign)
+        throw std::runtime_error("rInv is negative");
 
-    mul(r, rInv, temp);
-    temp.print_debug();
-    mul(m, mPrime, temp);
-    temp.print_debug();
+    // mPrime % r to remove negative
+    if (mPrime.sign)
+    {
+        sub(r, mPrime, temp, true);
+        swap(temp, mPrime);
+    }
 
+    //? Exponentiation
+    
+    // The most significant y bit.
+    size_t y_bit = y.size * 32 - 1;
+    while (y_bit > 0 && bitarr_32(y.num, y_bit) == 0)
+        y_bit--;
+    // Adjust for the for loop
+    y_bit++;
 
+    AlgInt sqr_temp, temp1, temp2;
+    // sqr_temp = x * r % m (x mont)
+    mul(x, r, temp1);
+    div(temp1, m, temp2, sqr_temp);
+    // ret = 1 * r % m (ret mont)
+    div(r, m, temp2, ret);
+
+    std::cout << "y_bit: " << y_bit << '\n';
+
+    for (size_t i = 0; i < y_bit; i++)
+    {
+
+        std::cout << "i: " << i << "\n";
+
+        // If the current bit is 1
+        if (bitarr_32(y.num, i) == 1)
+        {
+            // temp = ret * sqr_temp
+            mul(ret, sqr_temp, temp1);
+
+            // ret = temp1 * rInv
+            mont_redc(temp1, rInv, m, mPrime, r_sub, bit_pos, ret);
+        }
+        
+        // temp = sqr_temp^2
+        exp2(sqr_temp, temp1);
+
+        // sqr_temp = temp1 * rInv
+        mont_redc(temp1, rInv, m, mPrime, r_sub, bit_pos, sqr_temp);
+        //! Sqr_temp (while growing) exceeds the modulus
+        //! Code is extremely dirty for mont_redc, we can clean it and probably find the bug
+        //! New bitwise (bw) functions are also untested
+        //! after this is fixed, we can probably test the prime generation and refactor the entire codebase to standard
+        //! This is after we implement the key generation functions for RSA (both to finally finish it and have a practical test)
+        //! A lot of the signed functions are also quite bad. Both definiton and cleanliness need to be worked on.
+        //! We also need to implement exceptions for undefined operations
+        
+        //! I remember a similar problem with Alginate_old, check source for possible fixes.
+    }
+
+    // ret *= rInv (Removes ret from montgomery space)
+    AlgInt::swap(ret, temp1);
+    mont_redc(temp1, rInv, m, mPrime, r_sub, bit_pos, ret);
+    ret.trunc();
+
+    return;
 }
 
 bool AlgInt::prime_check(const AlgInt& candidate, const AlgInt& witness)
@@ -1306,3 +1382,91 @@ void AlgInt::ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y, Alg
 
     return;
 }
+
+void AlgInt::bw_and(const AlgInt& x, const AlgInt& y, AlgInt& ret)
+{
+    const AlgInt& big = (x.size > y.size) ? x : y;
+    const AlgInt& sml = (x.size > y.size) ? y : x;
+
+    ret.resize(big.size);
+    size_t i;
+    for (i = 0; i < sml.size; i++)
+    {
+        ret.num[i] = x.num[i] & y.num[i];
+    }
+
+    // AlgInts have implied leading zeroes
+    for (; i < big.size; i++)
+        ret.num[i] = 0;
+
+    ret.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "&\n";
+    y.print_log("y");
+    std::cerr << "=\n";
+    ret.print_log("ret");
+    std::cerr << "\n";
+
+    return;
+}
+
+void AlgInt::bw_or(const AlgInt& x, const AlgInt& y, AlgInt& ret)
+{
+    const AlgInt& big = (x.size > y.size) ? x : y;
+    const AlgInt& sml = (x.size > y.size) ? y : x;
+
+    ret.resize(big.size);
+    size_t i;
+    for (i = 0; i < sml.size; i++)
+    {
+        ret.num[i] = x.num[i] | y.num[i];
+    }
+
+    // AlgInts have implied leading zeroes
+    for (; i < big.size; i++)
+        ret.num[i] = big.num[i];
+
+    ret.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "|\n";
+    y.print_log("y");
+    std::cerr << "=\n";
+    ret.print_log("ret");
+    std::cerr << "\n";
+
+    return;
+}
+
+void AlgInt::bw_xor(const AlgInt& x, const AlgInt& y, AlgInt& ret)
+{
+    const AlgInt& big = (x.size > y.size) ? x : y;
+    const AlgInt& sml = (x.size > y.size) ? y : x;
+
+    ret.resize(big.size);
+    size_t i;
+    for (i = 0; i < sml.size; i++)
+    {
+        ret.num[i] = x.num[i] ^ y.num[i];
+    }
+
+    // AlgInts have implied leading zeroes
+    for (; i < big.size; i++)
+        ret.num[i] = big.num[i];
+
+    ret.trunc();
+
+    //! Temporary logging
+    x.print_log("\n== CALC ==\nx");
+    std::cerr << "^\n";
+    y.print_log("y");
+    std::cerr << "=\n";
+    ret.print_log("ret");
+    std::cerr << "\n";
+
+    return;
+}
+

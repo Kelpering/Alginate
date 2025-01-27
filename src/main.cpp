@@ -70,7 +70,7 @@ int main()
 
     uint32_t x_temp[] = {1, 2};
     uint32_t y_temp[] = {1, 2};
-    uint32_t m_temp[] = {1, 2};
+    uint32_t m_temp[] = {1, 2,3123,3,321,321,3};
     AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
     AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t)};
     AlgInt m = {m_temp, sizeof(m_temp)/sizeof(uint32_t)};
@@ -78,8 +78,14 @@ int main()
 
     std::cerr << "Main complete\n\n";
 
+    x.print_debug();
+    y.print_debug();
+    m.print_debug();
     AlgInt::mont_exp(x, y, m, ret);
+    ret.print_debug();
 
+    AlgInt::mod_exp(x, y, m, ret);
+    ret.print_debug();
 
 
     // //? Generate a large prime of size prime_size bits
