@@ -278,9 +278,6 @@ void AlgInt::print(const char* name) const
         AlgInt::swap(temp, ret);
     }
 
-    // Formatting
-    std::cout << name << ": ";
-
     // Digit array (reversed)
     std::cout << name << ": " << ((sign) ? '-' : '+') << " ";
     for (size_t i = working_str.size(); i > 0; i--)
@@ -384,21 +381,26 @@ void AlgInt::add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign
     const AlgInt& big = (x.size > y.size) ? x : y;
     const AlgInt& sml = (x.size > y.size) ? y : x;
 
+    ret = big;
     ret.resize(big.size+1);
 
     uint32_t carry = 0;
+    size_t i;
 
-    for (size_t i = 0; i < big.size; i++)
+    for (i = 0; i < sml.size; i++)
     {
-        uint64_t calc = (uint64_t) big.num[i] + sml.num[i] + carry;
+        uint64_t calc = (uint64_t) ret.num[i] + sml.num[i] + carry;
         ret.num[i] = (uint32_t) calc;
         carry = calc >> 32;
     }
 
-    if (carry)
-        ret.num[ret.size-1] = 1;
-    else
-        ret.resize(ret.size-1);
+    while (carry)
+    {
+        uint64_t calc = (uint64_t) ret.num[i] + carry;
+        ret.num[i] = (uint32_t) calc;
+        carry = calc >> 32;
+        i++;
+    }
 
     // Remove leading zeroes from ret
     ret.trunc();
@@ -424,9 +426,11 @@ void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign
             ret.sign = false;
             break;
         case 0b01:  // x - (-y) == x + y
-            return add(x, y, ret, true);
+            add(x, y, ret, true);
+            ret.sign = false;
+            return ;
         case 0b10:  // (-x) - y == -(x+y)
-            sub(y, x, ret, true);
+            add(x, y, ret, true);
             ret.sign = true;
             return;
         case 0b11:  // (-x) - (-y) == y - x
@@ -1281,28 +1285,18 @@ void AlgInt::ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y, Alg
         old_r = r;
         mul(q, r, temp2);
         sub(temp1, temp2, r);
-        r.print("\nr");
 
         // (old_s, s) = (s, old_s - q * s)
         temp1 = old_s;
         old_s = s;
         mul(q, s, temp2);
         sub(temp1, temp2, s);
-        s.print("s");
-
-        //! This step is broken.
-        // r: 
-        // r: + 1
-        // s: s: + 4294967296
-        // t: t: - 8589934589
-
 
         // (old_t, t) = (t, old_t - q * t)
         temp1 = old_t;
         old_t = t;
         mul(q, t, temp2);
         sub(temp1, temp2, t);
-        t.print("t");
 
 
         // Check r == 0 (rely on trunc)
