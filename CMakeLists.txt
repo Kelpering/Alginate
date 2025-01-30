@@ -21,6 +21,7 @@ target_compile_options(Alginate
         -Wpedantic
         -Werror
         -ggdb
+        -O2
 )
 
 
@@ -33,5 +34,6 @@ target_compile_options(Test
         -Wpedantic
         -Werror
         -ggdb
+        -O2
 )
 target_link_libraries(Test Alginate)

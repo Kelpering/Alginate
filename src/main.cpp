@@ -94,8 +94,8 @@ int main()
     AlgInt prime = {(uint8_t (*)())rand, prime_size};
     const AlgInt const_witness = {(uint8_t (*)())rand, prime_size/2};
     
-    prime.print("prime");
-    const_witness.print("const wit");
+    // prime.print("prime");
+    // const_witness.print("const wit");
 
     // Largest and smallest bits are set (big and even)
     // prime.print_debug("Prime");
@@ -117,13 +117,13 @@ int main()
             goto regen_prime;
     }
 
-    prime.print_debug("\nPrime");
+    // prime.print_debug("\nPrime");
 
     // Const Miller-Rabin test
-    std::cout << "Miller-Rabin... ";
+    // std::cout << "Miller-Rabin... ";
     if (AlgInt::prime_check(prime, const_witness) == false)
     {
-        std::cout << "Failed\n";
+        // std::cout << "Failed\n";
         goto regen_prime;
     }
 
@@ -133,10 +133,10 @@ int main()
         AlgInt wit = {(uint8_t (*)())rand, prime_size-1};
         if (AlgInt::prime_check(prime, wit) == false)
             goto regen_prime;
-        std::cout << "Passed: " << i+1 << "/64\n";
+        // std::cout << "Passed: " << i+1 << "/64\n";
     }
 
-    prime.print_debug("Probable Prime");
+    // prime.print_debug("Probable Prime");
 
     //! The currently slow function is mod_exp, as expected
     //! We need to highly optimize it if we want it to be effective.
