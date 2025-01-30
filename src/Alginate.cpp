@@ -12,7 +12,7 @@ void AlgInt::resize(size_t new_size)
     //!  allocate larger arrays to handle data.
 
     //! Temporary logvar
-    size_t prev_cap = cap;
+    // size_t prev_cap = cap;
 
     
     if (new_size < size)
@@ -54,10 +54,10 @@ void AlgInt::resize(size_t new_size)
     }
 
     //! Temporary logging
-    if (prev_cap == cap)
-        std::cerr << "Resize (" << new_size << " [" << cap << "])\n";
-    else
-        std::cerr << "Resize (" << new_size << " ["<< prev_cap << " -> " << cap << "])\n";
+    // if (prev_cap == cap)
+    //     std::cerr << "Resize (" << new_size << " [" << cap << "])\n";
+    // else
+    //     std::cerr << "Resize (" << new_size << " ["<< prev_cap << " -> " << cap << "])\n";
 
     return;
 }
@@ -65,7 +65,7 @@ void AlgInt::resize(size_t new_size)
 void AlgInt::trunc()
 {
     //! Temporary logging (includes resize)
-    std::cerr << "Trunc\n";
+    // std::cerr << "Trunc\n";
 
     // Removes all leading zeroes (except x.num[0] == 0).
     size_t temp_size = size;
@@ -79,7 +79,7 @@ void AlgInt::trunc()
 void AlgInt::swap(AlgInt& x, AlgInt& y)
 {
     //! Temporary logging
-    std::cerr << "Swap\n";
+    // std::cerr << "Swap\n";
 
     if (&x == &y)
         return;
@@ -95,7 +95,7 @@ void AlgInt::swap(AlgInt& x, AlgInt& y)
 AlgInt::AlgInt(const uint32_t* num, size_t size, bool sign)
 {
     //! Temporary logging (includes resize)
-    std::cerr << "Num Created + ";
+    // std::cerr << "Num Created + ";
 
     // Size 0 check
     if (size == 0)
@@ -119,7 +119,7 @@ AlgInt::AlgInt(const uint32_t* num, size_t size, bool sign)
 AlgInt::AlgInt(uint64_t num, bool sign)
 {
     //! Temporary logging (includes resize)
-    std::cerr << "Num Created + ";
+    // std::cerr << "Num Created + ";
 
     if (num > UINT32_MAX)
     {
@@ -141,10 +141,10 @@ AlgInt::AlgInt(uint64_t num, bool sign)
 AlgInt::~AlgInt()
 {
     //! Temporary logging
-    if (num == nullptr)
-        std::cerr << "Num Moved\n";
-    else
-        std::cerr << "Num Destroyed\n";
+    // if (num == nullptr)
+    //     std::cerr << "Num Moved\n";
+    // else
+    //     std::cerr << "Num Destroyed\n";
 
     // Destroy num array (de-allocate and reference nullptr)
     delete[] num;
@@ -156,7 +156,7 @@ AlgInt::~AlgInt()
 AlgInt::AlgInt(uint32_t (*randfunc)(), size_t size, bool sign)
 {
     //! Temporary logging (includes resize)
-    std::cerr << "Num Created + ";
+    // std::cerr << "Num Created + ";
 
     resize(size);
 
@@ -176,7 +176,7 @@ AlgInt::AlgInt(uint32_t (*randfunc)(), size_t size, bool sign)
 AlgInt::AlgInt(uint8_t (*randfunc)(), size_t size, bool sign)
 {
     //! Temporary logging (includes resize)
-    std::cerr << "Num Created + ";
+    // std::cerr << "Num Created + ";
 
     // Increase size to the nearest power of 2, then divide
     size_t temp_size = size;
@@ -258,7 +258,7 @@ void AlgInt::print_log(const char* name, bool show_size) const
 void AlgInt::print(const char* name) const
 {
     //! Temporary logging
-    std::cerr << "\n== Print ==\n";
+    // std::cerr << "\n== Print ==\n";
 
     AlgInt temp = *this;
     AlgInt ret;
@@ -352,10 +352,10 @@ void AlgInt::add_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
     ret.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "+\n" << "y: " << y << "\n=\n";
-    ret.print_log("ret");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "+\n" << "y: " << y << "\n=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
 
     return;
 }
@@ -406,12 +406,12 @@ void AlgInt::add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign
     ret.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "+\n";
-    y.print_log("y");
-    std::cerr << "=\n";
-    ret.print_log("ret");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "+\n";
+    // y.print_log("y");
+    // std::cerr << "=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
 
     return;
 }
@@ -452,12 +452,12 @@ void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign
         sub(y, x, ret);
         ret.sign = true;
         //! Temporary logging
-        x.print_log("\n== CALC ==\nx");
-        std::cerr << "-\n";
-        y.print_log("y");
-        std::cerr << "=\n";
-        ret.print_log("ret");
-        std::cerr << "\n";
+        // x.print_log("\n== CALC ==\nx");
+        // std::cerr << "-\n";
+        // y.print_log("y");
+        // std::cerr << "=\n";
+        // ret.print_log("ret");
+        // std::cerr << "\n";
 
         return;
     }
@@ -507,12 +507,12 @@ void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign
     ret.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "-\n";
-    y.print_log("y");
-    std::cerr << "=\n";
-    ret.print_log("ret");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "-\n";
+    // y.print_log("y");
+    // std::cerr << "=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
 
     return;
 }
@@ -530,10 +530,10 @@ void AlgInt::sub_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
         ret.num[0] -= y;
 
         //! Temporary logging
-        x.print_log("\n== CALC ==\nx");
-        std::cerr << "-\n" << "y: " << y << "\n=\n";
-        ret.print_log("ret");
-        std::cerr << "\n";
+        // x.print_log("\n== CALC ==\nx");
+        // std::cerr << "-\n" << "y: " << y << "\n=\n";
+        // ret.print_log("ret");
+        // std::cerr << "\n";
         return;
     }
     
@@ -547,10 +547,10 @@ void AlgInt::sub_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
     ret.num[i]--;
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "-\n" << "y: " << y << "\n=\n";
-    ret.print_log("ret");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "-\n" << "y: " << y << "\n=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
 
     return;
 }
@@ -579,10 +579,10 @@ void AlgInt::mul_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
     ret.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "*\n" << "y: " << y << "\n=\n";
-    ret.print_log("ret");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "*\n" << "y: " << y << "\n=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
 
     return;
 }
@@ -632,12 +632,12 @@ void AlgInt::mul(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     ret.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "*\n";
-    y.print_log("y");
-    std::cerr << "=\n";
-    ret.print_log("ret");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "*\n";
+    // y.print_log("y");
+    // std::cerr << "=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
 
     return;
 }
@@ -653,8 +653,8 @@ uint32_t AlgInt::div_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
         ret.num[0] = x.num[0] / y;
 
         //! Temporary logging
-        std::cerr << "Short Calc: " << x.num[0] << " / " << y << " = ";
-        std::cerr << "(" << ret.num[0] << ", " << x.num[0] % y << ")\n";
+        // std::cerr << "Short Calc: " << x.num[0] << " / " << y << " = ";
+        // std::cerr << "(" << ret.num[0] << ", " << x.num[0] % y << ")\n";
         return x.num[0] % y;
     }
 
@@ -678,10 +678,10 @@ uint32_t AlgInt::div_digit(const AlgInt& x, uint32_t y, AlgInt& ret)
     ret.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "/\n" << "y: " << y << "\n=\n";
-    ret.print_log("q");
-    std::cerr << "r: " << (uint32_t) x_both << "\n\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "/\n" << "y: " << y << "\n=\n";
+    // ret.print_log("q");
+    // std::cerr << "r: " << (uint32_t) x_both << "\n\n";
 
     // Final rollover is the remainder
     return (uint32_t) x_both;
@@ -707,9 +707,9 @@ uint32_t AlgInt::mod_digit(const AlgInt& x, uint32_t y)
     }
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "%\ny: " << y << "\n=\n";
-    std::cerr << "r: " << (uint32_t) x_both << "\n\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "%\ny: " << y << "\n=\n";
+    // std::cerr << "r: " << (uint32_t) x_both << "\n\n";
 
     // Final rollover is the remainder
     return (uint32_t) x_both;
@@ -838,13 +838,13 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r)
     r.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "/\n";
-    y.print_log("y");
-    std::cerr << "=\n";
-    q.print_log("q");
-    r.print_log("r");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "/\n";
+    // y.print_log("y");
+    // std::cerr << "=\n";
+    // q.print_log("q");
+    // r.print_log("r");
+    // std::cerr << "\n";
 
     return;
 }
@@ -881,10 +881,10 @@ void AlgInt::bw_shl(const AlgInt& x, size_t y, AlgInt& ret)
     ret.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "<<\n" << "y: " << y << "\n=\n";
-    ret.print_log("ret");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "<<\n" << "y: " << y << "\n=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
 
     return;
 }
@@ -929,10 +929,10 @@ void AlgInt::bw_shr(const AlgInt& x, size_t y, AlgInt& ret)
     ret.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << ">>\n" << "y: " << y << "\n=\n";
-    ret.print_log("ret");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << ">>\n" << "y: " << y << "\n=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
 
     return;
 }
@@ -992,12 +992,12 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     ret.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "^\n";
-    y.print_log("y");
-    std::cerr << "=\n";
-    ret.print_log("ret");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "^\n";
+    // y.print_log("y");
+    // std::cerr << "=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
 
     return;
 }
@@ -1054,14 +1054,14 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
     ret.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "^\n";
-    y.print_log("y");
-    std::cerr << "%\n";
-    m.print_log("m");
-    std::cerr << "=\n";
-    ret.print_log("ret");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "^\n";
+    // y.print_log("y");
+    // std::cerr << "%\n";
+    // m.print_log("m");
+    // std::cerr << "=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
 
     return;
 }
@@ -1071,8 +1071,6 @@ void AlgInt::mont_redc(const AlgInt& x, const AlgInt& rInv, const AlgInt& m, con
     //! Extremely messy code (probably can remove a var)
     //! Will leave alone until final revision
     AlgInt q, a, temp;
-
-    std::cerr << "Start reduce\n";
 
     //? q = ((x%r) * mPrime) % r
     // x % r (bw_and when modulus is a power of 2)
@@ -1103,9 +1101,9 @@ void AlgInt::mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt&
     // expect m to be trunc
     // take highest digit, find highest bit (bit_pos)
 
-    size_t bit_pos = x.size * 32 - 1;
+    size_t bit_pos = m.size * 32 - 1;
 
-    while (bitarr_32(x.num, bit_pos) == 0)
+    while (bitarr_32(m.num, bit_pos) == 0)
         bit_pos--;
     bit_pos++;
 
@@ -1121,7 +1119,10 @@ void AlgInt::mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt&
 
     // Test to see if rInv can be negative, if so: just copy mPrime modulus
     if (rInv.sign)
-        throw std::runtime_error("rInv is negative");
+    {
+        sub(r, rInv, temp, true);
+        swap(temp, rInv);
+    }
 
     // mPrime % r to remove negative
     if (mPrime.sign)
@@ -1146,12 +1147,8 @@ void AlgInt::mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt&
     // ret = 1 * r % m (ret mont)
     div(r, m, temp2, ret);
 
-    std::cout << "y_bit: " << y_bit << '\n';
-
     for (size_t i = 0; i < y_bit; i++)
     {
-
-        std::cout << "i: " << i << "\n";
 
         // If the current bit is 1
         if (bitarr_32(y.num, i) == 1)
@@ -1211,7 +1208,7 @@ bool AlgInt::prime_check(const AlgInt& candidate, const AlgInt& witness)
 
     //* Check witness^d == 1 (modulo candidate)
         //? temp is truncated, so if temp.size > 1, it must be larger than a single digit.
-    AlgInt::mod_exp(witness, d, candidate, temp);
+    AlgInt::mont_exp(witness, d, candidate, temp);
     if (temp.size == 1 && temp.num[0] == 1)
         goto logging_true;
     
@@ -1227,7 +1224,7 @@ bool AlgInt::prime_check(const AlgInt& candidate, const AlgInt& witness)
     for (size_t r = 0; r < s; r++)
     {
         // witness^(2^r * d) (modulo candidate)
-        AlgInt::mod_exp(witness, d, candidate, temp);
+        AlgInt::mont_exp(witness, d, candidate, temp);
 
         // temp == candidate - 1
         if (cmp(temp, cand_sub) == 0)
@@ -1243,18 +1240,18 @@ bool AlgInt::prime_check(const AlgInt& candidate, const AlgInt& witness)
 }
     //! Temporary logging
     logging_false:
-    candidate.print_log("\n== Prime Check ==\nCandidate");
-    witness.print_log("Witness");
-    std::cerr << "Prime: False\n";
+    // candidate.print_log("\n== Prime Check ==\nCandidate");
+    // witness.print_log("Witness");
+    // std::cerr << "Prime: False\n";
 
     return false;
 
     //! Label for logging, replace with return true
     logging_true:
     //! Temporary logging
-    candidate.print_log("\n== Prime Check ==\nCandidate");
-    witness.print_log("Witness");
-    std::cerr << "Prime: True\n";
+    // candidate.print_log("\n== Prime Check ==\nCandidate");
+    // witness.print_log("Witness");
+    // std::cerr << "Prime: True\n";
 
     return true;
 }
@@ -1263,7 +1260,7 @@ bool AlgInt::prime_check(const AlgInt& candidate, const AlgInt& witness)
 
 AlgInt& AlgInt::operator=(const AlgInt& other)
 {
-    std::cerr << "Copy\n";
+    // std::cerr << "Copy\n";
 
     // Prevent self-assignment
     if (&other == this)
@@ -1283,7 +1280,7 @@ AlgInt& AlgInt::operator=(const AlgInt& other)
 
 AlgInt& AlgInt::operator=(AlgInt&& other)
 {
-    std::cerr << "Move\n";
+    // std::cerr << "Move\n";
 
     // Prevent self-assignment
     if (&other == this)
@@ -1402,12 +1399,12 @@ void AlgInt::bw_and(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     ret.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "&\n";
-    y.print_log("y");
-    std::cerr << "=\n";
-    ret.print_log("ret");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "&\n";
+    // y.print_log("y");
+    // std::cerr << "=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
 
     return;
 }
@@ -1431,12 +1428,12 @@ void AlgInt::bw_or(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     ret.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "|\n";
-    y.print_log("y");
-    std::cerr << "=\n";
-    ret.print_log("ret");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "|\n";
+    // y.print_log("y");
+    // std::cerr << "=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
 
     return;
 }
@@ -1460,12 +1457,12 @@ void AlgInt::bw_xor(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     ret.trunc();
 
     //! Temporary logging
-    x.print_log("\n== CALC ==\nx");
-    std::cerr << "^\n";
-    y.print_log("y");
-    std::cerr << "=\n";
-    ret.print_log("ret");
-    std::cerr << "\n";
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "^\n";
+    // y.print_log("y");
+    // std::cerr << "=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
 
     return;
 }
