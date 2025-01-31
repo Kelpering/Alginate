@@ -603,6 +603,8 @@ void AlgInt::mul(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     {
         for (size_t j = 0; j < big.size; j++)
         {
+            //! Planning
+            //? We can propagate the carry with a single variable and the previous array carry we did.
             uint64_t calc1 = (uint64_t) big.num[j] * sml.num[i];
 
             // Add calc to ret from offset i+j
