@@ -922,7 +922,7 @@ void AlgInt::bw_shr(const AlgInt& x, size_t y, AlgInt& ret)
     return;
 }
 
-void AlgInt::exp2(const AlgInt& x, AlgInt& ret)
+void AlgInt::sqr(const AlgInt& x, AlgInt& ret)
 {
     //! This works, but can be significantly sped up with a faster algorithm
     mul(x, x, ret);
@@ -971,7 +971,7 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret)
             temp.num[j] = sqr_temp.num[j];
         
         // sqr_temp = sqr_temp^2
-        exp2(temp, sqr_temp);
+        sqr(temp, sqr_temp);
     }
 
     ret.trunc();
@@ -989,6 +989,26 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret)
 
 void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret)
 {
+    //* The final step (hopefully) is 2^k-ary sliding window exponentiation
+    //* We have to use a sliding window of k size (based on number of bits in x)
+    //* Then we fill it with precomputed values (each of which are an AlgInt)
+    //* Using some squaring, we have a current value for ret
+    //* Then we multiply by this precomputed value, this gives us a new value.
+    //* Then we fill this window again.
+    //* If we can figure out how this algorithm works and implement it correctly
+    //*  then we can finally finish this project with enough speed to complete prime generation
+
+    //* After this, we can revise most of the program with new learned knowledge
+        //* Most/All functions can include a ret alloc to allow rets into prev parameters add(a,b,a) or a = b + a
+        //* We can clean a lot of the algorithms and functions to look prettier
+        //* We (might) have to inline operator overloading, test later.
+        //* We can add a LOT of exception/error checking to the functions (like div 0)
+        //* We can add more get/set functions (uint64_t = AlgInt or AlgInt = PKCS#1 num)
+        //* We can add more documentation (pink //* works great for this)
+        //* bitwise or internal getters (maybe bitwise setters)
+        //* 
+
+
     // If m is odd, we can use the montgomery optimization
     // if (m.num[0] & 1)
         // mont_exp(x,y,m,ret);
@@ -1030,7 +1050,7 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
         }
         
         // temp = sqr_temp^2
-        exp2(sqr_temp, temp1);
+        sqr(sqr_temp, temp1);
 
         // sqr_temp = temp % m
         div(temp1, m, temp2, sqr_temp);
@@ -1146,19 +1166,10 @@ void AlgInt::mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt&
         }
         
         // temp = sqr_temp^2
-        exp2(sqr_temp, temp1);
+        sqr(sqr_temp, temp1);
 
         // sqr_temp = temp1 * rInv
         mont_redc(temp1, rInv, m, mPrime, r_sub, bit_pos, sqr_temp);
-        //! Sqr_temp (while growing) exceeds the modulus
-        //! Code is extremely dirty for mont_redc, we can clean it and probably find the bug
-        //! New bitwise (bw) functions are also untested
-        //! after this is fixed, we can probably test the prime generation and refactor the entire codebase to standard
-        //! This is after we implement the key generation functions for RSA (both to finally finish it and have a practical test)
-        //! A lot of the signed functions are also quite bad. Both definiton and cleanliness need to be worked on.
-        //! We also need to implement exceptions for undefined operations
-        
-        //! I remember a similar problem with Alginate_old, check source for possible fixes.
     }
 
     // ret *= rInv (Removes ret from montgomery space)
