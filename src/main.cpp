@@ -84,7 +84,7 @@ int main()
     //? Generate a large prime of size prime_size bits
     AlgInt temp;
     uint32_t short_primes[] = {3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997, 1009};
-    size_t prime_size = 1024;
+    size_t prime_size = 2048;
     prime_size /= 8;
 
     // Init rand
@@ -117,26 +117,26 @@ int main()
             goto regen_prime;
     }
 
-    // prime.print_debug("\nPrime");
+    prime.print_debug("\nPrime");
 
     // Const Miller-Rabin test
     // std::cout << "Miller-Rabin... ";
     if (AlgInt::prime_check(prime, const_witness) == false)
     {
-        // std::cout << "Failed\n";
+        std::cout << "Failed\n";
         goto regen_prime;
     }
 
     // Extensive (random) Miller-Rabin test
-    for (size_t i = 0; i < 64; i++)
+    for (size_t i = 0; i < 8; i++)
     {
         AlgInt wit = {(uint8_t (*)())rand, prime_size-1};
         if (AlgInt::prime_check(prime, wit) == false)
             goto regen_prime;
-        // std::cout << "Passed: " << i+1 << "/64\n";
+        std::cout << "Passed: " << i+1 << "/64\n";
     }
 
-    // prime.print_debug("Probable Prime");
+    prime.print_debug("Probable Prime");
 
     //! The currently slow function is mod_exp, as expected
     //! We need to highly optimize it if we want it to be effective.

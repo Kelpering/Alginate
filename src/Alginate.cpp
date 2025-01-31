@@ -601,33 +601,16 @@ void AlgInt::mul(const AlgInt& x, const AlgInt& y, AlgInt& ret)
 
     for (size_t i = 0; i < sml.size; i++)
     {
+        // calc also serves as a carry from previous mul/add loop
+        uint64_t calc = 0;
         for (size_t j = 0; j < big.size; j++)
         {
-            //! Planning
-            //? We can propagate the carry with a single variable and the previous array carry we did.
-            uint64_t calc1 = (uint64_t) big.num[j] * sml.num[i];
+            calc += (uint64_t) big.num[j] * sml.num[i] + ret.num[i + j];
 
-            // Add calc to ret from offset i+j
-            size_t t = i+j;
-            uint64_t calc2 = (uint64_t) ret.num[t] + (uint32_t) calc1;
-
-            // First carry
-            ret.num[t++] = (uint32_t) calc2;
-
-            // Merge first digit carry into other carry.
-            calc2 = (calc1>>32) + (calc2>>32);
-
-            // Second carry
-            calc2 += ret.num[t];
-            ret.num[t++] = (uint32_t) calc2;
-
-            while (calc2 > UINT32_MAX)
-            {
-                calc2 >>= 32;
-                calc2 += ret.num[t];
-                ret.num[t++] = (uint32_t) calc2;
-            }
+            ret.num[i + j] = (uint32_t) calc;
+            calc >>= 32;
         }
+        ret.num[i + big.size] = calc;
     }
 
     // Remove leading zeroes from ret
