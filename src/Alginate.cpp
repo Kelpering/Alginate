@@ -987,8 +987,111 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     return;
 }
 
+// direction MSB -> LSB
+
+// We precompute 0 -> 2^winsize ([a] = x^a)
+// in other words, the bits from the var window will be an index into this array.
+
+// For every bit pos, we square ret
+
+// while 0, we skip any EXTRA processing
+
+// when bit is 1, we fill the window with the last bit being 1, we cant exceed k bits.
+// Probably fill window to max and then rshift until last bit is 1 (this handles required squarings)
+
+// Basically, the precomputed is x^window, which we can multiply into ret (similar to binary exponentiation x^2 + x^4 = x^6)
+
+// How we pick the winsize is unknown, but it can help performance if it is variable.
+// Default is 4 until we fix the alg, max is 8 due to size constraints
+
 void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret)
 {
+    // 2^8 (max)
+    // precomp is basically x^window
+    size_t winsize = 4;
+    AlgInt temp1, temp2;
+    AlgInt precomp[256];
+    precomp[0] = 1;
+    precomp[1] = x;     // Assumes x < mod
+
+    // precomp[i] = precomp[i-1] * precomp[1];
+    for (size_t i = 1; i < 1ULL<<winsize; i++)
+        mul(precomp[i], precomp[1], precomp[i+1]);
+    
+    uint8_t window = 0;
+    size_t bit_pos = y.size * 32;
+    ret = 1;
+
+    int mode = 0;
+    size_t i = 0;
+    while (bit_pos-- > 0)
+    {
+        ret.print_debug("ret");
+        // sqr ret regardless
+        sqr(ret, temp1);
+        div(temp1, m, temp2, ret);
+
+        // Current bit
+        uint8_t bit = bitarr_32(y.num, bit_pos);
+
+        if (mode == 1)
+        {
+            window |= bit << --i;
+
+            // window is full
+            if (i == 0)
+            {
+                // windows lsb must be 1.
+                while ((window & 1) == 0)
+                    window >>= 1;
+
+                mul(ret, precomp[window], temp1);
+                div(temp1, m, temp2, ret);
+
+                window = 0;
+                mode = 0;
+            }
+        }
+        else if (bit == 1)
+        {
+            // Begin saving window
+            mode = 1;
+            i = winsize;
+            window |= bit << --i;
+        }
+    }
+
+    if (window)
+    {
+        // windows lsb must be 1.
+        size_t j = 0;
+        while ((window & 1) == 0)
+        {
+            window >>= 1;
+            // For zero squaring after
+            j++;
+        }
+        
+        mul(ret, precomp[window], temp1);
+        div(temp1, m, temp2, ret);
+
+        // Squarings after window
+        for (; j > i; j--)
+        {
+            sqr(ret, temp1);
+            div(temp1, m, temp2, ret);
+        }
+    }
+
+
+
+
+   ret.print("ret1");
+
+//    mp_exch(&res, Y);
+
+
+
     //* The final step (hopefully) is 2^k-ary sliding window exponentiation
     //* We have to use a sliding window of k size (based on number of bits in x)
     //* Then we fill it with precomputed values (each of which are an AlgInt)
@@ -1009,7 +1112,7 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
         //* 
 
 
-    // If m is odd, we can use the montgomery optimization
+    // // If m is odd, we can use the montgomery optimization
     // if (m.num[0] & 1)
         // mont_exp(x,y,m,ret);
 
@@ -1020,21 +1123,16 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
     // Adjust for the for loop
     y_bit++;
 
-    AlgInt temp1;
+    // AlgInt temp1;
     temp1.resize(x.size);
 
-    AlgInt temp2;
+    // AlgInt temp2;
     temp2.resize(x.size);
 
-    AlgInt sqr_temp;
-    sqr_temp.resize(x.size);
-    for (size_t i = 0; i < sqr_temp.size; i++)
-        sqr_temp.num[i] = x.num[i];
+    AlgInt sqr_temp = x;
 
     ret.resize(x.size);
-    for (size_t i = 0; i < ret.size; i++)
-        ret.num[i] = 0;
-    ret.num[0] = 1;
+    ret = 1;
 
     for (size_t i = 0; i < y_bit; i++)
     {
@@ -1057,16 +1155,17 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
     }
 
     ret.trunc();
+    ret.print("ret2");
 
-    //! Temporary logging
-    // x.print_log("\n== CALC ==\nx");
-    // std::cerr << "^\n";
-    // y.print_log("y");
-    // std::cerr << "%\n";
-    // m.print_log("m");
-    // std::cerr << "=\n";
-    // ret.print_log("ret");
-    // std::cerr << "\n";
+    // //! Temporary logging
+    // // x.print_log("\n== CALC ==\nx");
+    // // std::cerr << "^\n";
+    // // y.print_log("y");
+    // // std::cerr << "%\n";
+    // // m.print_log("m");
+    // // std::cerr << "=\n";
+    // // ret.print_log("ret");
+    // // std::cerr << "\n";
 
     return;
 }
