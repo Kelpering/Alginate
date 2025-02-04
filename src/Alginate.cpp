@@ -1006,91 +1006,117 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret)
 
 void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret)
 {
+    //* Currently this algorithm works, but only for
+    //*  some numbers (3,4,5). Probably some poorly written
+    //*  code that I can fix later. 4 is probably fast enough
+    //*  to test what I want to test anyway.
     // 2^8 (max)
     // precomp is basically x^window
     size_t winsize = 4;
     AlgInt temp1, temp2;
     AlgInt precomp[256];
     precomp[0] = 1;
-    precomp[1] = x;     // Assumes x < mod
+    div(x, m, temp2, precomp[1]);
 
+    //! We don't use the lower half (0b0xxx)
+    //! We can fix this later.
     // precomp[i] = precomp[i-1] * precomp[1];
-    for (size_t i = 1; i < 1ULL<<winsize; i++)
+    for (size_t i = 1; i < 16; i++)
         mul(precomp[i], precomp[1], precomp[i+1]);
     
     uint8_t window = 0;
-    size_t bit_pos = y.size * 32;
+    size_t bitpos = y.size * 32;
     ret = 1;
 
-    int mode = 0;
-    size_t i = 0;
-    while (bit_pos-- > 0)
+    while (bitpos-- > 0)
     {
-        ret.print_debug("ret");
-        // sqr ret regardless
-        sqr(ret, temp1);
-        div(temp1, m, temp2, ret);
+        uint8_t bit = bitarr_32(y.num, bitpos);
 
-        // Current bit
-        uint8_t bit = bitarr_32(y.num, bit_pos);
+        //? search
 
-        if (mode == 1)
+        if (bit == 0)
         {
-            window |= bit << --i;
+            sqr(ret, temp1);
+            div(temp1, m, temp2, ret);
+            continue;
+        }
 
-            // window is full
-            if (i == 0)
+        //? bitstring
+
+        // Cancel early if needed
+        if (winsize > bitpos)
+        {
+            // Save window
+            size_t i = 0;
+            while (i < bitpos+1)
             {
-                // windows lsb must be 1.
-                while ((window & 1) == 0)
-                    window >>= 1;
-
-                mul(ret, precomp[window], temp1);
-                div(temp1, m, temp2, ret);
-
-                window = 0;
-                mode = 0;
+                window |= bitarr_32(y.num, bitpos-i) << (bitpos-i);
+                i++;
             }
+            break;
         }
-        else if (bit == 1)
-        {
-            // Begin saving window
-            mode = 1;
-            i = winsize;
-            window |= bit << --i;
-        }
-    }
 
-    if (window)
-    {
-        // windows lsb must be 1.
-        size_t j = 0;
+        // Save window
+        size_t i = 0;
+        while (i < winsize)
+        {
+            window |= bitarr_32(y.num, bitpos-i) << (winsize-i);
+            i++;
+        }
+
+        // Remove trailing zeroes
+        size_t sqr_count = 0;
         while ((window & 1) == 0)
         {
             window >>= 1;
-            // For zero squaring after
-            j++;
+            sqr_count++;
         }
-        
+
+        for (size_t i = 0; i < winsize-sqr_count; i++)
+        {
+            sqr(ret, temp1);
+            div(temp1, m, temp2, ret);
+        }
+
         mul(ret, precomp[window], temp1);
         div(temp1, m, temp2, ret);
 
-        // Squarings after window
-        for (; j > i; j--)
+        for (size_t i = 0; i < sqr_count; i++)
+        {
+            sqr(ret, temp1);
+            div(temp1, m, temp2, ret);
+        }
+
+        bitpos -= winsize-1;
+        window = 0;
+    }
+
+    // If we broke early
+    if (window)
+    {
+        // Remove trailing zeroes
+        size_t sqr_count = 0;
+        while ((window & 1) == 0)
+        {
+            window >>= 1;
+            sqr_count++;
+        }
+
+        for (size_t i = 0; i < bitpos-sqr_count; i++)
+        {
+            sqr(ret, temp1);
+            div(temp1, m, temp2, ret);
+        }
+
+        mul(ret, precomp[window], temp1);
+        div(temp1, m, temp2, ret);
+
+        for (size_t i = 0; i < sqr_count; i++)
         {
             sqr(ret, temp1);
             div(temp1, m, temp2, ret);
         }
     }
-
-
-
-
-   ret.print("ret1");
-
-//    mp_exch(&res, Y);
-
-
 
     //* The final step (hopefully) is 2^k-ary sliding window exponentiation
     //* We have to use a sliding window of k size (based on number of bits in x)
@@ -1110,52 +1136,6 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
         //* We can add more documentation (pink //* works great for this)
         //* bitwise or internal getters (maybe bitwise setters)
         //* 
-
-
-    // // If m is odd, we can use the montgomery optimization
-    // if (m.num[0] & 1)
-        // mont_exp(x,y,m,ret);
-
-    // The most significant y bit.
-    size_t y_bit = y.size * 32 - 1;
-    while (y_bit > 0 && bitarr_32(y.num, y_bit) == 0)
-        y_bit--;
-    // Adjust for the for loop
-    y_bit++;
-
-    // AlgInt temp1;
-    temp1.resize(x.size);
-
-    // AlgInt temp2;
-    temp2.resize(x.size);
-
-    AlgInt sqr_temp = x;
-
-    ret.resize(x.size);
-    ret = 1;
-
-    for (size_t i = 0; i < y_bit; i++)
-    {
-
-        // If the current bit is 1
-        if (bitarr_32(y.num, i) == 1)
-        {
-            // temp = ret * sqr_temp
-            mul(ret, sqr_temp, temp1);
-
-            // ret = temp % m
-            div(temp1, m, temp2, ret);
-        }
-        
-        // temp = sqr_temp^2
-        sqr(sqr_temp, temp1);
-
-        // sqr_temp = temp % m
-        div(temp1, m, temp2, sqr_temp);
-    }
-
-    ret.trunc();
-    ret.print("ret2");
 
     // //! Temporary logging
     // // x.print_log("\n== CALC ==\nx");

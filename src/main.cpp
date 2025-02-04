@@ -68,22 +68,22 @@ int main()
     //  for future calculations.
     // Add some checksum (1 if static, 0 otherwise) to speed up pre-comp.
 
-    uint32_t x_temp[] = {233132321};
-    uint32_t y_temp[] = {6};
-    uint32_t m_temp[] = {1, 2, 7,22,1,3,32,13,2,312,3,123,2,412,6436,2};
+    uint32_t x_temp[] = {233,4,4,43,4,43,4,4};
+    uint32_t y_temp[] = {132, 1,6,453,4,53,4};
+    uint32_t m_temp[] = {1, 2,52434,4,23,423,4234,23,42};
     AlgInt x = {x_temp, sizeof(x_temp)/sizeof(uint32_t)};
     AlgInt y = {y_temp, sizeof(y_temp)/sizeof(uint32_t)};
     AlgInt m = {m_temp, sizeof(m_temp)/sizeof(uint32_t)};
     AlgInt ret;
+    std::cerr << "Main complete\n\n";
 
     x.print("x");
     y.print("y");
     m.print("m");
 
-    std::cerr << "Main complete\n\n";
 
     AlgInt::mod_exp(x, y, m, ret);
-    // ret.print_debug();
+    ret.print("ret");
 
     // //? Generate a large prime of size prime_size bits
     // AlgInt temp;
