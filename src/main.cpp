@@ -56,22 +56,10 @@
 
 int main()
 {
-
-    // Barrett and Montgomery are both for the same reduction.
-    // Montgomery is faster.
-    // Montgomery only works on odd numbers, but that is a VERY simple check/optimization
-    // So two mod_exp funcs (normal & montgomery)
-    // montgomery should be pre-calculated if possible.
-    // We can probably save the space with a special struct
-    // The struct can be default static in c++ if unspecified
-    //  If we specify the struct, then it saves pre-computed data to the struct
-    //  for future calculations.
-    // Add some checksum (1 if static, 0 otherwise) to speed up pre-comp.
-
     //? Generate a large prime of size prime_size bits
     AlgInt temp;
     uint32_t short_primes[] = {3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997, 1009};
-    size_t prime_size = 1024;
+    size_t prime_size = 2048;
     prime_size /= 8;
 
     // Init rand
@@ -148,6 +136,16 @@ int main()
     //* Miller-Rabin primality tests
     //^ randfunc generator
 
+    //* After this, we can revise most of the program with new learned knowledge
+    //* Most/All functions can include a ret alloc to allow rets into prev parameters add(a,b,a) or a = b + a
+    //* We can clean a lot of the algorithms and functions to look prettier
+    //* We (might) have to inline operator overloading, test later.
+    //* We can add a LOT of exception/error checking to the functions (like div 0)
+    //* We can add more get/set functions (uint64_t = AlgInt or AlgInt = PKCS#1 num)
+    //* We can add more documentation (pink //* works great for this)
+    //* bitwise or internal getters (maybe bitwise setters)
+    //* 
+
     // prime = randfunc(bitsize)
         // prime[1st bit] = 1;
         // prime[last bit] = 1;
@@ -184,6 +182,50 @@ int main()
         //! Add-back in the div function
         //! Poor (main) subtraction implementation
         //! mod_exp currently NOT montgomery
+
+
+//* Current status:
+    //* We have successfully created a prime with 2048 bits within a reasonable timeframe 
+    //* (avg. 3-5 seconds+extensive checks)
+
+    //* We have also learned that most assumed optimization losses are completely minimal.
+    //* This means we can drastically improve the appearance/API of the library.
+    //* We can completely seperate input and output parameters, which will improve API
+    //* We can probably add operator overloading, which will improve outward appearance (look for inline)
+    //* Currently, we will keep the awful code and api until we have a successful RSA implementation
+    //* Once we have proven that RSA is currently possible, we can refactor/rewrite the entire library to look nice.
+    
+    //* Eventual additions:
+        //* Improve interface/api
+            //* Allow input, output operand mixing ex: add(a,b,a) a+b=a (currently impossible)
+            //* Improve bitwise getter/setter
+            //* Allow private var size/cap reads?
+            //* PKCS#1 interop (bit string -> AlgInt & AlgInt -> bit string)
+            //* Decide on random input (NO internal random)
+            //* Allow cap shrinkage for the number array (currently if we grow num, it never shrinks until de-alloc'd)
+                //! Maybe an extended trunc to truncate cap?
+                //! Some kind of automatic within trunc? Can call extended trunc.
+            //* Canonical AlgInt (leading zeroes can sometimes appear, all rets should be canonical)
+        //* Make code prettier/consistent
+        //* Fix signed number usage
+        //* error/bound checking (example: div by zero)
+        //* operator overloading
+        //* Extensive commenting and documentation
+        //* Seperate functions into files?
+            //* Most libraries take a function or class of functions and seperate them into a file for readability
+            //* Example: miller_rabin -> miller_rabin.c: miller_rabin(), int_func1(), int_func2()
+            //* This makes a lot of sense, so I might do that.
+            //* The compiler will probably inline functions such as that, so minimal/no performance loss will be evident.
+            //* If I were to seperate the files, it would be MUCH easier to add math for each function (assuming educational)
+        //* Finalize cmake/library structure
+            //* Maybe make a static and shared library?
+        //* Finalize license (public domain in all cases, but how represent per file.)
+        //* Finalize contributions?
+            //* We studied a lot of libraries, but I don't believe we directly copied any verbatim.
+            //* Look into how exactly that would require contribution/mention, if it even does.
+        //* Finalize readme (general overview, links to documentation, disclaimer for crypto flaws)
+        
+
 
     return 0;
 }

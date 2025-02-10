@@ -1181,25 +1181,6 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
 //         }
 //     }
 
-//     //* The final step (hopefully) is 2^k-ary sliding window exponentiation
-//     //* We have to use a sliding window of k size (based on number of bits in x)
-//     //* Then we fill it with precomputed values (each of which are an AlgInt)
-//     //* Using some squaring, we have a current value for ret
-//     //* Then we multiply by this precomputed value, this gives us a new value.
-//     //* Then we fill this window again.
-//     //* If we can figure out how this algorithm works and implement it correctly
-//     //*  then we can finally finish this project with enough speed to complete prime generation
-
-//     //* After this, we can revise most of the program with new learned knowledge
-//         //* Most/All functions can include a ret alloc to allow rets into prev parameters add(a,b,a) or a = b + a
-//         //* We can clean a lot of the algorithms and functions to look prettier
-//         //* We (might) have to inline operator overloading, test later.
-//         //* We can add a LOT of exception/error checking to the functions (like div 0)
-//         //* We can add more get/set functions (uint64_t = AlgInt or AlgInt = PKCS#1 num)
-//         //* We can add more documentation (pink //* works great for this)
-//         //* bitwise or internal getters (maybe bitwise setters)
-//         //* 
-
 //     // //! Temporary logging
 //     // // x.print_log("\n== CALC ==\nx");
 //     // // std::cerr << "^\n";
