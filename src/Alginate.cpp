@@ -987,6 +987,66 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     return;
 }
 
+void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret)
+{
+    // The most significant y bit.
+    size_t y_bit = y.size * 32 - 1;
+    while (y_bit > 0 && bitarr_32(y.num, y_bit) == 0)
+        y_bit--;
+    // Adjust for the for loop
+    y_bit++;
+
+    AlgInt temp1;
+    temp1.resize(x.size);
+
+    AlgInt temp2;
+    temp2.resize(x.size);
+
+    AlgInt sqr_temp;
+    sqr_temp.resize(x.size);
+    for (size_t i = 0; i < sqr_temp.size; i++)
+        sqr_temp.num[i] = x.num[i];
+
+    ret.resize(x.size);
+    for (size_t i = 0; i < ret.size; i++)
+        ret.num[i] = 0;
+    ret.num[0] = 1;
+
+    for (size_t i = 0; i < y_bit; i++)
+    {
+
+        // If the current bit is 1
+        if (bitarr_32(y.num, i) == 1)
+        {
+            // temp = ret * sqr_temp
+            mul(ret, sqr_temp, temp1);
+
+            // ret = temp % m
+            div(temp1, m, temp2, ret);
+        }
+        
+        // temp = sqr_temp^2
+        sqr(sqr_temp, temp1);
+
+        // sqr_temp = temp % m
+        div(temp1, m, temp2, sqr_temp);
+    }
+
+    ret.trunc();
+
+    //! Temporary logging
+    // x.print_log("\n== CALC ==\nx");
+    // std::cerr << "^\n";
+    // y.print_log("y");
+    // std::cerr << "%\n";
+    // m.print_log("m");
+    // std::cerr << "=\n";
+    // ret.print_log("ret");
+    // std::cerr << "\n";
+
+    return;
+}
+
 // direction MSB -> LSB
 
 // We precompute 0 -> 2^winsize ([a] = x^a)
@@ -1004,334 +1064,386 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret)
 // How we pick the winsize is unknown, but it can help performance if it is variable.
 // Default is 4 until we fix the alg, max is 8 due to size constraints
 
-void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret)
-{
-    //* Currently this algorithm works, but only for
-    //*  some numbers (3,4,5). Probably some poorly written
-    //*  code that I can fix later. 4 is probably fast enough
-    //*  to test what I want to test anyway.
-    // 2^8 (max)
-    // precomp is basically x^window
-    size_t winsize = 4;
-    AlgInt temp1, temp2;
-    AlgInt precomp[256];
-    precomp[0] = 1;
-    div(x, m, temp2, precomp[1]);
+//! All optimizations have been totally insignificant to performance.
+//! Kept only for future endeavors.
 
-    //! We don't use the lower half (0b0xxx)
-    //! We can fix this later.
-    // precomp[i] = precomp[i-1] * precomp[1];
-    for (size_t i = 1; i < 16; i++)
-        mul(precomp[i], precomp[1], precomp[i+1]);
+// void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret)
+// {
+//     //* Currently this algorithm works, but only for
+//     //*  some numbers (3,4,5). Probably some poorly written
+//     //*  code that I can fix later. 4 is probably fast enough
+//     //*  to test what I want to test anyway.
+//     // 2^8 (max)
+//     // precomp is basically x^window
+//     size_t winsize = 4;
+//     AlgInt temp1, temp2;
+//     AlgInt precomp[256];
+//     precomp[0] = 1;
+//     div(x, m, temp2, precomp[1]);
+
+//     //! We don't use the lower half (0b0xxx)
+//     //! We can fix this later.
+//     // precomp[i] = precomp[i-1] * precomp[1];
+//     for (size_t i = 1; i < 16; i++)
+//         mul(precomp[i], precomp[1], precomp[i+1]);
     
-    uint8_t window = 0;
-    size_t bitpos = y.size * 32;
-    ret = 1;
+//     uint8_t window = 0;
+//     size_t bitpos = y.size * 32;
+//     ret = 1;
 
-    while (bitpos-- > 0)
-    {
-        uint8_t bit = bitarr_32(y.num, bitpos);
+//     while (bitpos-- > 0)
+//     {
+//         uint8_t bit = bitarr_32(y.num, bitpos);
 
-        //? search
+//         //? search
 
-        if (bit == 0)
-        {
-            sqr(ret, temp1);
-            div(temp1, m, temp2, ret);
-            continue;
-        }
+//         if (bit == 0)
+//         {
+//             sqr(ret, temp1);
+//             div(temp1, m, temp2, ret);
+//             continue;
+//         }
 
-        //? bitstring
+//         //? bitstring
 
-        // Cancel early if needed
-        if (winsize > bitpos)
-        {
-            // Save window
-            size_t i = 0;
-            while (i < bitpos+1)
-            {
-                window |= bitarr_32(y.num, bitpos-i) << (bitpos-i);
-                i++;
-            }
-            break;
-        }
+//         // Cancel early if needed
+//         if (winsize > bitpos)
+//         {
+//             // Save window
+//             size_t i = 0;
+//             while (i < bitpos+1)
+//             {
+//                 window |= bitarr_32(y.num, bitpos-i) << (bitpos-i);
+//                 i++;
+//             }
+//             break;
+//         }
 
-        // Save window
-        size_t i = 0;
-        while (i < winsize)
-        {
-            window |= bitarr_32(y.num, bitpos-i) << (winsize-i);
-            i++;
-        }
+//         // Save window
+//         size_t i = 0;
+//         while (i < winsize)
+//         {
+//             window |= bitarr_32(y.num, bitpos-i) << (winsize-i);
+//             i++;
+//         }
 
-        // Remove trailing zeroes
-        size_t sqr_count = 0;
-        while ((window & 1) == 0)
-        {
-            window >>= 1;
-            sqr_count++;
-        }
+//         // Remove trailing zeroes
+//         size_t sqr_count = 0;
+//         while ((window & 1) == 0)
+//         {
+//             window >>= 1;
+//             sqr_count++;
+//         }
 
-        for (size_t i = 0; i < winsize-sqr_count; i++)
-        {
-            sqr(ret, temp1);
-            div(temp1, m, temp2, ret);
-        }
+//         for (size_t i = 0; i < winsize-sqr_count; i++)
+//         {
+//             sqr(ret, temp1);
+//             div(temp1, m, temp2, ret);
+//         }
 
-        mul(ret, precomp[window], temp1);
-        div(temp1, m, temp2, ret);
+//         mul(ret, precomp[window], temp1);
+//         div(temp1, m, temp2, ret);
 
-        for (size_t i = 0; i < sqr_count; i++)
-        {
-            sqr(ret, temp1);
-            div(temp1, m, temp2, ret);
-        }
+//         for (size_t i = 0; i < sqr_count; i++)
+//         {
+//             sqr(ret, temp1);
+//             div(temp1, m, temp2, ret);
+//         }
 
-        bitpos -= winsize-1;
-        window = 0;
-    }
+//         bitpos -= winsize-1;
+//         window = 0;
+//     }
 
-    // If we broke early
-    if (window)
-    {
-        // Remove trailing zeroes
-        size_t sqr_count = 0;
-        while ((window & 1) == 0)
-        {
-            window >>= 1;
-            sqr_count++;
-        }
+//     // If we broke early
+//     if (window)
+//     {
+//         // Remove trailing zeroes
+//         size_t sqr_count = 0;
+//         while ((window & 1) == 0)
+//         {
+//             window >>= 1;
+//             sqr_count++;
+//         }
 
-        for (size_t i = 0; i < bitpos-sqr_count; i++)
-        {
-            sqr(ret, temp1);
-            div(temp1, m, temp2, ret);
-        }
+//         for (size_t i = 0; i < bitpos-sqr_count; i++)
+//         {
+//             sqr(ret, temp1);
+//             div(temp1, m, temp2, ret);
+//         }
 
-        mul(ret, precomp[window], temp1);
-        div(temp1, m, temp2, ret);
+//         mul(ret, precomp[window], temp1);
+//         div(temp1, m, temp2, ret);
 
-        for (size_t i = 0; i < sqr_count; i++)
-        {
-            sqr(ret, temp1);
-            div(temp1, m, temp2, ret);
-        }
-    }
+//         for (size_t i = 0; i < sqr_count; i++)
+//         {
+//             sqr(ret, temp1);
+//             div(temp1, m, temp2, ret);
+//         }
+//     }
 
-    //* The final step (hopefully) is 2^k-ary sliding window exponentiation
-    //* We have to use a sliding window of k size (based on number of bits in x)
-    //* Then we fill it with precomputed values (each of which are an AlgInt)
-    //* Using some squaring, we have a current value for ret
-    //* Then we multiply by this precomputed value, this gives us a new value.
-    //* Then we fill this window again.
-    //* If we can figure out how this algorithm works and implement it correctly
-    //*  then we can finally finish this project with enough speed to complete prime generation
+//     //* The final step (hopefully) is 2^k-ary sliding window exponentiation
+//     //* We have to use a sliding window of k size (based on number of bits in x)
+//     //* Then we fill it with precomputed values (each of which are an AlgInt)
+//     //* Using some squaring, we have a current value for ret
+//     //* Then we multiply by this precomputed value, this gives us a new value.
+//     //* Then we fill this window again.
+//     //* If we can figure out how this algorithm works and implement it correctly
+//     //*  then we can finally finish this project with enough speed to complete prime generation
 
-    //* After this, we can revise most of the program with new learned knowledge
-        //* Most/All functions can include a ret alloc to allow rets into prev parameters add(a,b,a) or a = b + a
-        //* We can clean a lot of the algorithms and functions to look prettier
-        //* We (might) have to inline operator overloading, test later.
-        //* We can add a LOT of exception/error checking to the functions (like div 0)
-        //* We can add more get/set functions (uint64_t = AlgInt or AlgInt = PKCS#1 num)
-        //* We can add more documentation (pink //* works great for this)
-        //* bitwise or internal getters (maybe bitwise setters)
-        //* 
+//     //* After this, we can revise most of the program with new learned knowledge
+//         //* Most/All functions can include a ret alloc to allow rets into prev parameters add(a,b,a) or a = b + a
+//         //* We can clean a lot of the algorithms and functions to look prettier
+//         //* We (might) have to inline operator overloading, test later.
+//         //* We can add a LOT of exception/error checking to the functions (like div 0)
+//         //* We can add more get/set functions (uint64_t = AlgInt or AlgInt = PKCS#1 num)
+//         //* We can add more documentation (pink //* works great for this)
+//         //* bitwise or internal getters (maybe bitwise setters)
+//         //* 
 
-    // //! Temporary logging
-    // // x.print_log("\n== CALC ==\nx");
-    // // std::cerr << "^\n";
-    // // y.print_log("y");
-    // // std::cerr << "%\n";
-    // // m.print_log("m");
-    // // std::cerr << "=\n";
-    // // ret.print_log("ret");
-    // // std::cerr << "\n";
+//     // //! Temporary logging
+//     // // x.print_log("\n== CALC ==\nx");
+//     // // std::cerr << "^\n";
+//     // // y.print_log("y");
+//     // // std::cerr << "%\n";
+//     // // m.print_log("m");
+//     // // std::cerr << "=\n";
+//     // // ret.print_log("ret");
+//     // // std::cerr << "\n";
 
-    return;
-}
+//     return;
+// }
 
-void AlgInt::mont_redc(const AlgInt& x, const AlgInt& rInv, const AlgInt& m, const AlgInt& mPrime, const AlgInt& r_sub, size_t r_shift, AlgInt& ret)
-{
-    //! Extremely messy code (probably can remove a var)
-    //! Will leave alone until final revision
-    AlgInt q, a, temp;
+// void AlgInt::mont_redc(const AlgInt& x, const AlgInt& rInv, const AlgInt& m, const AlgInt& mPrime, const AlgInt& r_sub, size_t r_shift, AlgInt& ret)
+// {
+//     //! Extremely messy code (probably can remove a var)
+//     //! Will leave alone until final revision
+//     AlgInt q, a, temp;
 
-    //? q = ((x%r) * mPrime) % r
-    // x % r (bw_and when modulus is a power of 2)
-    bw_and(x, r_sub, q);
-    mul(q, mPrime, temp);
-    bw_and(temp, r_sub, q);
+//     //? q = ((x%r) * mPrime) % r
+//     // x % r (bw_and when modulus is a power of 2)
+//     bw_and(x, r_sub, q);
+//     mul(q, mPrime, temp);
+//     bw_and(temp, r_sub, q);
 
-    //? a = (x - q * m) / r
-    mul(q, m, a);
-    sub(x, a, temp);
-    // temp / r (bw_shr when denominator is a power of 2)
-    bw_shr(temp, r_shift, a);
+//     //? a = (x - q * m) / r
+//     mul(q, m, a);
+//     sub(x, a, temp);
+//     // temp / r (bw_shr when denominator is a power of 2)
+//     bw_shr(temp, r_shift, a);
 
-    if (a.sign)
-        add(a, m, ret);
-    else
-        ret = a;
+//     if (a.sign)
+//         add(a, m, ret);
+//     else
+//         ret = a;
 
-    return;
-}
+//     return;
+// }
 
-void AlgInt::mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret)
-{
-    // We transform x and m into montgomery space
-    // We perform exponentiation
-    // We transform ret out of montgomery space
+// void AlgInt::mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret)
+// {
+//     // We transform x and m into montgomery space
+//     // We perform exponentiation
+//     // We transform ret out of montgomery space
 
-    // expect m to be trunc
-    // take highest digit, find highest bit (bit_pos)
+//     // expect m to be trunc
+//     // take highest digit, find highest bit (bit_pos)
 
-    size_t bit_pos = m.size * 32 - 1;
+//     size_t bit_pos = m.size * 32 - 1;
 
-    while (bitarr_32(m.num, bit_pos) == 0)
-        bit_pos--;
-    bit_pos++;
+//     while (bitarr_32(m.num, bit_pos) == 0)
+//         bit_pos--;
+//     bit_pos++;
 
-    // r_sub is used for modulus (bitmask r_sub)
-    // bit_pos is used for multiplication (rshift bit_pos)
-    AlgInt r, r_sub;
-    bw_shl(1, bit_pos, r);
-    sub_digit(r, 1, r_sub);
+//     // r_sub is used for modulus (bitmask r_sub)
+//     // bit_pos is used for multiplication (rshift bit_pos)
+//     AlgInt r, r_sub;
+//     bw_shl(1, bit_pos, r);
+//     sub_digit(r, 1, r_sub);
 
-    AlgInt rInv, mPrime, temp;
-    ext_gcd(r, m, rInv, mPrime, temp);
-    // If temp != 1, error.
+//     AlgInt rInv, mPrime, temp;
+//     ext_gcd(r, m, rInv, mPrime, temp);
+//     // If temp != 1, error.
 
-    // Test to see if rInv can be negative, if so: just copy mPrime modulus
-    if (rInv.sign)
-    {
-        sub(r, rInv, temp, true);
-        swap(temp, rInv);
-    }
+//     // Test to see if rInv can be negative, if so: just copy mPrime modulus
+//     if (rInv.sign)
+//     {
+//         sub(r, rInv, temp, true);
+//         swap(temp, rInv);
+//     }
 
-    // mPrime % r to remove negative
-    if (mPrime.sign)
-    {
-        sub(r, mPrime, temp, true);
-        swap(temp, mPrime);
-    }
+//     // mPrime % r to remove negative
+//     if (mPrime.sign)
+//     {
+//         sub(r, mPrime, temp, true);
+//         swap(temp, mPrime);
+//     }
 
-    //? Exponentiation
+//     //? Exponentiation
     
-    // The most significant y bit.
-    size_t y_bit = y.size * 32 - 1;
-    while (y_bit > 0 && bitarr_32(y.num, y_bit) == 0)
-        y_bit--;
-    // Adjust for the for loop
-    y_bit++;
+//     // The most significant y bit.
+//     size_t y_bit = y.size * 32 - 1;
+//     while (y_bit > 0 && bitarr_32(y.num, y_bit) == 0)
+//         y_bit--;
+//     // Adjust for the for loop
+//     y_bit++;
 
-    AlgInt sqr_temp, temp1, temp2;
-    // sqr_temp = x * r % m (x mont)
-    mul(x, r, temp1);
-    div(temp1, m, temp2, sqr_temp);
-    // ret = 1 * r % m (ret mont)
-    div(r, m, temp2, ret);
+//     AlgInt sqr_temp, temp1, temp2;
+//     // sqr_temp = x * r % m (x mont)
+//     mul(x, r, temp1);
+//     div(temp1, m, temp2, sqr_temp);
+//     // ret = 1 * r % m (ret mont)
+//     div(r, m, temp2, ret);
 
-    for (size_t i = 0; i < y_bit; i++)
-    {
+//     for (size_t i = 0; i < y_bit; i++)
+//     {
 
-        // If the current bit is 1
-        if (bitarr_32(y.num, i) == 1)
-        {
-            // temp = ret * sqr_temp
-            mul(ret, sqr_temp, temp1);
+//         // If the current bit is 1
+//         if (bitarr_32(y.num, i) == 1)
+//         {
+//             // temp = ret * sqr_temp
+//             mul(ret, sqr_temp, temp1);
 
-            // ret = temp1 * rInv
-            mont_redc(temp1, rInv, m, mPrime, r_sub, bit_pos, ret);
-        }
+//             // ret = temp1 * rInv
+//             mont_redc(temp1, rInv, m, mPrime, r_sub, bit_pos, ret);
+//         }
         
-        // temp = sqr_temp^2
-        sqr(sqr_temp, temp1);
+//         // temp = sqr_temp^2
+//         sqr(sqr_temp, temp1);
 
-        // sqr_temp = temp1 * rInv
-        mont_redc(temp1, rInv, m, mPrime, r_sub, bit_pos, sqr_temp);
-    }
+//         // sqr_temp = temp1 * rInv
+//         mont_redc(temp1, rInv, m, mPrime, r_sub, bit_pos, sqr_temp);
+//     }
 
-    // ret *= rInv (Removes ret from montgomery space)
-    AlgInt::swap(ret, temp1);
-    mont_redc(temp1, rInv, m, mPrime, r_sub, bit_pos, ret);
-    ret.trunc();
+//     // ret *= rInv (Removes ret from montgomery space)
+//     AlgInt::swap(ret, temp1);
+//     mont_redc(temp1, rInv, m, mPrime, r_sub, bit_pos, ret);
+//     ret.trunc();
 
-    return;
-}
+//     return;
+// }
 
-bool AlgInt::prime_check(const AlgInt& candidate, const AlgInt& witness)
+bool AlgInt::miller_rabin(const AlgInt& candidate, const AlgInt& witness)
 {
     // Witness must be within the range [2,candidate-1)
     //! Checks are not currently ran.
 
-    // If candidate is even, it is not prime.
     if ((candidate.num[0] & 1) == 0)
-        goto logging_false;
+        return false;    
 
-    // candidate = (2^s * d + 1) for some (s,d).
-//! Logging scope, remove when removing logging_false
-{    
-    size_t s = 0;
+
+    //* candidate = (2^s * d + 1) for some (s,d).
+    // s is offset by 1 because candidate-1 is always even.
+    size_t s = 1;
     AlgInt temp;
     AlgInt d;
-    AlgInt::sub_digit(candidate, 1, temp);
 
     // while (d >> s) is even, s++ 
-    while (bitarr_32(temp.num, s) == 0)
+    while (bitarr_32(candidate.num, s) == 0)
         s++;
-    AlgInt::bw_shr(temp, s, d);
+    AlgInt::bw_shr(candidate, s, d);
 
     //* Check witness^d == 1 (modulo candidate)
-        //? temp is truncated, so if temp.size > 1, it must be larger than a single digit.
-    AlgInt::mont_exp(witness, d, candidate, temp);
+        //? Relies on the fact that temp should be truncated (no leading zeroes).
+    AlgInt::mod_exp(witness, d, candidate, temp);
     if (temp.size == 1 && temp.num[0] == 1)
-        goto logging_true;
+        return true;    
     
-
-    //* Check witness^(2^r * d) == -1 (modulo candidate) for some value r [0, s)
-
-    // candidate - 1 == -1 (modulo candidate)
-//! Required logging scope, can remove when removing logging_true    
-{
-    AlgInt cand_sub;
-    AlgInt::sub_digit(candidate, 1, cand_sub);
-
-    for (size_t r = 0; r < s; r++)
+    //* Check witness^d == -1 (modulo candidate)
+        //? Checks r = 0 for next loop
+    if (temp.num[0] == (candidate.num[0]-1))
     {
-        // witness^(2^r * d) (modulo candidate)
-        AlgInt::mont_exp(witness, d, candidate, temp);
+        for (size_t i = 1; i < temp.size; i++)
+        {
+            if (temp.num[i] != candidate.num[i])
+                break;
+        }
+        return true;
+    }
 
-        // temp == candidate - 1
-        if (cmp(temp, cand_sub) == 0)
-            goto logging_true;
+    // Prepares d for squaring
+    AlgInt::swap(d, temp);
 
-        // 2^r * d simplifies to a left bitshift of 1 per loop (r+=1)
-        AlgInt::bw_shl(d, 1, temp);
+    //* Check each possible r (r in range of [0, s), but we checked 0 previously)
+    for (size_t r = 1; r < s; r++)
+    {
+        //* witness^(2^r * d) (modulo candidate)
+            //? This simplifies to a squaring every loop.
+        AlgInt::mod_exp(d, 2, candidate, temp);
+
+        //* temp == candidate - 1 (-1 mod n == n-1)
+        if (temp.num[0] == (candidate.num[0]-1))
+        {
+            for (size_t i = 1; i < temp.size; i++)
+            {
+                if (temp.num[i] != candidate.num[i])
+                    break;
+            }
+            return true;
+        }
 
         // Swap d and temp (fast)
         AlgInt::swap(d, temp);
     }
-}
-}
-    //! Temporary logging
-    logging_false:
-    // candidate.print_log("\n== Prime Check ==\nCandidate");
-    // witness.print_log("Witness");
-    // std::cerr << "Prime: False\n";
 
     return false;
-
-    //! Label for logging, replace with return true
-    logging_true:
-    //! Temporary logging
-    // candidate.print_log("\n== Prime Check ==\nCandidate");
-    // witness.print_log("Witness");
-    // std::cerr << "Prime: True\n";
-
-    return true;
 }
 
+// {
+    // Witness must be within the range [2,candidate-1)
+    //! Checks are not currently ran.
 
+    // // If candidate is even, it is not prime.
+    // if ((candidate.num[0] & 1) == 0)
+    //     return false;
+
+    // candidate = (2^s * d + 1) for some (s,d).
+//! Logging scope, remove when removing logging_false
+// {    
+
+    // // We start s off at one because candidate-1 must always have a 0 in the first bit.
+    // size_t s = 1;
+    // AlgInt temp;
+    // AlgInt d;
+//     AlgInt::sub_digit(candidate, 1, temp);
+
+    // while (d >> s) is even, s++ 
+    // while (bitarr_32(candidate.num, s) == 0)
+    //     s++;
+    // AlgInt::bw_shr(candidate, s, d);
+
+    // //* Check witness^d == 1 (modulo candidate)
+    // AlgInt::mod_exp(witness, d, candidate, temp);
+    // if (temp.size == 1 && temp.num[0] == 1)
+    //     return true;
+    
+
+//     //* Check witness^(2^r * d) == -1 (modulo candidate) for some value r [0, s)
+
+//     // candidate - 1 == -1 (modulo candidate)
+// //! Required logging scope, can remove when removing logging_true    
+// {
+//     AlgInt cand_sub;
+//     AlgInt::sub_digit(candidate, 1, cand_sub);
+
+//     for (size_t r = 0; r < s; r++)
+//     {
+//         // witness^(2^r * d) (modulo candidate)
+//         AlgInt::mod_exp(witness, d, candidate, temp);
+
+//         // temp == candidate - 1
+//         if (cmp(temp, cand_sub) == 0)
+//             goto logging_true;
+
+//         // 2^r * d simplifies to a left bitshift of 1 per loop (r+=1)
+//         AlgInt::bw_shl(d, 1, temp);
+
+//         // Swap d and temp (fast)
+//         AlgInt::swap(d, temp);
+//     }
+// }
+
+    // return logging_bool (removed logging)
+// }
 
 AlgInt& AlgInt::operator=(const AlgInt& other)
 {

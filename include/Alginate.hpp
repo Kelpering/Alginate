@@ -119,15 +119,15 @@ class AlgInt
         // r_sub = r - 1
         // r_shift = 1 << r_shift == r
         // r substitutes allow fast optimizations in mont_redc
-        static void mont_redc(const AlgInt& x, const AlgInt& rInv, const AlgInt& m, const AlgInt& mPrime, const AlgInt& r_sub, size_t r_shift, AlgInt& ret);
+        // static void mont_redc(const AlgInt& x, const AlgInt& rInv, const AlgInt& m, const AlgInt& mPrime, const AlgInt& r_sub, size_t r_shift, AlgInt& ret);
 
         // Same as mod_exp + m must be odd
-        static void mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret);
+        // static void mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret);
 
         // False == candidate is NOT prime
         // True  == prime OR witness strong liar
         // witness must be [2, candidate-1) and completely random
-        static bool prime_check(const AlgInt& candidate, const AlgInt& witness);
+        static bool miller_rabin(const AlgInt& candidate, const AlgInt& witness);
 
         bool get_bit(size_t bit) const;
         void set_bit(size_t bit);
