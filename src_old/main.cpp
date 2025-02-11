@@ -54,64 +54,54 @@
     //^ Using iostream w/ these numbers is odd unless debugging
     //^ Internal state, base 2^32 (print_debug), base 10 (requires div)
 
+AlgInt gen_prime();
+
 int main()
 {
-    //? Generate a large prime of size prime_size bits
-    AlgInt temp;
-    uint32_t short_primes[] = {3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997, 1009};
-    size_t prime_size = 2048;
-    prime_size /= 8;
+    AlgInt t1, t2, t3, t4,t5;
 
-    // Init rand
-    srand(time(NULL));
+    AlgInt p = gen_prime();
+    p.print("P");
 
-    // Create a random number (prime) with byte random
-    AlgInt prime = {(uint8_t (*)())rand, prime_size};
-    const AlgInt const_witness = {(uint8_t (*)())rand, prime_size/2};
-    
-    // prime.print("prime");
-    // const_witness.print("const wit");
+    AlgInt q = gen_prime();
+    q.print("Q");
 
-    // Largest and smallest bits are set (big and even)
-    // prime.print_debug("Prime");
-    prime.set_bit(0);
-    prime.set_bit(prime.get_bitsize()-1);
-    // prime.print("Prime");
+    AlgInt n;
+    AlgInt::mul(p, q, n);
+    n.print("n");
+
+    AlgInt totient;
+    AlgInt::sub_digit(p, 1, t1);
+    AlgInt::sub_digit(q, 1, t2);
+    AlgInt::mul(t1, t2, t3);
+
+    // gcd(t1, t2, t5)
+    AlgInt::ext_gcd(t1, t2, totient, t4, t5);
+
+    AlgInt::div(t3, t5, totient, t4);
+    totient.print("totient");
+
+    AlgInt e = 65537;
+    e.print("e");
+
+    AlgInt d;
+    AlgInt::ext_gcd(e, totient, t3, t1, t2);
+    // Prevents negative d (assumes t3 negative)
+    AlgInt::add(t3, totient, d);
+    d.print("d");
+
+    // e*d + totient*t1 == t2
 
 
-    //? Create prime
-    regen_prime:
-    
-    AlgInt::add_digit(prime, 2, temp);
-    AlgInt::swap(prime, temp);
+    AlgInt message = 42;
+    AlgInt temp1, temp2;
 
-    // Trial short prime divide
-    for (size_t i = 0; i < sizeof(short_primes)/sizeof(uint32_t); i++)
-    {
-        if (AlgInt::mod_digit(prime, short_primes[i]) == 0)
-            goto regen_prime;
-    }
+    AlgInt::mod_exp(message, e, n, temp1);
+    AlgInt::mod_exp(temp1, d, n, temp2);
+    message.print("message");
+    temp1.print("encrypted");
+    temp2.print("decrypted");
 
-    prime.print_debug("\nPrime");
-
-    // Const Miller-Rabin test
-    // std::cout << "Miller-Rabin... ";
-    if (AlgInt::miller_rabin(prime, const_witness) == false)
-    {
-        std::cout << "Failed\n";
-        goto regen_prime;
-    }
-
-    // Extensive (random) Miller-Rabin test
-    for (size_t i = 0; i < 64; i++)
-    {
-        AlgInt wit = {(uint8_t (*)())rand, prime_size-1};
-        if (AlgInt::miller_rabin(prime, wit) == false)
-            goto regen_prime;
-        std::cout << "Passed: " << i+1 << "/64\n";
-    }
-
-    prime.print("Probable Prime");
 
     //! The currently slow function is mod_exp, as expected
     //! We need to highly optimize it if we want it to be effective.
@@ -228,4 +218,58 @@ int main()
 
 
     return 0;
+}
+
+AlgInt gen_prime()
+{
+    AlgInt temp;
+    uint32_t short_primes[150] = {3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877};
+
+    size_t prime_size = 2048;
+    prime_size /= 8;
+
+    // Init rand
+    srand(time(NULL));
+
+    // Create a random number (prime) with byte random
+    AlgInt prime = {(uint8_t (*)())rand, prime_size};
+    const AlgInt const_witness = {(uint8_t (*)())rand, prime_size/2};
+    
+    // prime.print("prime");
+    // const_witness.print("const wit");
+
+    // Largest and smallest bits are set (big and even)
+    // prime.print_debug("Prime");
+    prime.set_bit(0);
+    prime.set_bit(prime.get_bitsize()-1);
+    // prime.print("Prime");
+
+
+    //? Create prime
+    regen_prime:
+    
+    AlgInt::add_digit(prime, 2, temp);
+    AlgInt::swap(prime, temp);
+
+    // Trial short prime divide
+    for (size_t i = 0; i < sizeof(short_primes)/sizeof(uint32_t); i++)
+    {
+        if (AlgInt::mod_digit(prime, short_primes[i]) == 0)
+            goto regen_prime;
+    }
+
+    // Const Miller-Rabin test
+    // std::cout << "Miller-Rabin... ";
+    if (AlgInt::miller_rabin(prime, const_witness) == false)
+        goto regen_prime;
+
+    // Extensive (random) Miller-Rabin test
+    for (size_t i = 0; i < 24; i++)
+    {
+        AlgInt rand_wit = {(uint8_t (*)())rand, prime_size-1};
+        if (AlgInt::miller_rabin(prime, rand_wit) == false)
+            goto regen_prime;
+    }
+
+    return prime;
 }
