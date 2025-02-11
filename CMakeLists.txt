@@ -4,6 +4,7 @@ project(Alginate)
 
 # Mark Alginate as a static library
 add_library(Alginate STATIC
+    src/Alginate_old.cpp
     src/Alginate.cpp
 )
 
@@ -20,10 +21,19 @@ target_compile_options(Alginate
         -Wpedantic
         -Werror
         -ggdb
+        -O2
 )
 
 
 # Temporary testing executable
 
 add_executable(Test src/main.cpp)
+target_compile_options(Test
+    PRIVATE
+        -Wall
+        -Wpedantic
+        -Werror
+        -ggdb
+        -O2
+)
 target_link_libraries(Test Alginate)
