@@ -1,4 +1,3 @@
-  
 #ifndef __ALGINATE_HPP__
 #define __ALGINATE_HPP__
 
@@ -35,17 +34,17 @@ class AlgInt
     public:
     
     //* Constructors
-        AlgInt(AlgInt&& other);
         AlgInt(const AlgInt& other);
+        AlgInt(AlgInt&& other);
 
         AlgInt() : AlgInt(nullptr, 0, false) {};
         AlgInt(const uint32_t* num, size_t size, bool sign = false);
 
         AlgInt(uint64_t num, bool sign = false);
         
-        //? rand constructor (from randfunc, both 8-bit and 32-bit)
+        //^ rand constructor (from randfunc, both 8-bit and 32-bit)
 
-        //? PKCS#1 constructor (might have to be a function, might be default constructor)
+        //^ PKCS#1 constructor (might have to be a function, might be default constructor)
 
         ~AlgInt();
 
@@ -53,12 +52,12 @@ class AlgInt
         static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
         static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
         static void mul(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
-        static void div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, bool unsign = false);
-        static void div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& remainder, bool unsign = false);
-        static void mod(const AlgInt& x, const AlgInt& y, AlgInt& remainder, bool unsign = false);
+        static void div(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
+        static void div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r, bool unsign = false);
+        static void mod(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
         
         
-        //* Short Arithmetic
+    //* Short Arithmetic
         static void add(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign = false);
         static void add(uint32_t x, const AlgInt& y, AlgInt& ret, bool unsign = false);
 
@@ -68,8 +67,8 @@ class AlgInt
         static void mul(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign = false);
         static void mul(uint32_t x, const AlgInt& y, AlgInt& ret, bool unsign = false);
         
-        static uint32_t div_short(const AlgInt& x, uint32_t y, AlgInt& quotient, bool unsign = false);
-        static uint32_t mod_short(const AlgInt& x, uint32_t y, bool unsign = false);
+        static uint32_t div(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign = false);
+        static uint32_t mod(const AlgInt& x, uint32_t y, bool unsign = false);
 
     //* Comparison
     static int cmp(const AlgInt& x, const AlgInt& y, bool unsign = false);
