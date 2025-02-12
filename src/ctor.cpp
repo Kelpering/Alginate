@@ -1,7 +1,37 @@
 /**
  * 
  */  
-#include "../Alginate.h"
+#include "Alginate.hpp"
+
+AlgInt::AlgInt(const AlgInt& other)
+{   
+    // Resize instead of copy to allocate a new array.
+    resize(other.size);
+
+    // Deep copy other.num's array.
+    for (size_t i = 0; i < other.size; i++)
+        num[i] = other.num[i];
+
+    trunc();
+
+    // Copy other.sign
+    sign = other.sign;
+
+    return;
+}
+
+AlgInt::AlgInt(AlgInt&& other)
+{
+    num = other.num;
+    size = other.size;
+    cap = other.cap;
+    sign = other.sign;
+
+    // We transferred other.num to this AlgInt so we destroy other's copy.
+    other.num = nullptr;
+
+    return;
+}
  
 AlgInt::AlgInt(const uint32_t* num, size_t size, bool sign)
 {
@@ -21,7 +51,7 @@ AlgInt::AlgInt(const uint32_t* num, size_t size, bool sign)
     return;
 }
 
-AlgInt::AlgInt(const uint64_t num, bool sign)
+AlgInt::AlgInt(uint64_t num, bool sign)
 {
     // Allocate the internal num array.
     resize(2);

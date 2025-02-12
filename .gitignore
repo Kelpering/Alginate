@@ -1,10 +1,15 @@
+# Do not track any hidden files
+.*
+
+# Except .gitignore
+!.gitignore
+
+# Do not track any build folders
 build/
-build/*
-.vscode/
-.vscode/*
-.cache/
-.cache/*
+cmake/
+
+# Do not track any output files
 *.o
 *.out
 *.exe
-*.txt
+*.log
