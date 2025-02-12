@@ -3,6 +3,7 @@
  */
 #include "Alginate.hpp"
 #include <bit>
+#include <utility>
 
 void AlgInt::resize(size_t size)
 {
@@ -54,6 +55,16 @@ void AlgInt::trunc()
     // The canonical representation for 0 is size == 0.
     while (size && num[size-1] == 0)
         size--;
+
+    return;
+}
+
+void AlgInt::swap(AlgInt& first, AlgInt& second)
+{
+    std::swap(first.num, second.num);
+    std::swap(first.size, second.size);
+    std::swap(first.cap, second.cap);
+    std::swap(first.sign, second.sign);
 
     return;
 }

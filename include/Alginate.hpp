@@ -30,6 +30,7 @@ class AlgInt
     //* Private functions
         void resize(size_t size);
         void trunc();
+        static void swap(AlgInt& first, AlgInt& second);
 
     public:
     
@@ -49,20 +50,26 @@ class AlgInt
         ~AlgInt();
 
     //* Arithmetic
-        static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret);
-        static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret);
-        static void mul(const AlgInt& x, const AlgInt& y, AlgInt& ret);
-        static void div(const AlgInt& x, const AlgInt& y, AlgInt& quotient);
-        static void div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& remainder);
-        static void mod(const AlgInt& x, const AlgInt& y, AlgInt& remainder);
+        static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
+        static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
+        static void mul(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
+        static void div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, bool unsign = false);
+        static void div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& remainder, bool unsign = false);
+        static void mod(const AlgInt& x, const AlgInt& y, AlgInt& remainder, bool unsign = false);
         
         
-    //* Short Arithmetic
-        static void add_short(const AlgInt& x, uint32_t y, AlgInt& ret);
-        static void sub_short(const AlgInt& x, uint32_t y, AlgInt& ret);
-        static void mul_short(const AlgInt& x, uint32_t y, AlgInt& ret);
-        static uint32_t div_short(const AlgInt& x, uint32_t y, AlgInt& quotient);
-        static uint32_t mod_short(const AlgInt& x, uint32_t y);
+        //* Short Arithmetic
+        static void add(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign = false);
+        static void add(uint32_t x, const AlgInt& y, AlgInt& ret, bool unsign = false);
+
+        static void sub(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign = false);
+        static void sub(uint32_t x, const AlgInt& y, AlgInt& ret, bool unsign = false);
+        
+        static void mul(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign = false);
+        static void mul(uint32_t x, const AlgInt& y, AlgInt& ret, bool unsign = false);
+        
+        static uint32_t div_short(const AlgInt& x, uint32_t y, AlgInt& quotient, bool unsign = false);
+        static uint32_t mod_short(const AlgInt& x, uint32_t y, bool unsign = false);
 
     //* Comparison
     static int cmp(const AlgInt& x, const AlgInt& y, bool unsign = false);
@@ -75,6 +82,10 @@ class AlgInt
         void print(const char* name = "Number") const;
         void print_debug(const char* name = "Number") const;
         void print_internal(const char* name = "Number") const;
+
+    //* Operators
+        AlgInt& operator=(const AlgInt& other);
+        AlgInt& operator=(AlgInt&& other);
 
 
 };

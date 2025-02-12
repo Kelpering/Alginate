@@ -4,13 +4,17 @@
 int main()
 {
     // Remove make log from view
-    std::cout << "\n\n";
+    std::cout << '\n';
 
-    AlgInt x = 42;
+    AlgInt x = 89123891230390123;
+    AlgInt y = 231382319321132703;
+    AlgInt ret = x;
 
-    x.print_debug("x");
+    x.print_debug("x  ");
+    AlgInt::sub(ret, y, ret);
+    AlgInt::add(ret, y, ret);
+    ret.print_debug("ret");
 
-    std::cout << "Result: " << AlgInt::cmp_short(x, -43) << '\n';
     
     return 0;
 }

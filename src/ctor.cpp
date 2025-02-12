@@ -5,13 +5,14 @@
 
 AlgInt::AlgInt(const AlgInt& other)
 {   
-    // Resize instead of copy to allocate a new array.
+    // Resize instead of copy to allocate a new array
     resize(other.size);
 
-    // Deep copy other.num's array.
+    // Deep copy other.num
     for (size_t i = 0; i < other.size; i++)
         num[i] = other.num[i];
 
+    // Remove leading zeroes
     trunc();
 
     // Copy other.sign
