@@ -23,7 +23,7 @@ void AlgInt::print(const char* name) const
 void AlgInt::print_debug(const char* name) const
 {
     // Formatting
-    std::cout << name << " (size: " << size << "): " << ((sign) ? '-' : '+');
+    std::cout << name  << ": " << ((sign) ? '-' : '+');
 
     // Zero check
     if (cmp_short(*this, 0) == 0) {

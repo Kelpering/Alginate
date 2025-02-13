@@ -70,6 +70,15 @@ class AlgInt
         static uint32_t div(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign = false);
         static uint32_t mod(const AlgInt& x, uint32_t y, bool unsign = false);
 
+    //* Bitwise
+        static void bw_and(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        static void bw_xor(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        static void bw_or(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        static void bw_shl(const AlgInt& x, size_t y, AlgInt& ret);
+        static void bw_shr(const AlgInt& x, size_t y, AlgInt& ret);
+
+
+
     //* Comparison
     static int cmp(const AlgInt& x, const AlgInt& y, bool unsign = false);
     static int cmp_short(const AlgInt& x, int32_t y, bool unsign = false);

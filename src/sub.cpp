@@ -2,7 +2,6 @@
  * 
  */
 #include "Alginate.hpp"
-#include <cstdint>
 
 void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
 {
@@ -79,9 +78,7 @@ void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
     // Remove leading zeroes
     temp.trunc();
 
-    // Set ret = temp
     AlgInt::swap(ret, temp);
-
     return;
 }
 
@@ -131,9 +128,7 @@ void AlgInt::sub(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign)
     // Remove leading zeroes
     temp.trunc();
 
-    // Set ret = temp
     AlgInt::swap(ret, temp);
-
     return;
 }
 
@@ -169,8 +164,6 @@ void AlgInt::sub(uint32_t x, const AlgInt& y, AlgInt& ret, bool unsign)
     // Remove leading zeroes
     temp.trunc();
 
-    // Set ret = temp
     AlgInt::swap(ret, temp);
-
    return;
 }

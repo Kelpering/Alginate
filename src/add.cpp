@@ -61,9 +61,7 @@ void AlgInt::add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
     // Remove leading zeroes
     temp.trunc();
 
-    // Set ret = temp
     AlgInt::swap(ret, temp);
-
     return;
 }
 
@@ -90,9 +88,7 @@ void AlgInt::add(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign)
     // Remove leading zeroes
     temp.trunc();
 
-    // Set ret = temp
     AlgInt::swap(ret, temp);
-
     return;
 }
 
