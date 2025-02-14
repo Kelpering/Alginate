@@ -7,7 +7,7 @@ void AlgInt::mul(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
 {
     // Basic temp setup
     AlgInt temp;
-    temp.resize(x.size+1);
+    temp.resize(x.size+y.size);
     temp.sign = (x.sign ^ y.sign) && !unsign;
 
     const AlgInt& big = (x.size > y.size) ? x : y;

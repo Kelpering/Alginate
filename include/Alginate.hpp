@@ -52,8 +52,8 @@ class AlgInt
         static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
         static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
         static void mul(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
-        static void div(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
         static void div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r, bool unsign = false);
+        static void div(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
         static void mod(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
         
         

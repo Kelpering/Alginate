@@ -64,6 +64,7 @@ void AlgInt::bw_shl(const AlgInt& x, size_t y, AlgInt& ret)
 
     AlgInt temp;
     temp.resize(x.size + dig_shift + 1);
+    temp.sign = x.sign;
 
     // Copy x into temp (accounting for digit shift)
     for (size_t i = 0; i < x.size; i++)
@@ -92,6 +93,7 @@ void AlgInt::bw_shr(const AlgInt& x, size_t y, AlgInt& ret)
 
     AlgInt temp;
     temp.resize(x.size - dig_shift);
+    temp.sign = x.sign;
 
     // If we clear x with digit shift alone, return early.
     if (dig_shift > x.size)

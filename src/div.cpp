@@ -4,15 +4,6 @@
 #include "Alginate.hpp"
 #include <stdexcept>
 
-void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, bool unsign)
-{
-    // There is a minimal time loss because quotient and remainder are generated at the same time.
-    AlgInt temp;
-    div(x,y, quotient, temp, unsign);
-
-    return;
-}
-
 void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& remainder, bool unsign)
 {
     // Exception block
@@ -25,10 +16,6 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
         // uint32_t cast into AlgInt
         remainder = div(x, y.num[0], quotient);
         remainder.sign = x.sign;
-
-        // Signed remainder
-        if ((x.sign ^ y.sign) && !unsign)
-            add(remainder, y, remainder);
 
         return;
     }
@@ -43,10 +30,7 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
     if (cmp_ret == -1)
     {
         quotient = 0;
-
         remainder = x;
-        if ((x.sign ^ y.sign) && !unsign)
-            add(remainder, y, remainder);
 
         return;
     } else if (cmp_ret == 0)
@@ -147,17 +131,31 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
         quo.num[i] = q_h;
     }
 
-    // Unnormalize xnorm
+    // Unnormalize xnorm (remainder)
     bw_shr(xnorm, norm_shift, xnorm);
-    
-    // Signed remainder
-    if ((x.sign ^ y.sign) && !unsign)
-        add(xnorm, y, xnorm);
     AlgInt::swap(remainder, xnorm);
 
     // Remove leading zeroes.
     quo.trunc();
     AlgInt::swap(quotient, quo);
+
+    return;
+}
+
+void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, bool unsign)
+{
+    // Wrapper function, temp discarded at the end of scope.
+    AlgInt temp;
+    div(x,y, quotient, temp, unsign);
+
+    return;
+}
+
+void AlgInt::mod(const AlgInt& x, const AlgInt& y, AlgInt& remainder, bool unsign)
+{
+    // Wrapper function, temp discarded at the end of scope.
+    AlgInt temp;
+    div(x, y, temp, remainder, false);
 
     return;
 }
@@ -210,4 +208,11 @@ uint32_t AlgInt::div(const AlgInt& x, uint32_t y, AlgInt& quotient, bool unsign)
     // If -x, remainder == y - digits
     AlgInt::swap(quotient, temp);
     return (x.sign) ? y - digits: digits;
+}
+
+uint32_t AlgInt::mod(const AlgInt& x, uint32_t y, bool unsign)
+{
+    // Wrapper function, temp discarded at the end of scope.
+    AlgInt temp;
+    return div(x, y, temp, false);
 }
