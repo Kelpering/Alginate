@@ -77,8 +77,6 @@ class AlgInt
         static void bw_shl(const AlgInt& x, size_t y, AlgInt& ret);
         static void bw_shr(const AlgInt& x, size_t y, AlgInt& ret);
 
-
-
     //* Comparison
     static int cmp(const AlgInt& x, const AlgInt& y, bool unsign = false);
     static int cmp_short(const AlgInt& x, int32_t y, bool unsign = false);
@@ -94,8 +92,7 @@ class AlgInt
     //* Operators
         AlgInt& operator=(const AlgInt& other);
         AlgInt& operator=(AlgInt&& other);
-
-
+        
 };
 
 #endif // __ALGINATE_HPP__
