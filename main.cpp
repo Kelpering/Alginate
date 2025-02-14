@@ -1,26 +1,25 @@
 #include "Alginate.hpp"
 #include <iostream>
 
+typedef uint32_t(*u32rand)();
+typedef uint8_t(*u8rand)();
+
 int main()
 {
     // Remove make log from view
     std::cout << '\n';
 
-    uint32_t xt[] = {4, 10, 1,3,3,3,3,3,5};
-    AlgInt x = {xt, sizeof(xt)/sizeof(xt[0]), false};
-    uint32_t yt[] = {36};
-    AlgInt y = {yt, sizeof(yt)/sizeof(yt[0]), false};
-    uint32_t mt[] = {38};
-    AlgInt m = {mt, sizeof(mt)/sizeof(mt[0]), false};
+    size_t bitsize = 2048;
+    AlgInt x = {bitsize/32, (u32rand)rand, false};
+    AlgInt y = {bitsize/32, (u32rand)rand, false};
+    AlgInt m = {bitsize/32, (u32rand)rand, false};
     AlgInt ret;
 
-
-    x.print("x  ");
-    y.print("y  ");
-    m.print("m  ");
+    x.print_debug("x  ");
+    y.print_debug("y  ");
+    m.print_debug("m  ");
     AlgInt::mod_exp(x,y,m,ret);
-    ret.print("ret");
-    
-    
+    ret.print_debug("ret");
+
     return 0;
 }

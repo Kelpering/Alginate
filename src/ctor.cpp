@@ -70,6 +70,69 @@ AlgInt::AlgInt(uint64_t num, bool sign)
     return;
 }
 
+AlgInt::AlgInt(size_t size, uint32_t(*randfunc)(), bool sign)
+{
+    if (size == 0)
+        return;
+
+    // Allocate the internal num array.
+    resize(size);
+
+    // Copy the external num array into the internal array.
+    size_t i;
+    for (i = 0; i < size-1; i++)
+        AlgInt::num[i] = randfunc();
+
+    // Prevent final digit from being 0.
+    uint32_t rand = 0;
+    while (rand == 0)
+        rand = randfunc();
+    AlgInt::num[size-1] = rand;
+
+    // Properly apply the sign.
+    AlgInt::sign = sign;
+
+    return;
+}
+
+#include <iostream>
+
+AlgInt::AlgInt(size_t size, uint8_t(*randfunc)(), bool sign)
+{
+    if (size == 0)
+        return;
+
+    // Allocate the internal num array.
+    resize((size+3)/4);
+
+    // Copy the external num array into the internal array.
+    for (size_t i = 0; i < size/4; i++)
+    {
+        AlgInt::num[i] |= (uint32_t) randfunc() << 0;
+        AlgInt::num[i] |= (uint32_t) randfunc() << 8;
+        AlgInt::num[i] |= (uint32_t) randfunc() << 16;
+        AlgInt::num[i] |= (uint32_t) randfunc() << 24;
+    }
+
+    if (size & 0b11)
+    {
+        size_t i;
+        for (i = 0; i < (size & 0b11)-1; i++)
+            AlgInt::num[size/4] |= (uint32_t) randfunc() << (i*8);
+
+        // Prevent final digit from being 0.
+        uint8_t rand = 0;
+        while (rand == 0)
+            rand = randfunc();
+        AlgInt::num[size/4] |= (uint32_t) rand << (i*8);
+    }
+
+    // Properly apply the sign.
+    AlgInt::sign = sign;
+
+    return;
+}
+
 AlgInt::~AlgInt()
 {
     // Deallocate the num array and prevent double frees.

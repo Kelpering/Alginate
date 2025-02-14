@@ -42,7 +42,8 @@ class AlgInt
 
         AlgInt(uint64_t num, bool sign = false);
         
-        //^ rand constructor (from randfunc, both 8-bit and 32-bit)
+        AlgInt(size_t size, uint32_t(*randfunc)(), bool sign = false);
+        AlgInt(size_t size, uint8_t(*randfunc)(), bool sign = false);
 
         //^ PKCS#1 constructor (might have to be a function, might be default constructor)
 
