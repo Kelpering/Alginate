@@ -13,16 +13,8 @@ int main()
     AlgInt q, r;
 
 
-    x.print_debug("x");
-    y.print_debug("y");
-    AlgInt::div(x,y,q,r);
-    q.print_debug("q");
-    r.print_debug("r");
-
-    AlgInt::mul(q,y,q);
-    AlgInt::add(q,r,q);
-    x.print_debug("x1");
-    q.print_debug("x2");
+    std::cout << "size: " << x.get_size() << '\n';
+    std::cout << "bits: " << x.get_bitsize() << '\n';
     
     
     return 0;

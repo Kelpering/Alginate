@@ -3,6 +3,23 @@
  */
 #include "Alginate.hpp"
 
+bool AlgInt::get_bit(size_t bit)
+{
+    return ((num[bit>>5] >> (bit & 0x1F)) & 1);
+}
+
+void AlgInt::set_bit(size_t bit)
+{
+    num[bit>>5] |= 1ULL << (bit & 0x1F);
+    return;
+}
+
+void AlgInt::clr_bit(size_t bit)
+{
+    num[bit>>5] &= ~(1ULL << (bit & 0x1F));
+    return;
+}
+
 void AlgInt::bw_and(const AlgInt& x, const AlgInt& y, AlgInt& ret)
 {
     const AlgInt& big = (x.size > y.size) ? x : y;

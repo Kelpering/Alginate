@@ -68,3 +68,23 @@ void AlgInt::swap(AlgInt& first, AlgInt& second)
 
     return;
 }
+
+size_t AlgInt::get_size()
+{
+    return size;
+}
+
+size_t AlgInt::get_bitsize()
+{
+    size_t tmp = 0;
+    uint32_t msw = num[size-1];
+
+    // Count highest bit
+    while (msw)
+    {
+        msw >>= 1;
+        tmp++;
+    }
+
+    return size*32 - (32-tmp);
+}

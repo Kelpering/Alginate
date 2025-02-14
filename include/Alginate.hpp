@@ -71,6 +71,9 @@ class AlgInt
         static uint32_t mod(const AlgInt& x, uint32_t y, bool unsign = false);
 
     //* Bitwise
+        bool get_bit(size_t bit);
+        void set_bit(size_t bit);
+        void clr_bit(size_t bit);
         static void bw_and(const AlgInt& x, const AlgInt& y, AlgInt& ret);
         static void bw_xor(const AlgInt& x, const AlgInt& y, AlgInt& ret);
         static void bw_or(const AlgInt& x, const AlgInt& y, AlgInt& ret);
@@ -78,13 +81,15 @@ class AlgInt
         static void bw_shr(const AlgInt& x, size_t y, AlgInt& ret);
 
     //* Comparison
-    static int cmp(const AlgInt& x, const AlgInt& y, bool unsign = false);
-    static int cmp_short(const AlgInt& x, int32_t y, bool unsign = false);
-    static int cmp_short(int32_t x, const AlgInt& y, bool unsign = false) {
-        return -cmp_short(y, x, unsign);
-    }
+        static int cmp(const AlgInt& x, const AlgInt& y, bool unsign = false);
+        static int cmp_short(const AlgInt& x, int32_t y, bool unsign = false);
+        static int cmp_short(int32_t x, const AlgInt& y, bool unsign = false) {
+            return -cmp_short(y, x, unsign);
+        }
 
-    //* Standard I/O
+    //* Output
+        size_t get_size();
+        size_t get_bitsize();
         void print(const char* name = "Number") const;
         void print_debug(const char* name = "Number") const;
         void print_internal(const char* name = "Number") const;
@@ -92,7 +97,7 @@ class AlgInt
     //* Operators
         AlgInt& operator=(const AlgInt& other);
         AlgInt& operator=(AlgInt&& other);
-        
+
 };
 
 #endif // __ALGINATE_HPP__
