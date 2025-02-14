@@ -128,26 +128,21 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, bool unsign
 }
 
 void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& remainder, bool unsign)
-//!
-//! Incomplete, does not handle remainder
-//!
 {
     // Exception block
     if (cmp(y, 0) == 0)
         throw std::domain_error("Divide by Zero.");
 
     // If y.size == 1, perform quick division
-    //^ Testing needed
     if (y.size == 1)
     {
-        int64_t rem = div(x, y.num[0], quotient);
-        quotient.sign = (x.sign ^ y.sign) && !unsign;
+        // uint32_t cast into AlgInt
+        remainder = div(x, y.num[0], quotient);
+        remainder.sign = x.sign;
 
-        // Handle y.sign
-        //! I think the answer would change if quotient's sign was positive
-        if (y.sign)
-            rem = -rem;
-        remainder = (uint32_t) (rem % y.num[0]);
+        // Signed remainder
+        if ((x.sign ^ y.sign) && !unsign)
+            add(remainder, y, remainder);
 
         return;
     }
@@ -159,14 +154,20 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
     int cmp_ret = cmp(xnorm, ynorm, true);
 
     // Fast comparison divison (prevent x.size < y.size OoB)
-    //! Fast comparison division needs remainder mods
     if (cmp_ret == -1)
     {
         quotient = 0;
+
+        remainder = x;
+        if ((x.sign ^ y.sign) && !unsign)
+            add(remainder, y, remainder);
+
         return;
     } else if (cmp_ret == 0)
     {
         quotient = 1;
+        remainder = 0;
+
         return;
     }
 
@@ -260,11 +261,18 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
         quo.num[i] = q_h;
     }
 
+    // Unnormalize xnorm
+    bw_shr(xnorm, norm_shift, xnorm);
+    
+    // Signed remainder
+    if ((x.sign ^ y.sign) && !unsign)
+        add(xnorm, y, xnorm);
+    AlgInt::swap(remainder, xnorm);
+
     // Remove leading zeroes.
     quo.trunc();
     AlgInt::swap(quotient, quo);
 
-    //! Final return requires remainder mods
     return;
 }
 
