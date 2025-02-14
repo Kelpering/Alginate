@@ -85,6 +85,9 @@ class AlgInt
         static void bw_shl(const AlgInt& x, size_t y, AlgInt& ret);
         static void bw_shr(const AlgInt& x, size_t y, AlgInt& ret);
 
+    //* Algorithm
+        static bool miller_rabin(const AlgInt& candidate, const AlgInt& witness);
+
     //* Comparison
         static int cmp(const AlgInt& x, const AlgInt& y, bool unsign = false);
         static int cmp_short(const AlgInt& x, int32_t y, bool unsign = false);

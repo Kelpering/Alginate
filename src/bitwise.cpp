@@ -13,7 +13,7 @@ bool AlgInt::get_bit(size_t bit) const
 void AlgInt::set_bit(size_t bit)
 {
     if (bit>>5 >= size)
-        resize(bit>>5);
+        resize((bit>>5) + 1);
     num[bit>>5] |= 1ULL << (bit & 0x1F);
     return;
 }
