@@ -70,8 +70,12 @@ class AlgInt
         static uint32_t div(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign = false);
         static uint32_t mod(const AlgInt& x, uint32_t y, bool unsign = false);
 
+    //* Exponential
+        static void exp(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
+        static void mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret, bool unsign = false);
+
     //* Bitwise
-        bool get_bit(size_t bit);
+        bool get_bit(size_t bit) const;
         void set_bit(size_t bit);
         void clr_bit(size_t bit);
         static void bw_and(const AlgInt& x, const AlgInt& y, AlgInt& ret);
@@ -88,8 +92,8 @@ class AlgInt
         }
 
     //* Output
-        size_t get_size();
-        size_t get_bitsize();
+        size_t get_size() const;
+        size_t get_bitsize() const;
         void print(const char* name = "Number") const;
         void print_debug(const char* name = "Number") const;
         void print_internal(const char* name = "Number") const;

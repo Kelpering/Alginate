@@ -69,12 +69,12 @@ void AlgInt::swap(AlgInt& first, AlgInt& second)
     return;
 }
 
-size_t AlgInt::get_size()
+size_t AlgInt::get_size() const
 {
     return size;
 }
 
-size_t AlgInt::get_bitsize()
+size_t AlgInt::get_bitsize() const
 {
     size_t tmp = 0;
     uint32_t msw = num[size-1];
