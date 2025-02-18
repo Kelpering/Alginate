@@ -26,16 +26,20 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
     // Truncation is performed during assignment.
     int cmp_ret = cmp(xnorm, ynorm, true);
 
-    // Fast comparison divison (prevent x.size < y.size OoB)
+    // Fast comparison divison (prevent x < y OoB)
     if (cmp_ret == -1)
     {
         quotient = 0;
         remainder = x;
+        if (remainder.sign)
+            sub(y, remainder, remainder, true);
+        //! Correct remainder here
 
         return;
     } else if (cmp_ret == 0)
     {
         quotient = 1;
+        quotient.sign = (x.sign ^ y.sign) && !unsign;
         remainder = 0;
 
         return;
@@ -155,7 +159,7 @@ void AlgInt::mod(const AlgInt& x, const AlgInt& y, AlgInt& remainder, bool unsig
 {
     // Wrapper function, temp discarded at the end of scope.
     AlgInt temp;
-    div(x, y, temp, remainder, false);
+    div(x, y, temp, remainder, unsign);
 
     return;
 }

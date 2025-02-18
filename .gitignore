@@ -10,6 +10,6 @@ cmake/
 
 # Do not track any output files
 *.o
-*.out
 *.exe
-*.log
+*.out*
+*.log*

@@ -16,7 +16,7 @@ void AlgInt::print(const char* name) const
     std::cout << name << ": " << ((sign) ? '-' : '+') << ' ';
 
     // Zero check
-    if (cmp_short(*this, 0) == 0) 
+    if (cmp(*this, 0) == 0) 
         str += " 0\n";
 
     // Div by 10 conversion
@@ -37,7 +37,7 @@ void AlgInt::print_debug(const char* name) const
     std::cout << name  << ": " << ((sign) ? '-' : '+');
 
     // Zero check
-    if (cmp_short(*this, 0) == 0) {
+    if (cmp(*this, 0) == 0) {
         std::cout << " 0\n";
         return;
     }
@@ -56,7 +56,7 @@ void AlgInt::print_internal(const char* name) const
     std::cout << name << " (size: " << size << "): " << ((sign) ? '-' : '+');
 
     // Zero check
-    if (cmp_short(*this, 0) == 0) {
+    if (cmp(*this, 0) == 0) {
         std::cout << "{0}\n";
         return;
     }

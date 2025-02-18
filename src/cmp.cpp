@@ -27,7 +27,7 @@ int AlgInt::cmp(const AlgInt& x, const AlgInt& y, bool unsign)
     return 0;
 }
 
-int AlgInt::cmp_short(const AlgInt& x, int32_t y, bool unsign)
+int AlgInt::cmp(const AlgInt& x, int32_t y, bool unsign)
 {
     // Fix y
     bool y_sign = y < 0;

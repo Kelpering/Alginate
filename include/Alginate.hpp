@@ -74,6 +74,7 @@ class AlgInt
     //* Exponential
         static void exp(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
         static void mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret, bool unsign = false);
+        static void mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret);
 
     //* Bitwise
         bool get_bit(size_t bit) const;
@@ -86,17 +87,21 @@ class AlgInt
         static void bw_shr(const AlgInt& x, size_t y, AlgInt& ret);
 
     //* Algorithm
+        static void gcd(const AlgInt& a, const AlgInt& b, AlgInt& ret);
+        static AlgInt ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y);
         static bool miller_rabin(const AlgInt& candidate, const AlgInt& witness);
 
     //* Comparison
         static int cmp(const AlgInt& x, const AlgInt& y, bool unsign = false);
-        static int cmp_short(const AlgInt& x, int32_t y, bool unsign = false);
-        static int cmp_short(int32_t x, const AlgInt& y, bool unsign = false) {
-            return -cmp_short(y, x, unsign);
+        static int cmp(const AlgInt& x, int32_t y, bool unsign = false);
+        static int cmp(int32_t x, const AlgInt& y, bool unsign = false) {
+            return -cmp(y, x, unsign);
         }
 
     //* Output
         size_t get_size() const;
+        size_t get_sign() const;
+        size_t get_cap() const;
         size_t get_bitsize() const;
         void print(const char* name = "Number") const;
         void print_debug(const char* name = "Number") const;
