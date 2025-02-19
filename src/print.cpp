@@ -17,7 +17,7 @@ void AlgInt::print(const char* name) const
 
     // Zero check
     if (cmp(*this, 0) == 0) 
-        str += " 0\n";
+        str += " 0";
 
     // Div by 10 conversion
     while (temp.size)
@@ -57,7 +57,7 @@ void AlgInt::print_internal(const char* name) const
 
     // Zero check
     if (cmp(*this, 0) == 0) {
-        std::cout << "{0}\n";
+        std::cout << " {0}\n";
         return;
     }
     

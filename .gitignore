@@ -12,4 +12,4 @@ cmake/
 *.o
 *.exe
 *.out*
-*.log*
+*log*

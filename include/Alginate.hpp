@@ -58,7 +58,7 @@ class AlgInt
         static void mod(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
         
         
-    //* Short Arithmetic
+    //* Short Arithmetic Overloads
         static void add(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign = false);
         static void add(uint32_t x, const AlgInt& y, AlgInt& ret, bool unsign = false);
 
@@ -99,17 +99,68 @@ class AlgInt
         }
 
     //* Output
-        size_t get_size() const;
-        size_t get_sign() const;
-        size_t get_cap() const;
-        size_t get_bitsize() const;
         void print(const char* name = "Number") const;
         void print_debug(const char* name = "Number") const;
         void print_internal(const char* name = "Number") const;
 
+    //* Getters
+        size_t get_bitsize() const;
+        size_t get_size() const;
+        size_t get_sign() const;
+        size_t get_cap() const;
+
     //* Operators
         AlgInt& operator=(const AlgInt& other);
         AlgInt& operator=(AlgInt&& other);
+
+        AlgInt operator+(const AlgInt& other);
+        AlgInt operator+(uint32_t other);
+
+        AlgInt operator-(const AlgInt& other);
+        AlgInt operator-(uint32_t other);
+
+        AlgInt operator*(const AlgInt& other);
+        AlgInt operator*(uint32_t other);
+
+        AlgInt operator/(const AlgInt& other);
+        AlgInt operator/(uint32_t other);
+
+        AlgInt operator%(const AlgInt& other);
+        AlgInt operator%(uint32_t other);
+
+        AlgInt operator&(const AlgInt& other);
+        AlgInt operator^(const AlgInt& other);
+        AlgInt operator|(const AlgInt& other);
+        AlgInt operator<<(size_t other);
+        AlgInt operator>>(size_t other);
+
+        AlgInt& operator+=(const AlgInt& other);
+        AlgInt& operator+=(uint32_t other);
+
+        AlgInt& operator-=(const AlgInt& other);
+        AlgInt& operator-=(uint32_t other);
+
+        AlgInt& operator*=(const AlgInt& other);
+        AlgInt& operator*=(uint32_t other);
+
+        AlgInt& operator/=(const AlgInt& other);
+        AlgInt& operator/=(uint32_t other);
+
+        AlgInt& operator%=(const AlgInt& other);
+        AlgInt& operator%=(uint32_t other);
+
+        AlgInt& operator&=(const AlgInt& other);
+        AlgInt& operator^=(const AlgInt& other);
+        AlgInt& operator|=(const AlgInt& other);
+        AlgInt& operator<<=(size_t other);
+        AlgInt& operator>>=(size_t other);
+
+        bool operator<(const AlgInt& other);
+        bool operator<=(const AlgInt& other);
+        bool operator!=(const AlgInt& other);
+        bool operator==(const AlgInt& other);
+        bool operator>(const AlgInt& other);
+        bool operator>=(const AlgInt& other);
 
 };
 
