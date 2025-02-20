@@ -1,6 +1,14 @@
 /**
- * 
- */  
+*   File: ctor.cpp
+*   Project: Alginate
+*   SPDX-License-Identifier: Unlicense
+* 
+*   Constructors take a valid integer representation and convert
+*   it into a canonical AlgInt. The most complex is the random
+*   constructor due to Alginate's desire to prevent internal
+*   randomness. All random values are provided by the user, via
+*   a function. This makes AlgInt deterministic to the user.
+*/
 #include "Alginate.hpp"
 
 AlgInt::AlgInt(const AlgInt& other)

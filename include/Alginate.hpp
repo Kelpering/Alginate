@@ -4,24 +4,28 @@
 *   SPDX-License-Identifier: Unlicense
 * 
 *   Alginate is an arbitrary-precision arithmetic C++ library. The main interface is
-*   through the AlgInt class. [...] 
+*   through the AlgInt class. All arithmetic operations are provided via static methods. 
+*   In addition, Alginate provides ample operator overloading for simple arithmetic such
+*   as addition and multiplication (most of C's operators are valid operators). AlgInts
+*   are dynamically allocated upon construction and are de-allocated when they fall out
+*   of scope. AlgInt's methods throw exceptions in response to invalid or unsupported 
+*   inputs (such as division by zero or negative exponents).
+*   
+*   All AlgInts are considered to have an infinite chain of leading zeroes. In addition, 
+*   the canonical representation of zero is an array size of 0. For efficiency, leading
+*   zeroes are truncated during correct usage. AlgInts are represented in sign-magnitude,
+*   with canonical zero being positive. All methods (including constructors) are 
+*   guaranteed to output canonical numbers. The default constructor creates an AlgInt
+*   equal to a canonical zero.
+* 
+*   AlgInts store the arbitrary integer within an array of 32-bit words. Each index 
+*   contains one digit in base 2^32. The array is ordered from the least to most 
+*   significant word. This is the reverse of natural writing (base-10), which is written
+*   from most to least significant.
 */
 
 #ifndef __ALGINATE_HPP__
 #define __ALGINATE_HPP__
-
-//! All //! comments will contain finalization todo instructions
-//! Document all code with doxygen style comments (indicating what each parameter does)
-//! All .c files should have some form of header to allow for explanation
-    //! We probably want the license identifier (Im not copying the entire license)
-    //! The purpose of the file
-    //! Name of file
-    //! Project name
-
-//! This file can have an overview of the entire project, along with how it works on a basic level.
-    //! Example: How does the num array work? How is the sign interpreted, basic stuff
-
-//! Reorder at end (alphabetical, least include required)
 #include <cstdint>
 #include <cstddef>
 

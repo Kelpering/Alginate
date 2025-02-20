@@ -1,6 +1,17 @@
 /**
- *
- */
+*   File: ext_gcd.cpp
+*   Project: Alginate
+*   SPDX-License-Identifier: Unlicense
+* 
+*   The Greatest Common Denominator (or gcd) is calculated with Euclid's
+*   Algorithm. The basic principle is with the pair a, b (a>=b): 
+*   gcd(a, b) == gcd(b, a) == gcd(a, a%b). This allows us to reduce the
+*   larger AlgInt until we reach gcd(x, 0) == x. This modulo reduction
+*   allows a faster reduction over imbalanced integers over the more common
+*   gcd(a,b) == gcd(b, a-b) equivalence.
+*
+*
+*/
 #include "Alginate.hpp"
 
 void AlgInt::gcd(const AlgInt& a, const AlgInt& b, AlgInt& ret)

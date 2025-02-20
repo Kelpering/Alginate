@@ -1,6 +1,13 @@
 /**
- * 
- */
+*   File: add.cpp
+*   Project: Alginate
+*   SPDX-License-Identifier: Unlicense
+* 
+*   Addition is performed in O(N) time. We copy the larger AlgInt and
+*   iterate over the smaller AlgInt (while remembering any carry).
+*   After we finish iterating over the smaller AlgInt, we continue the
+*   carry algorithm until there is no longer a carry.
+*/
 #include "Alginate.hpp"
 
 void AlgInt::add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)

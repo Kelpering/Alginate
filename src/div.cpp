@@ -1,6 +1,31 @@
 /**
- * 
- */
+*   File: div.cpp
+*   Project: Alginate
+*   SPDX-License-Identifier: Unlicense
+* 
+*   Division is performed with Knuth's Algorithm D from
+*   "The Art of Computer Programming, Volume 2". For a full explanation, 
+*   please review this book. For a basic review, first we must normalize 
+*   the dividend and divisor. More specifically: we must multiply x and y
+*   by a number, where y's most significant digit (y_1 >= base/2). Base here
+*   is 2^32, and for efficiency during unnormalization, we make this a power
+*   of 2, or a bitshift. 
+*   
+*   Normalization is important because it allows the accurate approximation 
+*   of q_h (see algorithm for equation). We then further improve q_h as an 
+*   approximation and attempt to subtract (ynorm * q_h) from xnorm while
+*   accounting for proper digit shifts. This step is most similar to schoolbook
+*   division. 
+
+*   We finally check for an underflow, which indicates that q_h was wrong. Due 
+*   to our previous improvements, it could only be off by 1, so we subract 1 from
+*   q_h and add (ynorm*1) to xnorm to fix the underflow. This is exceedingly unlikely
+*   which is why this is a fast algorithm.
+*
+*   The temporary variable contains all the fixed q_h in order and xnorm contains the
+*   normalized remainder. We unnormalize xnorm and finally apply any required sign
+*   operations according to modulo. The sign operations deviate from Algorithm D.
+*/
 #include "Alginate.hpp"
 #include <stdexcept>
 

@@ -1,6 +1,18 @@
 /**
- * 
- */
+*   File: bitwise.cpp
+*   Project: Alginate
+*   SPDX-License-Identifier: Unlicense
+* 
+*   Bit functions are performed in O(1) by converting an associated bit 
+*   index into an array index and bit shift. OoB bit indexs are handled 
+*   if they appear, but can cause the performance to drop to O(N)
+*   because of the resize required.
+*   
+*   Bitwise functions are performed in O(N) by applying the bitwise 
+*   operation to each array index. For the smaller AlgInt, we assume 
+*   a leading zero digit. Bitwise shifts are performed digit first, 
+*   individual bits last, which is faster.
+*/
 #include "Alginate.hpp"
 
 bool AlgInt::get_bit(size_t bit) const
@@ -23,6 +35,7 @@ void AlgInt::clr_bit(size_t bit)
     if (bit>>5 >= size)
         return;
     num[bit>>5] &= ~(1ULL << (bit & 0x1F));
+    trunc();
     return;
 }
 

@@ -56,6 +56,9 @@ void AlgInt::trunc()
     while (size && num[size-1] == 0)
         size--;
 
+    if (size == 0)
+        sign = false;
+
     return;
 }
 
