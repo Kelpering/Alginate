@@ -1,3 +1,12 @@
+/**
+*   File: Alginate.hpp
+*   Project: Alginate
+*   SPDX-License-Identifier: Unlicense
+* 
+*   Alginate is an arbitrary-precision arithmetic C++ library. The main interface is
+*   through the AlgInt class. [...] 
+*/
+
 #ifndef __ALGINATE_HPP__
 #define __ALGINATE_HPP__
 
