@@ -6,20 +6,64 @@ constexpr uint32_t short_primes[1000] = {3,5,7,11,13,17,19,23,29,31,37,41,43,47,
 typedef uint32_t(*u32rand)();
 typedef uint8_t(*u8rand)();
 
+AlgInt gen_prime(size_t bitsize);
+
 int main()
 {
     // Remove make log from view
     std::cout << '\n';
 
     srand(time(NULL));
-    size_t bitsize = 4096;
+    size_t bitsize = 2048;
+
+    AlgInt temp;
+
+    AlgInt P = gen_prime(bitsize);
+    P.print("P");
+    AlgInt Q = gen_prime(bitsize);
+    Q.print("Q");
+
+    AlgInt n = P * Q;
+    n.print("N");
+
+    AlgInt::gcd(P-1, Q-1, temp);
+    AlgInt totient = ((P-1) * (Q-1)) / temp;
+    totient.print("totient");
+
+    AlgInt e = 65537;
+    e.print("e");
+    AlgInt::gcd(e, totient, temp);
+    temp.print("gcd(e, totient)");
+
+    AlgInt d;
+    AlgInt::ext_gcd(e, totient, d, temp);
+    d.print("d");
+    ((e*d) % totient).print("e*d (mod totient)");
+
+    // Public key:  (e, n)
+    // Private key: (d, n)
+
+    AlgInt message = 42;
+    message.print("Message");
+
+    AlgInt::mod_exp(message, e, n, message);
+    message.print("Encrypted");
+
+    AlgInt::mod_exp(message, d, n, message);
+    message.print("Decrypted");
+
+    
+
+    return 0;
+}
+
+AlgInt gen_prime(size_t bitsize)
+{
     AlgInt prime = {bitsize/32, (u32rand)rand, false};
     AlgInt const_wit = 2;
     
     prime.set_bit(0);
     prime.set_bit(prime.get_size()*32-1);
-    
-    // prime.print_debug("Prime candidate");
     
     retry:
     AlgInt::add(prime, 2, prime);
@@ -28,33 +72,19 @@ int main()
     for (size_t i = 0; i < (sizeof(short_primes)/sizeof(short_primes[0])); i++)
     {
         if (AlgInt::mod(prime, short_primes[i]) == 0)
-        {
-            std::cout<< "Failed trial div\n";
             goto retry;
-        }
     }
 
     // const witness miller-rabin
     while (AlgInt::miller_rabin(prime, const_wit) == false)
-    {
-        prime.print_debug("const-fail");
         goto retry;
-    }
 
     for (size_t i = 0; i < 24; i++)
     {
         AlgInt rand_wit = {bitsize/64, (u32rand)rand, false};
         if (AlgInt::miller_rabin(prime, const_wit) == false)
-        {
-            prime.print_debug("miller-fail");
             goto retry;
-        }
-        std::cout << "Passed (" << i+1 <<"/24)\n";
     }
 
-    prime.print("Probab prime");
-
-    
-
-    return 0;
+    return prime;
 }
