@@ -3,7 +3,49 @@
 *   Project: Alginate
 *   SPDX-License-Identifier: Unlicense
 * 
-*   [aaa]
+*   Exponentiation is performed according to Binary Exponentiation (see
+*   exp.cpp for an explanation). Montgomery multiplication is used as a
+*   further optimization to the modular exponentiaton function. The
+*   Montgomery optimization requires that we convert x into Montgomery
+*   space. In return, we can perform x * y (mod m) without any divisions.
+*   
+*   Montgomery space is a special form of a number using the value R.
+*   R must follow both (R > m) and (gcd(R, m) == 1). For efficiency, 
+*   R must also be a power of 2, which restricts montgomery modular
+*   exponentiation to odd modulo. To convert the number x into
+*   Montgomery space, we perform (x*R mod m) = x', which is a single costly
+*   division. This is why normal modular multiplications do not use
+*   this Montgomery optimization. Only repeated multiplications are efficient.
+*   
+*   Multiplication in Montgomery space is complicated due to the R factor.
+*   If we were to multiply x' by y' (both in Montgomery space) we would receive
+*   x*y*R*R. In order to convert this number back to Montgomery space (or
+*   convert any number back to normal space) we must multiply by R's
+*   modular multiplicative inverse (R_inv) and take the value modulo m.
+*   Unfortunately, this is still slower than regular multiplication, but there
+*   is an optimized function to calculate x * R_Inv (mod m). We perform a
+*   Montgomery Reduction (or REDC). To perform this reduction, we need
+*   the value m_prime. This value can be defined by the extended gcd, or
+*   (R * R_inv + m * m_prime == 1). We also apply basic modulo to keep 
+*   m_prime positive (for future calculations).
+*   
+*   For REDC, we first calculate n = ((x mod R) * m_prime) mod R.
+*   Then we recalculate x = (x - n*m) / R. These two statements allow us to 
+*   multiply by R_Inv and divide by m, without having actually divided by m.
+*   Importantly, divisions by R are faster than divisions by m because R
+*   is a power of 2. This allows for x%R == x & (R-1) and x/R == x>>r_shift
+*   where R = (1 << r_shift). These are both extremely fast compared to their
+*   equivalent functions. The newly calculated x might be negative, so we
+*   also perform a simple modulo if that is the case.
+*   
+*   During each step of the Binary Exponentiation, we replace all modulo
+*   operations with equivalent mont_redc operations. At the end of the method,
+*   we apply one last mont_redc to convert the result x' back into normal space.
+*   
+*   This optimization is so important because miller-rabin primality tests
+*   perform a modular exponentiation with the modulo being the candidate prime.
+*   Since all even candidate primes are removed, this allows for faster mont_exp
+*   calls, which significantly improves prime checking speed.
 */
 #include "Alginate.hpp"
 #include <stdexcept>
@@ -47,8 +89,6 @@ void AlgInt::mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt&
     sub(r, 1, r_sub);
 
     ext_gcd(r, m, r_inv, m_prime);
-    if (r_inv.sign)
-        sub(m, r_inv, r_inv, true);
     if (m_prime.sign)
         sub(r, m_prime, m_prime, true);
 

@@ -1,6 +1,11 @@
 /**
- * 
- */
+*   File: misc.cpp
+*   Project: Alginate
+*   SPDX-License-Identifier: Unlicense
+* 
+*   Misc.cpp contains extraneous methods (especially internal methods)
+*   which perform simple or critical tasks.
+*/
 #include "Alginate.hpp"
 #include <bit>
 #include <utility>

@@ -1,6 +1,11 @@
 /**
- *  
- */
+*   File: print.cpp
+*   Project: Alginate
+*   SPDX-License-Identifier: Unlicense
+* 
+*   print.cpp contains simple print functions to output AlgInt
+*   debug information or to print numbers to stdio.
+*/
 #include "Alginate.hpp"
 #include <iostream>
 

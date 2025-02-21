@@ -1,6 +1,15 @@
 /**
- * 
- */
+*   File: sub.cpp
+*   Project: Alginate
+*   SPDX-License-Identifier: Unlicense
+* 
+*   Subtraction is performed in O(N) time. First check whether x >= y, 
+*   if it is not, then the result will be negative and we perform y - x 
+*   instead. We copy the larger AlgInt and iterate over the smaller AlgInt
+*   (while remembering any borrow). After we finish iterating over the smaller 
+*   AlgInt, we continue the borrow algorithm until there is no longer a borrow.
+*   Due to the previous comparison, this is guaranteed.
+*/
 #include "Alginate.hpp"
 
 void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)

@@ -1,6 +1,11 @@
 /**
- * 
- */
+*   File: operators.cpp
+*   Project: Alginate
+*   SPDX-License-Identifier: Unlicense
+* 
+*   Operators.cpp contains simple wrappers for the overloaded operators
+*   to provide AlgInts with a more intuitive interface for simple arithmetic.
+*/
 #include "Alginate.hpp"
 
 AlgInt& AlgInt::operator=(const AlgInt& other)

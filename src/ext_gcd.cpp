@@ -10,7 +10,9 @@
 *   allows a faster reduction over imbalanced integers over the more common
 *   gcd(a,b) == gcd(b, a-b) equivalence.
 *
-*
+*   The Extended GCD (or the Extended Euclidean Algorithm) calculates both
+*   the gcd and x,y where a*x + b*y = gcd(a,b). We use the afformentioned Extended
+*   Euclidean Algorithm to calculate these values. 
 */
 #include "Alginate.hpp"
 

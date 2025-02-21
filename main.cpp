@@ -12,9 +12,9 @@ int main()
     std::cout << '\n';
 
     srand(time(NULL));
-    size_t bitsize = 2048;
+    size_t bitsize = 4096;
     AlgInt prime = {bitsize/32, (u32rand)rand, false};
-    AlgInt const_wit = 27;
+    AlgInt const_wit = 2;
     
     prime.set_bit(0);
     prime.set_bit(prime.get_size()*32-1);

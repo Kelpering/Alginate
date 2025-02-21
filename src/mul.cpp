@@ -1,6 +1,21 @@
 /**
- * 
- */
+*   File: mul.cpp
+*   Project: Alginate
+*   SPDX-License-Identifier: Unlicense
+* 
+*   Multiplication, being core to so many critical loops, must be highly optimized.
+*   Its critical loop performs a schoolbook multiplication in O(N**2). For smaller
+*   bitcounts, O(N**2) is sufficient. For higher bitcounts, other algorithms such
+*   as karatsuba can perform significantly faster O(N**log_2(3)) multiplication.
+*   
+*   Karatsuba multiplication performs 3 O(N/2) multiplications, which happen to be
+*   faster than the equivalent O(N) multiplication. Eventually, we reach a faster
+*   O(N) multiplication than the equivalent 3 O(N/2), so we swap back to the  faster
+*   schoolbook algorithm when we reach this point.
+*   
+*   Karatsuba works by:
+*   ! Update when we write a karatsuba optimization.
+*/
 #include "Alginate.hpp"
 
 void AlgInt::mul(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
