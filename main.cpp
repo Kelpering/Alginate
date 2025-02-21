@@ -16,8 +16,6 @@ int main()
     srand(time(NULL));
     size_t bitsize = 2048;
 
-    AlgInt temp;
-
     AlgInt P = gen_prime(bitsize);
     P.print("P");
     AlgInt Q = gen_prime(bitsize);
@@ -26,19 +24,15 @@ int main()
     AlgInt n = P * Q;
     n.print("N");
 
-    AlgInt::gcd(P-1, Q-1, temp);
-    AlgInt totient = ((P-1) * (Q-1)) / temp;
+    AlgInt totient = AlgInt::lcm(P-1, Q-1);
     totient.print("totient");
 
     AlgInt e = 65537;
     e.print("e");
-    AlgInt::gcd(e, totient, temp);
-    temp.print("gcd(e, totient)");
 
     AlgInt d;
-    AlgInt::ext_gcd(e, totient, d, temp);
+    AlgInt::ext_gcd(e, totient, d);
     d.print("d");
-    ((e*d) % totient).print("e*d (mod totient)");
 
     // Public key:  (e, n)
     // Private key: (d, n)

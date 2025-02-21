@@ -100,9 +100,14 @@ class AlgInt
         static void bw_shr(const AlgInt& x, size_t y, AlgInt& ret);
 
     //* Algorithm
+        static AlgInt abs(const AlgInt& x);
         static void gcd(const AlgInt& a, const AlgInt& b, AlgInt& ret);
+        static AlgInt gcd(const AlgInt& x, const AlgInt& y);
         static AlgInt ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y);
+        static AlgInt ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x);
+        static AlgInt lcm(const AlgInt& x, const AlgInt& y);
         static bool miller_rabin(const AlgInt& candidate, const AlgInt& witness);
+
 
     //* Comparison
         static int cmp(const AlgInt& x, const AlgInt& y, bool unsign = false);
@@ -126,26 +131,26 @@ class AlgInt
         AlgInt& operator=(const AlgInt& other);
         AlgInt& operator=(AlgInt&& other);
 
-        AlgInt operator+(const AlgInt& other);
-        AlgInt operator+(uint32_t other);
+        AlgInt operator+(const AlgInt& other) const;
+        AlgInt operator+(uint32_t other) const;
 
-        AlgInt operator-(const AlgInt& other);
-        AlgInt operator-(uint32_t other);
+        AlgInt operator-(const AlgInt& other) const;
+        AlgInt operator-(uint32_t other) const;
 
-        AlgInt operator*(const AlgInt& other);
-        AlgInt operator*(uint32_t other);
+        AlgInt operator*(const AlgInt& other) const;
+        AlgInt operator*(uint32_t other) const;
 
-        AlgInt operator/(const AlgInt& other);
-        AlgInt operator/(uint32_t other);
+        AlgInt operator/(const AlgInt& other) const;
+        AlgInt operator/(uint32_t other) const;
 
-        AlgInt operator%(const AlgInt& other);
-        AlgInt operator%(uint32_t other);
+        AlgInt operator%(const AlgInt& other) const;
+        AlgInt operator%(uint32_t other) const;
 
-        AlgInt operator&(const AlgInt& other);
-        AlgInt operator^(const AlgInt& other);
-        AlgInt operator|(const AlgInt& other);
-        AlgInt operator<<(size_t other);
-        AlgInt operator>>(size_t other);
+        AlgInt operator&(const AlgInt& other) const;
+        AlgInt operator^(const AlgInt& other) const;
+        AlgInt operator|(const AlgInt& other) const;
+        AlgInt operator<<(size_t other) const;
+        AlgInt operator>>(size_t other) const;
 
         AlgInt& operator+=(const AlgInt& other);
         AlgInt& operator+=(uint32_t other);
@@ -168,12 +173,12 @@ class AlgInt
         AlgInt& operator<<=(size_t other);
         AlgInt& operator>>=(size_t other);
 
-        bool operator<(const AlgInt& other);
-        bool operator<=(const AlgInt& other);
-        bool operator!=(const AlgInt& other);
-        bool operator==(const AlgInt& other);
-        bool operator>(const AlgInt& other);
-        bool operator>=(const AlgInt& other);
+        bool operator<(const AlgInt& other) const;
+        bool operator<=(const AlgInt& other) const;
+        bool operator!=(const AlgInt& other) const;
+        bool operator==(const AlgInt& other) const;
+        bool operator>(const AlgInt& other) const;
+        bool operator>=(const AlgInt& other) const;
 
 };
 

@@ -32,82 +32,82 @@ AlgInt& AlgInt::operator=(AlgInt&& other)
     return *this;
 }
 
-AlgInt AlgInt::operator+(const AlgInt& other) {
+AlgInt AlgInt::operator+(const AlgInt& other) const {
     AlgInt temp;
     add(*this, other, temp);
     return temp;
 }
-AlgInt AlgInt::operator+(uint32_t other) {
+AlgInt AlgInt::operator+(uint32_t other) const {
     AlgInt temp;
     add(*this, other, temp);
     return temp;
 }
 
-AlgInt AlgInt::operator-(const AlgInt& other) {
+AlgInt AlgInt::operator-(const AlgInt& other) const {
     AlgInt temp;
     sub(*this, other, temp);
     return temp;
 }
-AlgInt AlgInt::operator-(uint32_t other) {
+AlgInt AlgInt::operator-(uint32_t other) const {
     AlgInt temp;
     sub(*this, other, temp);
     return temp;
 }
 
-AlgInt AlgInt::operator*(const AlgInt& other) {
+AlgInt AlgInt::operator*(const AlgInt& other) const {
     AlgInt temp;
     mul(*this, other, temp);
     return temp;
 }
-AlgInt AlgInt::operator*(uint32_t other) {
+AlgInt AlgInt::operator*(uint32_t other) const {
     AlgInt temp;
     mul(*this, other, temp);
     return temp;
 }
 
-AlgInt AlgInt::operator/(const AlgInt& other) {
+AlgInt AlgInt::operator/(const AlgInt& other) const {
     AlgInt temp;
     div(*this, other, temp);
     return temp;
 }
-AlgInt AlgInt::operator/(uint32_t other) {
+AlgInt AlgInt::operator/(uint32_t other) const {
     AlgInt temp;
     div(*this, other, temp);
     return temp;
 }
 
-AlgInt AlgInt::operator%(const AlgInt& other) {
+AlgInt AlgInt::operator%(const AlgInt& other) const {
     AlgInt temp;
     mod(*this, other, temp);
     return temp;
 }
-AlgInt AlgInt::operator%(uint32_t other) {
+AlgInt AlgInt::operator%(uint32_t other) const {
     AlgInt temp;
     mod(*this, other, temp);
     return temp;
 }
 
-AlgInt AlgInt::operator&(const AlgInt& other) {
+AlgInt AlgInt::operator&(const AlgInt& other) const {
     AlgInt temp;
     bw_and(*this, other, temp);
     return temp;
 }
-AlgInt AlgInt::operator^(const AlgInt& other) {
+AlgInt AlgInt::operator^(const AlgInt& other) const {
     AlgInt temp;
     bw_xor(*this, other, temp);
     return temp;
 }
-AlgInt AlgInt::operator|(const AlgInt& other) {
+AlgInt AlgInt::operator|(const AlgInt& other) const {
     AlgInt temp;
     bw_or(*this, other, temp);
     return temp;
 }
-AlgInt AlgInt::operator<<(size_t other) {
+AlgInt AlgInt::operator<<(size_t other) const {
     AlgInt temp;
     bw_shl(*this, other, temp);
     return temp;
 }
-AlgInt AlgInt::operator>>(size_t other) {
+AlgInt AlgInt::operator>>(size_t other) const {
     AlgInt temp;
     bw_shr(*this, other, temp);
     return temp;
@@ -179,27 +179,27 @@ AlgInt& AlgInt::operator>>=(size_t other) {
     return *this;
 }
 
-bool AlgInt::operator<(const AlgInt& other) {
+bool AlgInt::operator<(const AlgInt& other) const {
     int cmp_ret = cmp(*this, other);
     return cmp_ret < 0;
 }
-bool AlgInt::operator<=(const AlgInt& other) {
+bool AlgInt::operator<=(const AlgInt& other) const {
     int cmp_ret = cmp(*this, other);
     return cmp_ret <= 0;
 }
-bool AlgInt::operator!=(const AlgInt& other) {
+bool AlgInt::operator!=(const AlgInt& other) const {
     int cmp_ret = cmp(*this, other);
     return cmp_ret != 0;
 }
-bool AlgInt::operator==(const AlgInt& other) {
+bool AlgInt::operator==(const AlgInt& other) const {
     int cmp_ret = cmp(*this, other);
     return cmp_ret == 0;
 }
-bool AlgInt::operator>(const AlgInt& other) {
+bool AlgInt::operator>(const AlgInt& other) const {
     int cmp_ret = cmp(*this, other);
     return cmp_ret > 0;
 }
-bool AlgInt::operator>=(const AlgInt& other) {
+bool AlgInt::operator>=(const AlgInt& other) const {
     int cmp_ret = cmp(*this, other);
     return cmp_ret >= 0;
 }

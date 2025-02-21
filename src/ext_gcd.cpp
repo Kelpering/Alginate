@@ -68,3 +68,9 @@ AlgInt AlgInt::ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y)
     AlgInt::swap(old_t, y);
     return old_r;
 }
+
+AlgInt AlgInt::ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x)
+{
+    AlgInt temp;
+    return ext_gcd(a, b, x, temp);
+}
