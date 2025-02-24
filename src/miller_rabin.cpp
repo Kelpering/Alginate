@@ -37,7 +37,7 @@ bool AlgInt::miller_rabin(const AlgInt& candidate, const AlgInt& witness)
     if (candidate.size == 0 || (candidate.num[0] & 1) == 0)
         return false;
 
-    // No additional checks are required because candidate must be odd by this point.
+    // No borrows are required because candidate must be odd.
     AlgInt cand_sub = candidate;
     cand_sub.num[0]--;
 
@@ -52,10 +52,10 @@ bool AlgInt::miller_rabin(const AlgInt& candidate, const AlgInt& witness)
     // while (d >> s) is even, s++ 
     while (cand_sub.get_bit(s) == 0)
         s++;
-    AlgInt::bw_shr(cand_sub, s, d);
+    bw_shr(cand_sub, s, d);
 
     // Check witness^d == 1 (mod candidate)
-    AlgInt::mod_exp(witness, d, candidate, temp);
+    mont_exp(witness, d, candidate, temp);
     if (cmp(temp, 1) == 0)
         return true;  
 
@@ -68,7 +68,8 @@ bool AlgInt::miller_rabin(const AlgInt& candidate, const AlgInt& witness)
     {
         // witness^(2^r * d) (modulo candidate)
         // This simplifies to a squaring every loop.
-        AlgInt::mod_exp(temp, 2, candidate, temp);
+        mul(temp, temp, temp);
+        mod(temp, candidate, temp);
 
         // temp == candidate - 1 (-1 mod n == n-1)
         if (cmp(temp, cand_sub) == 0)

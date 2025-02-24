@@ -42,7 +42,7 @@
 *   operations with equivalent mont_redc operations. At the end of the method,
 *   we apply one last mont_redc to convert the result x' back into normal space.
 *   
-*   This optimization is so important because miller-rabin primality tests
+*   This optimization is important because miller-rabin primality tests
 *   perform a modular exponentiation with the modulo being the candidate prime.
 *   Since all even candidate primes are removed, this allows for faster mont_exp
 *   calls, which significantly improves prime checking speed.

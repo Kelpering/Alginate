@@ -39,8 +39,6 @@ AlgInt AlgInt::ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y)
     AlgInt r = b;
     AlgInt old_s = 1;
     AlgInt s = 0;
-    AlgInt old_t = 0;
-    AlgInt t = 1;
     
     AlgInt temp, q;
     while (cmp(r,0) != 0)
@@ -56,15 +54,18 @@ AlgInt AlgInt::ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y)
         old_s = s;
         mul(q, s, s);
         sub(temp, s, s);
-
-        temp = old_t;
-        old_t = t;
-        mul(q, t, t);
-        sub(temp, t, t);
     }
-        
+
+    // Calculate y last as an optimization.
+    y = 0;
+    if (cmp(b,0) != 0)
+    {
+        mul(old_s, a, y);
+        sub(old_r, y, y);
+        div(y, b, y);
+    }
+
     // Return values
     AlgInt::swap(old_s, x);
-    AlgInt::swap(old_t, y);
     return old_r;
 }

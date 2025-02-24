@@ -101,10 +101,16 @@ class AlgInt
 
     //* Algorithm
         static AlgInt abs(const AlgInt& x);
+        
         static void gcd(const AlgInt& a, const AlgInt& b, AlgInt& ret);
         static AlgInt gcd(const AlgInt& x, const AlgInt& y);
-        static AlgInt ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y);
+        
         static AlgInt lcm(const AlgInt& x, const AlgInt& y);
+
+        static AlgInt ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y);
+        
+        static void mod_inv(const AlgInt& x, const AlgInt& m, AlgInt& inv);
+        
         static bool miller_rabin(const AlgInt& candidate, const AlgInt& witness);
 
 

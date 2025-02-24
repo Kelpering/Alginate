@@ -30,9 +30,14 @@ AlgInt AlgInt::lcm(const AlgInt& x, const AlgInt& y)
     return abs(x * y) / gcd(x, y);
 }
 
-//! Fix mod_inv alg, needs mod check +=
 void AlgInt::mod_inv(const AlgInt& x, const AlgInt& m, AlgInt& inv)
 {
     AlgInt temp;
-    return ext_gcd(x, m, inv, temp);
+    ext_gcd(x, m, inv, temp);
+
+    // Prevent negative inv.
+    if (inv.sign)
+        add(inv, m, inv);
+
+    return;
 }

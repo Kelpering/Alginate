@@ -36,9 +36,7 @@ int main()
     temp.print("gcd(e, totient)");
 
     AlgInt d;
-    AlgInt::ext_gcd(e, totient, d);
-    if (d.get_sign())
-        d += totient;
+    AlgInt::mod_inv(e, totient, d);
     d.print("d");
     ((e*d) % totient).print("e*d (mod totient)");
 
