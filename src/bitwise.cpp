@@ -17,6 +17,7 @@
 
 bool AlgInt::get_bit(size_t bit) const
 {
+    // We don't store leading zeroes, so all OoB checks are zero.
     if (bit>>5 >= size)
         return 0;
     return ((num[bit>>5] >> (bit & 0x1F)) & 1);
@@ -24,6 +25,7 @@ bool AlgInt::get_bit(size_t bit) const
 
 void AlgInt::set_bit(size_t bit)
 {
+    // If bit is OoB, we extend size.
     if (bit>>5 >= size)
         resize((bit>>5) + 1);
     num[bit>>5] |= 1ULL << (bit & 0x1F);
@@ -32,6 +34,7 @@ void AlgInt::set_bit(size_t bit)
 
 void AlgInt::clr_bit(size_t bit)
 {
+    // We don't store leading zeroes, so all OoB checks are zero.
     if (bit>>5 >= size)
         return;
     num[bit>>5] &= ~(1ULL << (bit & 0x1F));
@@ -46,7 +49,8 @@ void AlgInt::bw_and(const AlgInt& x, const AlgInt& y, AlgInt& ret)
 
     AlgInt temp;
     temp.resize(sml.size);
-
+    
+    // We only need to check the smaller number because 0 & x == 0.
     for (size_t i = 0; i < sml.size; i++)
         temp.num[i] = big.num[i] & sml.num[i];
 
@@ -63,6 +67,7 @@ void AlgInt::bw_xor(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     AlgInt temp;
     temp.resize(big.size);
 
+    // We only need to check the smaller number because 0 ^ x == x.
     size_t i = 0;
     for (; i < sml.size; i++)
         temp.num[i] = big.num[i] ^ sml.num[i];
@@ -82,6 +87,7 @@ void AlgInt::bw_or(const AlgInt& x, const AlgInt& y, AlgInt& ret)
     AlgInt temp;
     temp.resize(big.size);
     
+    // We only need to check the smaller number because 0 | x == x.
     size_t i = 0;
     for (; i < sml.size; i++)
         temp.num[i] = big.num[i] | sml.num[i];
@@ -102,11 +108,11 @@ void AlgInt::bw_shl(const AlgInt& x, size_t y, AlgInt& ret)
     temp.resize(x.size + dig_shift + 1);
     temp.sign = x.sign;
 
-    // Copy x into temp (accounting for digit shift)
+    // Copy x into temp (accounting for digit shift).
     for (size_t i = 0; i < x.size; i++)
         temp.num[i+dig_shift] = x.num[i];
 
-    // Perform bitwise shift
+    //? Bitwise shift left loop.
     if (bit_shift)
     {
         // All but last digit
@@ -117,7 +123,10 @@ void AlgInt::bw_shl(const AlgInt& x, size_t y, AlgInt& ret)
         temp.num[0] <<= bit_shift;
     }
 
+    // Remove leading zeroes
     temp.trunc();
+
+    // Return values
     AlgInt::swap(ret, temp);
     return;
 }
@@ -135,10 +144,11 @@ void AlgInt::bw_shr(const AlgInt& x, size_t y, AlgInt& ret)
     if (dig_shift > x.size)
         return (void) (ret = 0);
 
-    // Copy x into temp (accounting for digit shift)
+    // Copy x into temp (accounting for digit shift).
     for (size_t i = 0; i < temp.size; i++)
         temp.num[i] = x.num[i+dig_shift];
 
+    //? Bitwise shift right loop.
     if (bit_shift && temp.size)
     {
         // All but last digit
@@ -150,7 +160,10 @@ void AlgInt::bw_shr(const AlgInt& x, size_t y, AlgInt& ret)
         temp.num[i] >>= y;
     }
     
+    // Remove leading zeroes
     temp.trunc();
+
+    // Return values
     AlgInt::swap(ret, temp);
     return;
 }

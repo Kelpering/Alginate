@@ -4,14 +4,14 @@
 *   SPDX-License-Identifier: Unlicense
 * 
 *   Comparisons are performed in O(N) with a series of fast checks,
-*   then a slow iteration if those fail. If all checks pass, then 
-*   the AlgInts must be equal to eachother.
+*   then a slow iteration if those succeed. If the iteration passes,
+*   then the AlgInts must be equal.
 */
 #include "Alginate.hpp"
 
 int AlgInt::cmp(const AlgInt& x, const AlgInt& y, bool unsign)
 {
-    // Account for signs (and remove signs if required)
+    //? Handle sign
     bool uneven_sign = (unsign) ? false : x.sign ^ y.sign;
 
     // If only one is negative, return the positive as larger.
@@ -22,6 +22,7 @@ int AlgInt::cmp(const AlgInt& x, const AlgInt& y, bool unsign)
     if (x.size != y.size)
         return (x.size < y.size) ? -1 : 1;
 
+    //? Comparison loop (MSW first)
     for (size_t i = x.size; i-- > 0;)
     {
         // If the numbers are not equal, return the larger one.
@@ -35,18 +36,18 @@ int AlgInt::cmp(const AlgInt& x, const AlgInt& y, bool unsign)
 
 int AlgInt::cmp(const AlgInt& x, int32_t y, bool unsign)
 {
-    // Fix y
+    //? Convert y into sign-magnitude.
     bool y_sign = y < 0;
     uint32_t fixed_y = (y_sign) ? -y : y;
 
-    // Account for signs (and remove signs if required)
+    //? Handle Sign
     bool uneven_sign = (unsign) ? false : x.sign ^ y_sign;
 
     // If only one is negative, return the positive as larger.
     if (uneven_sign)
         return (x.sign) ? -1 : 1;
 
-    // Zero check
+    // Zero equality check
     if (x.size == 0 && y == 0)
         return 0;
 

@@ -7,6 +7,7 @@
 *   be repeated often enough to warrant a dedicated method.
 */
 #include "Alginate.hpp"
+#include <stdexcept>
 
 AlgInt AlgInt::abs(const AlgInt& x)
 {
@@ -26,16 +27,22 @@ AlgInt AlgInt::gcd(const AlgInt& x, const AlgInt& y)
 
 AlgInt AlgInt::lcm(const AlgInt& x, const AlgInt& y)
 {
-    // lcm(x,y) = |x*y| / gcd(x,y)
+    //* lcm(x,y) = |x*y| / gcd(x,y)
     return abs(x * y) / gcd(x, y);
 }
 
 void AlgInt::mod_inv(const AlgInt& x, const AlgInt& m, AlgInt& inv)
 {
-    AlgInt temp;
-    ext_gcd(x, m, inv, temp);
+    //* The modular multiplicative inverse of a number can be calculated
+    //*  with the ext_gcd algorithm, provided that gcd(x, m) == 1.
+    AlgInt temp, gcd;
+    gcd = ext_gcd(x, m, inv, temp);
 
-    // Prevent negative inv.
+    if (cmp(gcd, 1) != 0)
+        throw std::domain_error("x^-1 (mod m) does not exist for provided x and m. x^-1 only exists if gcd(x, m) == 1.");
+
+    //* Inv might be returned negative by ext_gcd (-inv = inv - m). For convenience, only
+    //*  positive values of inv are returned, although both are valid inverses.
     if (inv.sign)
         add(inv, m, inv);
 
