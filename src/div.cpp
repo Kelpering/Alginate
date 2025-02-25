@@ -38,7 +38,7 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
     // If y.size == 1, perform quick division
     if (y.size == 1)
     {
-        // uint32_t cast into AlgInt
+        // AlgInt y is cast into uint32_t
         remainder = div(x, y.num[0], quotient);
         remainder.sign = x.sign;
 
@@ -58,7 +58,6 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
         remainder = x;
         if (remainder.sign)
             sub(y, remainder, remainder, true);
-        //! Correct remainder here
 
         return;
     } else if (cmp_ret == 0)
@@ -88,7 +87,7 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
     quo.resize(x.size);
     quo.sign = (x.sign ^ y.sign) && !unsign;
 
-    // Primary div loop
+    //? Primary div loop
     size_t n = y.size;
     y_msw = ynorm.num[n-1];
     AlgInt temp;
@@ -114,7 +113,7 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
         // Single digit mul
         AlgInt::mul(ynorm, q_h, temp);
 
-        // xnorm - ynorm*q_h << (i*32)
+        //? xnorm - ynorm*q_h << (i*32)
         // subtracts ynorm from xnorm while accounting for relative shift
         uint8_t sub_carry = 0;
         uint64_t x_digit = 0;
@@ -137,8 +136,8 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
             xnorm.num[i+j] = x_digit - y_digit;
         }
 
-        // If we have a remaining carry (q_h > q)
-        // xnorm += ynorm << (i*32)
+        //? xnorm += ynorm << (i*32) (ignore carry)
+        // If we have a remaining carry then: q_h > q
         if (sub_carry)
         {
             uint8_t add_carry = 0;
@@ -173,20 +172,14 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
 
 void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, bool unsign)
 {
-    // Wrapper function, temp discarded at the end of scope.
     AlgInt temp;
-    div(x,y, quotient, temp, unsign);
-
-    return;
+    return div(x,y, quotient, temp, unsign);
 }
 
 void AlgInt::mod(const AlgInt& x, const AlgInt& y, AlgInt& remainder, bool unsign)
 {
-    // Wrapper function, temp discarded at the end of scope.
     AlgInt temp;
-    div(x, y, temp, remainder, unsign);
-
-    return;
+    return div(x, y, temp, remainder, unsign);
 }
 
 uint32_t AlgInt::div(const AlgInt& x, uint32_t y, AlgInt& quotient, bool unsign)
@@ -214,21 +207,21 @@ uint32_t AlgInt::div(const AlgInt& x, uint32_t y, AlgInt& quotient, bool unsign)
 
     // Two digits of x merged into one variable.
     // First digit is 0 due to implied leading zero.
-    uint64_t digits = 0;
+    uint64_t x_digits = 0;
 
     for (size_t i = x.size+1; i > 1; i--)
     {
         // Shift the remaining LSW to the MSW
-        digits <<= 32;
+        x_digits <<= 32;
 
         // Add the new LSW
-        digits |= x.num[i-2];
+        x_digits |= x.num[i-2];
 
         // Single digit division
-        temp.num[i-2] = digits / y;
+        temp.num[i-2] = x_digits / y;
 
         // Keep the remainder (remaining LSW)
-        digits %= y;
+        x_digits %= y;
     }
 
     // Remove leading zeroes
@@ -236,12 +229,11 @@ uint32_t AlgInt::div(const AlgInt& x, uint32_t y, AlgInt& quotient, bool unsign)
 
     // If -x, remainder == y - digits
     AlgInt::swap(quotient, temp);
-    return (x.sign) ? y - digits: digits;
+    return (x.sign) ? y - x_digits: x_digits;
 }
 
 uint32_t AlgInt::mod(const AlgInt& x, uint32_t y, bool unsign)
 {
-    // Wrapper function, temp discarded at the end of scope.
     AlgInt temp;
     return div(x, y, temp, false);
 }

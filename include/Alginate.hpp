@@ -21,8 +21,8 @@
 *   Alginate was designed to be a supplement to another library (Phloios) which is
 *   a cryptographic library. To this end, Alginate does not use internal random
 *   functions, but instead requires external randomness. Despite this, Alginate
-*   is not side-channel secure and is not recommended to be used in any environments
-*   outside of education.
+*   is not side-channel secure and is not recommended to be used in any
+*   production environment.
 * 
 *   AlgInts store the arbitrary integer within an array of 32-bit words. Each index 
 *   contains one digit in base 2^32. The array is ordered from the least to most 

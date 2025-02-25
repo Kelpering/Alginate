@@ -18,28 +18,35 @@
 
 void AlgInt::gcd(const AlgInt& a, const AlgInt& b, AlgInt& ret)
 {
+    // big and sml need to be absolute here.
     AlgInt big = (cmp(a, b) >= 0) ? a : b;
     AlgInt sml = (cmp(a, b) >= 0) ? b : a;
 
+    //? Primary Euclidean Algorithm loop
     AlgInt temp;
     while (cmp(sml, 0) != 0)
     {
+        //* Since the remainder of a division is always smaller than the
+        //*  dividend, we can always swap big and sml until gcd(big, 0).
         mod(big, sml, temp);
         AlgInt::swap(sml, big);
         AlgInt::swap(temp, sml);
     }
     
+    // Return values
     AlgInt::swap(big, ret);
     return;
 }
 
 AlgInt AlgInt::ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y)
 {
+    // Extended Euclidean Algorithm (old_t and t are skipped).
     AlgInt old_r = a;
     AlgInt r = b;
     AlgInt old_s = 1;
     AlgInt s = 0;
     
+    //? Primary Extended Euclidean Algorithm loop
     AlgInt temp, q;
     while (cmp(r,0) != 0)
     {
@@ -56,7 +63,7 @@ AlgInt AlgInt::ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y)
         sub(temp, s, s);
     }
 
-    // Calculate y last as an optimization.
+    //? Calculate y last as an optimization.
     y = 0;
     if (cmp(b,0) != 0)
     {

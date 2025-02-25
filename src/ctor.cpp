@@ -10,24 +10,25 @@
 
 AlgInt::AlgInt(const AlgInt& other)
 {   
-    // Resize instead of copy to allocate a new array
+    // Resize initializes this array.
     resize(other.size);
 
     // Deep copy other.num
     for (size_t i = 0; i < other.size; i++)
         num[i] = other.num[i];
 
-    // Remove leading zeroes
-    trunc();
-
     // Copy other.sign
     sign = other.sign;
+
+    // Remove leading zeroes
+    trunc();
 
     return;
 }
 
 AlgInt::AlgInt(AlgInt&& other)
 {
+    // Since other will expire after this transfer, we shallow copy.
     num = other.num;
     size = other.size;
     cap = other.cap;
@@ -59,7 +60,7 @@ AlgInt::AlgInt(const uint32_t* num, size_t size, bool sign)
 
 AlgInt::AlgInt(uint64_t num, bool sign)
 {
-    // Allocate the internal num array.
+    // Allocate the internal num array (uint64_t can be maximum 2 digits).
     resize(2);
 
     // Copy the lower half, then higher half of the 64-bit number.
@@ -69,7 +70,7 @@ AlgInt::AlgInt(uint64_t num, bool sign)
     // Properly apply the sign.
     AlgInt::sign = sign;
 
-    // Remove all leading zeroes
+    // Remove leading zeroes
     trunc();
 
     return;
@@ -77,13 +78,14 @@ AlgInt::AlgInt(uint64_t num, bool sign)
 
 AlgInt::AlgInt(size_t size, uint32_t(*randfunc)(), bool sign)
 {
+    // Zero check
     if (size == 0)
         return;
 
     // Allocate the internal num array.
     resize(size);
 
-    // Copy the external num array into the internal array.
+    // Copy the random digits into the internal array.
     size_t i;
     for (i = 0; i < size-1; i++)
         AlgInt::num[i] = randfunc();
@@ -110,7 +112,7 @@ AlgInt::AlgInt(size_t size, uint8_t(*randfunc)(), bool sign)
     // Allocate the internal num array.
     resize((size+3)/4);
 
-    // Copy the external num array into the internal array.
+    // Copy the random digits into the internal array.
     for (size_t i = 0; i < size/4; i++)
     {
         AlgInt::num[i] |= (uint32_t) randfunc() << 0;
@@ -119,6 +121,7 @@ AlgInt::AlgInt(size_t size, uint8_t(*randfunc)(), bool sign)
         AlgInt::num[i] |= (uint32_t) randfunc() << 24;
     }
 
+    // If the size was uneven (not divisible by 4).
     if (size & 0b11)
     {
         size_t i;
@@ -140,8 +143,10 @@ AlgInt::AlgInt(size_t size, uint8_t(*randfunc)(), bool sign)
 
 AlgInt::~AlgInt()
 {
-    // Deallocate the num array and prevent double frees.
+    // Deallocate the num array.
     delete[] num;
+
+    // Prevent double frees.
     num = nullptr;
 
     return;

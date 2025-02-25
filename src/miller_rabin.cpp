@@ -33,7 +33,7 @@
 
 bool AlgInt::miller_rabin(const AlgInt& candidate, const AlgInt& witness)
 {
-    // If candidate == 0 or if candidate is even, it cannot be prime.
+    // If candidate == 0 or candidate is even, candidate is not prime.
     if (candidate.size == 0 || (candidate.num[0] & 1) == 0)
         return false;
 
@@ -46,6 +46,7 @@ bool AlgInt::miller_rabin(const AlgInt& candidate, const AlgInt& witness)
         throw std::domain_error("Witness must be within the range [2, candidate-1)");
 
     // s is at least 1, because cand_sub is always even
+    //* candidate = d<<s + 1
     size_t s = 1;
     AlgInt d, temp;
 
@@ -55,6 +56,7 @@ bool AlgInt::miller_rabin(const AlgInt& candidate, const AlgInt& witness)
     bw_shr(cand_sub, s, d);
 
     // Check witness^d == 1 (mod candidate)
+    //* Because this is a full exponentiation, this is expensive.
     mont_exp(witness, d, candidate, temp);
     if (cmp(temp, 1) == 0)
         return true;  
@@ -67,14 +69,15 @@ bool AlgInt::miller_rabin(const AlgInt& candidate, const AlgInt& witness)
     for (size_t r = 1; r < s; r++)
     {
         // witness^(2^r * d) (modulo candidate)
-        // This simplifies to a squaring every loop.
+        //* This simplifies to a squaring every loop, which is much faster.
         mul(temp, temp, temp);
         mod(temp, candidate, temp);
 
-        // temp == candidate - 1 (-1 mod n == n-1)
+        //* temp == candidate - 1 (-1 mod n == n-1)
         if (cmp(temp, cand_sub) == 0)
             return true;
     }   
 
+    //* If all checks fail, then the number is guaranteed not prime.
     return false;
 }

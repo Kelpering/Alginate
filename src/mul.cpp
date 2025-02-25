@@ -21,32 +21,34 @@
 void AlgInt::mul(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
 {
     // Basic temp setup
-    AlgInt temp;
-    temp.resize(x.size+y.size);
-    temp.sign = (x.sign ^ y.sign) && !unsign;
+    AlgInt tret;
+    tret.resize(x.size+y.size);
+    tret.sign = (x.sign ^ y.sign) && !unsign;
 
+    // Create reference variables based on digit (not absolute) size.
     const AlgInt& big = (x.size > y.size) ? x : y;
     const AlgInt& sml = (x.size > y.size) ? y : x;
 
-    // Primary multiplication loop
+    //? Primary multiplication loop
     for (size_t i = 0; i < sml.size; i++)
     {
-        // calc also serves as a carry from previous mul/add loop
+        //* calc also serves as a carry from previous mul/add loop
         uint64_t calc = 0;
         for (size_t j = 0; j < big.size; j++)
         {
-            calc += (uint64_t) big.num[j] * sml.num[i] + temp.num[i + j];
+            calc += (uint64_t) big.num[j] * sml.num[i] + tret.num[i + j];
 
-            temp.num[i + j] = (uint32_t) calc;
+            tret.num[i + j] = (uint32_t) calc;
             calc >>= 32;
         }
-        temp.num[i + big.size] = calc;
+        tret.num[i + big.size] = calc;
     }
 
     // Remove leading zeroes.
-    temp.trunc();
+    tret.trunc();
 
-    AlgInt::swap(ret, temp);
+    // Return values
+    AlgInt::swap(ret, tret);
     return;
 }
 
@@ -57,7 +59,7 @@ void AlgInt::mul(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign)
     temp.resize(x.size+1);
     temp.sign = x.sign && !unsign;
 
-    // Loop block (single digit w/ carry)
+    //? Primary multiplication loop (single digit w/ carry)
     uint32_t carry = 0;
     for (size_t i = 0; i < temp.size; i++)
     {
@@ -70,6 +72,7 @@ void AlgInt::mul(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign)
     // Remove leading zeroes.
     temp.trunc();
 
+    // Return values
     AlgInt::swap(ret, temp);
     return;
 }
