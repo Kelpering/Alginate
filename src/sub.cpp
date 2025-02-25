@@ -20,6 +20,7 @@ void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
     {
         //* x - y == x - y
         case 0b00:
+            ret.sign = false;
             break;
 
         //* -x - y == -(x + y)
@@ -81,6 +82,9 @@ void AlgInt::sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
             tret.num[i++] = UINT32_MAX;
         tret.num[i]--;
     }
+
+    // Apply sign
+    tret.sign = ret.sign;
     
     // Remove leading zeroes
     tret.trunc();

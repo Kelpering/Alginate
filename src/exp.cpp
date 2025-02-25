@@ -26,7 +26,7 @@
 void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
 {
     // Exception block
-    if (y.sign)
+    if (y.sign && !unsign)
         throw std::domain_error("Negative y not supported.");
 
     // Basic setup
@@ -50,7 +50,7 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
     return;
 }
 
-void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret, bool unsign)
+void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret)
 {
     // Exception block
     if (y.sign)
@@ -65,7 +65,7 @@ void AlgInt::mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& 
     mod(x, m, sqr);
 
     AlgInt tret = 1;
-    tret.sign = x.sign && !unsign;
+    tret.sign = x.sign;
 
     for (size_t i = 0; i < y.get_bitsize(); i++)
     {

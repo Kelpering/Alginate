@@ -17,10 +17,10 @@ AlgInt AlgInt::abs(const AlgInt& x)
     return temp;
 }
 
-AlgInt AlgInt::gcd(const AlgInt& x, const AlgInt& y)
+AlgInt AlgInt::gcd(const AlgInt& a, const AlgInt& b)
 {
     AlgInt temp;
-    gcd(x, y, temp);
+    gcd(a, b, temp);
 
     return temp;
 }

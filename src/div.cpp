@@ -39,8 +39,9 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
     if (y.size == 1)
     {
         // AlgInt y is cast into uint32_t
-        remainder = div(x, y.num[0], quotient);
-        remainder.sign = x.sign;
+        remainder = div(x, y.num[0], quotient, true);
+        quotient.sign = (x.sign ^ y.sign) && !unsign;
+        remainder.sign = (x.sign) && !unsign;
 
         return;
     }
@@ -56,8 +57,7 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
     {
         quotient = 0;
         remainder = x;
-        if (remainder.sign)
-            sub(y, remainder, remainder, true);
+        remainder.sign = x.sign && !unsign;
 
         return;
     } else if (cmp_ret == 0)
@@ -161,6 +161,7 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
 
     // Unnormalize xnorm (remainder)
     bw_shr(xnorm, norm_shift, xnorm);
+    xnorm.sign = x.sign && !unsign;
     AlgInt::swap(remainder, xnorm);
 
     // Remove leading zeroes.
@@ -179,30 +180,34 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, bool unsign
 void AlgInt::mod(const AlgInt& x, const AlgInt& y, AlgInt& remainder, bool unsign)
 {
     AlgInt temp;
-    return div(x, y, temp, remainder, unsign);
+    div(x, y, temp, remainder, unsign);
+    if (remainder.sign)
+        sub(y, remainder, remainder, true);
+
+    return;
 }
 
-uint32_t AlgInt::div(const AlgInt& x, uint32_t y, AlgInt& quotient, bool unsign)
+int64_t AlgInt::div(const AlgInt& x, uint32_t y, AlgInt& quotient, bool unsign)
 {
     // Exception block
     if (y == 0)
         throw std::domain_error("Divide by Zero.");
 
     // Basic temp setup
-    AlgInt temp = 0;
-    temp.resize(x.size);
-    temp.sign = x.sign && !unsign;
+    AlgInt tret = 0;
+    tret.resize(x.size);
+    tret.sign = x.sign && !unsign;
 
     // Early return for small x.size
     if (x.size <= 1)
     {
         // Account for canonical zero (x.size == 0)
-        temp = (x.size) ? (x.num[0] / y) : 0;
-        uint32_t rem = (x.size) ? (x.num[0] % y) : 0;
+        tret = (x.size) ? (x.num[0] / y) : 0;
+        int64_t rem = (x.size) ? (x.num[0] % y) : 0;
 
-        // If -x, remainder == y - rem
-        AlgInt::swap(quotient, temp);
-        return (temp.sign) ? y - rem : rem ;
+        // Return values
+        AlgInt::swap(quotient, tret);
+        return (x.sign) ? -rem : rem;
     }
 
     // Two digits of x merged into one variable.
@@ -218,22 +223,25 @@ uint32_t AlgInt::div(const AlgInt& x, uint32_t y, AlgInt& quotient, bool unsign)
         x_digits |= x.num[i-2];
 
         // Single digit division
-        temp.num[i-2] = x_digits / y;
+        tret.num[i-2] = x_digits / y;
 
         // Keep the remainder (remaining LSW)
         x_digits %= y;
     }
 
     // Remove leading zeroes
-    temp.trunc();
+    tret.trunc();
 
-    // If -x, remainder == y - digits
-    AlgInt::swap(quotient, temp);
-    return (x.sign) ? y - x_digits: x_digits;
+    // Return values
+    AlgInt::swap(quotient, tret);
+    int64_t rem = x_digits;
+    return (x.sign) ? -rem : rem;
+
 }
 
 uint32_t AlgInt::mod(const AlgInt& x, uint32_t y, bool unsign)
 {
     AlgInt temp;
-    return div(x, y, temp, false);
+    int64_t rem = div(x, y, temp, false);
+    return (x.sign) ? y - rem : rem;
 }
