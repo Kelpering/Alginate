@@ -40,60 +40,6 @@ AlgInt::AlgInt(AlgInt&& other)
     return;
 }
 
-AlgInt::AlgInt(const uint32_t* num, size_t size, bool sign)
-{
-    // Allocate the internal num array.
-    resize(size);
-
-    // Copy the external num array into the internal array.
-    for (size_t i = 0; i < size; i++)
-        AlgInt::num[i] = num[i];
-
-    // Properly apply the sign.
-    AlgInt::sign = sign;
-
-    // Remove all leading zeroes.
-    trunc();
-
-    return;
-}
-
-//
-// if (size == 0)
-// return;
-
-// // Allocate the internal num array.
-// resize((size+3)/4);
-
-// // Copy the random digits into the internal array.
-// for (size_t i = 0; i < size/4; i++)
-// {
-// AlgInt::num[i] |= (uint32_t) randfunc() << 0;
-// AlgInt::num[i] |= (uint32_t) randfunc() << 8;
-// AlgInt::num[i] |= (uint32_t) randfunc() << 16;
-// AlgInt::num[i] |= (uint32_t) randfunc() << 24;
-// }
-
-// // If the size was uneven (not divisible by 4).
-// if (size & 0b11)
-// {
-// size_t i;
-// for (i = 0; i < (size & 0b11)-1; i++)
-//     AlgInt::num[size/4] |= (uint32_t) randfunc() << (i*8);
-
-// // Prevent final digit from being 0.
-// uint8_t rand = 0;
-// while (rand == 0)
-//     rand = randfunc();
-// AlgInt::num[size/4] |= (uint32_t) rand << (i*8);
-// }
-
-// // Properly apply the sign.
-// AlgInt::sign = sign;
-
-// return;
-//
- 
 AlgInt::AlgInt(const uint8_t* num, size_t size, bool sign)
 {
     // Allocate the internal num array.
@@ -121,6 +67,69 @@ AlgInt::AlgInt(const uint8_t* num, size_t size, bool sign)
     return;
 }
 
+AlgInt::AlgInt(std::vector<uint8_t>& num, bool sign)
+{
+    // Allocate the internal num array.
+    resize((num.size()+3)/4);
+
+    // Copy the external num array into the internal array.
+    for (size_t i = 0; i < num.size()/4; i++)
+    {
+        AlgInt::num[i] |= (uint32_t) num[(i*4)+0] << 0;
+        AlgInt::num[i] |= (uint32_t) num[(i*4)+1] << 8;
+        AlgInt::num[i] |= (uint32_t) num[(i*4)+2] << 16;
+        AlgInt::num[i] |= (uint32_t) num[(i*4)+3] << 24;
+    }
+
+    // If the size was uneven (not divisible by 4).
+    for (size_t i = 0; i < (num.size() & 0b11); i++)
+        AlgInt::num[num.size()/4] |= (uint32_t) num[(num.size() & ~0b11) + i] << (i*8);
+
+    // Properly apply the sign.
+    AlgInt::sign = sign;
+
+    // Remove all leading zeroes.
+    trunc();
+
+    return;
+}
+
+AlgInt::AlgInt(const uint32_t* num, size_t size, bool sign)
+{
+    // Allocate the internal num array.
+    resize(size);
+
+    // Copy the external num array into the internal array.
+    for (size_t i = 0; i < size; i++)
+        AlgInt::num[i] = num[i];
+
+    // Properly apply the sign.
+    AlgInt::sign = sign;
+
+    // Remove all leading zeroes.
+    trunc();
+
+    return;
+}
+
+AlgInt::AlgInt(std::vector<uint32_t>& num, bool sign)
+{
+    // Allocate the internal num array.
+    resize(size);
+
+    // Copy the external num array into the internal array.
+    for (size_t i = 0; i < num.size(); i++)
+        AlgInt::num[i] = num[i];
+
+    // Properly apply the sign.
+    AlgInt::sign = sign;
+
+    // Remove all leading zeroes.
+    trunc();
+
+    return;
+}
+
 AlgInt::AlgInt(uint64_t num, bool sign)
 {
     // Allocate the internal num array (uint64_t can be maximum 2 digits).
@@ -138,6 +147,52 @@ AlgInt::AlgInt(uint64_t num, bool sign)
 
     return;
 }
+
+//! Conflicts with constructors
+//! Convert into string input function
+
+// AlgInt::AlgInt(std::string num)
+// {
+//     // What we want to do here is use an AlgInt to store the power of 10.
+//     // Cycle through the LSW to MSW (read normally).
+
+//     AlgInt pow10 = 1;
+//     AlgInt temp;
+
+//     // Skip whitespace
+//     size_t i = 0;
+//     if (num[i] == ' ')
+//         while (num[i++] == ' ');
+
+//     // Allow for either '-' or '+' to appear once to specify sign.
+//     if (num[i] == '-')
+//     {
+//         sign = true;
+//         i++;
+//     } else if (num[i] == '+')
+//     {
+//         sign = false;
+//         i++;
+//     }
+
+//     // Primary constructor
+//     while (num[i++] != '\0')
+//     {
+//         // Skip whitespace
+//         if (num[i] == ' ')
+//             continue;
+
+//         // Prevent invalid string.
+//         if (num[i] < '0' || num[i] > '9')
+//             throw std::domain_error("Provided string is not a correctly formatted base 10 string.");
+
+//         temp += pow10 * (num[i] - '0');
+//         pow10 *= 10;
+//     }
+
+//     *this = temp;
+//     return;
+// }
 
 AlgInt::AlgInt(size_t size, uint32_t(*randfunc)(), bool sign)
 {

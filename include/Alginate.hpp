@@ -35,6 +35,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <stdexcept>
+#include <vector>
 
 class AlgInt
 {
@@ -104,14 +105,22 @@ class AlgInt
          */
          AlgInt() : AlgInt((uint32_t*) nullptr, 0, false) {};
 
-         /**
-          * @brief Constructs a new AlgInt from an external number array. `num` is interpreted as a base 2^8 integer of `size` digits, read from LSW to MSW.
-          * 
-          * @param num An array of base 2^8 digits, read LSW to MSW.
-          * @param size The size of the `num` array.
-          * @param sign The sign of the AlgInt. False represents positive integers.
-          */
-         AlgInt(const uint8_t* num, size_t size, bool sign = false);
+        /**
+         * @brief Constructs a new AlgInt from an external number array. `num` is interpreted as a base 2^8 integer of `size` digits, read from LSW to MSW.
+         * 
+         * @param num An array of base 2^8 digits, read LSW to MSW.
+         * @param size The size of the `num` array.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         */
+        AlgInt(const uint8_t* num, size_t size, bool sign = false);
+
+        /**
+         * @brief Constructs a new AlgInt from an external number vector. `num` is interpreted as a base 2^8 integer, read from LSW to MSW.
+         * 
+         * @param num A vector of base 2^8 digits, read LSW to MSW.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         */
+         AlgInt(std::vector<uint8_t>& num, bool sign = false);
         
         /**
          * @brief Constructs a new AlgInt from an external number array. `num` is interpreted as a base 2^32 integer of `size` digits, read from LSW to MSW.
@@ -121,6 +130,14 @@ class AlgInt
          * @param sign The sign of the AlgInt. False represents positive integers.
          */
         AlgInt(const uint32_t* num, size_t size, bool sign = false);
+
+        /**
+         * @brief Constructs a new AlgInt from an external number vector. `num` is interpreted as a base 2^32 integer, read from LSW to MSW.
+         * 
+         * @param num A vector of base 2^32 digits, read LSW to MSW.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         */
+         AlgInt(std::vector<uint32_t>& num, bool sign = false);
 
         /**
          * @brief Constructs an AlgInt equal to the provided number.
