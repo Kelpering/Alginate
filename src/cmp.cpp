@@ -62,3 +62,7 @@ int AlgInt::cmp(const AlgInt& x, int32_t y, bool unsign)
     // If all checks pass, the numbers must be equal.
     return 0;
 }
+
+int AlgInt::cmp(int32_t x, const AlgInt& y, bool unsign) {
+    return -cmp(y, x, unsign);
+}

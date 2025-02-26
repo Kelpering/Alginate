@@ -22,6 +22,10 @@ void AlgInt::gcd(const AlgInt& a, const AlgInt& b, AlgInt& ret)
     AlgInt big = (cmp(a, b) >= 0) ? a : b;
     AlgInt sml = (cmp(a, b) >= 0) ? b : a;
 
+    // Avoid divide by zero error.
+    if (cmp(a, 0) == 0 || cmp(b,0) == 0)
+        return AlgInt::swap(big, ret);
+    
     //? Primary Euclidean Algorithm loop
     AlgInt temp;
     while (cmp(sml, 0) != 0)
@@ -40,6 +44,14 @@ void AlgInt::gcd(const AlgInt& a, const AlgInt& b, AlgInt& ret)
 
 AlgInt AlgInt::ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y)
 {
+    // Avoid divide by zero error.
+    if (cmp(b,0) == 0)
+    {
+        x = 1;
+        y = 0;
+        return a;
+    }
+
     // Extended Euclidean Algorithm (old_t and t are skipped).
     AlgInt old_r = a;
     AlgInt r = b;

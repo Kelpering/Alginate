@@ -21,44 +21,55 @@ int main()
     // Remove make log from view
     std::cout << '\n';
 
-    srand(time(NULL));
-    size_t bitsize = 2048;
+    uint32_t x_temp[] = {1,2,3};
+    AlgInt x = {x_temp, sizeof(x_temp)/sizeof(x_temp[0]), false};
 
-    AlgInt temp;
+    std::cout << "x: " << x.output_base10() << '\n';
+    std::cout << "x: " << x.output_debug() << '\n';
+    std::cout << "x: " << x.output_internal() << '\n';
 
-    AlgInt P = gen_prime(bitsize);
-    P.print("P");
-    AlgInt Q = gen_prime(bitsize);
-    Q.print("Q");
+    std::cout << "x: " << x << '\n';
 
-    AlgInt n = P * Q;
-    n.print("N");
+    return 0;
 
-    AlgInt::gcd(P-1, Q-1, temp);
-    AlgInt totient = ((P-1) * (Q-1)) / temp;
-    totient.print("totient");
+    // srand(time(NULL));
+    // size_t bitsize = 2048;
 
-    AlgInt e = 65537;
-    e.print("e");
-    AlgInt::gcd(e, totient, temp);
-    temp.print("gcd(e, totient)");
+    // AlgInt temp;
 
-    AlgInt d;
-    AlgInt::mod_inv(e, totient, d);
-    d.print("d");
-    ((e*d) % totient).print("e*d (mod totient)");
+    // AlgInt P = gen_prime(bitsize);
+    // P.print("P");
+    // AlgInt Q = gen_prime(bitsize);
+    // Q.print("Q");
 
-    // Public key:  (e, n)
-    // Private key: (d, n)
+    // AlgInt n = P * Q;
+    // n.print("N");
 
-    AlgInt message = 42;
-    message.print("Message");
+    // AlgInt::gcd(P-1, Q-1, temp);
+    // AlgInt totient = ((P-1) * (Q-1)) / temp;
+    // totient.print("totient");
 
-    AlgInt::mod_exp(message, e, n, message);
-    message.print("Encrypted");
+    // AlgInt e = 65537;
+    // e.print("e");
+    // AlgInt::gcd(e, totient, temp);
+    // temp.print("gcd(e, totient)");
 
-    AlgInt::mod_exp(message, d, n, message);
-    message.print("Decrypted");
+    // AlgInt d;
+    // AlgInt::mod_inv(e, totient, d);
+    // d.print("d");
+    // ((e*d) % totient).print("e*d (mod totient)");
+
+    // // Public key:  (e, n)
+    // // Private key: (d, n)
+
+    // AlgInt message = 42;
+    // message.print("Message");
+
+    // AlgInt::mod_exp(message, e, n, message);
+    // message.print("Encrypted");
+
+    // AlgInt::mod_exp(message, d, n, message);
+    // message.print("Decrypted");
 
     
 

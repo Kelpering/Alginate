@@ -29,7 +29,6 @@
 *   in order to generate primes of about 2048-4096 bits with this library.
 */
 #include "Alginate.hpp"
-#include <stdexcept>
 
 bool AlgInt::miller_rabin(const AlgInt& candidate, const AlgInt& witness)
 {

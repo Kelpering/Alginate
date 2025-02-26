@@ -21,7 +21,6 @@
 *   the wrong word but adequately explains the relationship.
 */
 #include "Alginate.hpp"
-#include <stdexcept>
 
 void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
 {

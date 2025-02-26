@@ -27,7 +27,6 @@
 *   operations according to modulo. The sign operations deviate from Algorithm D.
 */
 #include "Alginate.hpp"
-#include <stdexcept>
 
 void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& remainder, bool unsign)
 {

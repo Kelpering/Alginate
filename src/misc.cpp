@@ -77,33 +77,3 @@ void AlgInt::swap(AlgInt& first, AlgInt& second)
 
     return;
 }
-
-size_t AlgInt::get_sign() const
-{
-    return sign;
-}
-
-size_t AlgInt::get_size() const
-{
-    return size;
-}
-
-size_t AlgInt::get_cap() const
-{
-    return cap;
-}
-
-size_t AlgInt::get_bitsize() const
-{
-    size_t tmp = 0;
-    uint32_t msw = num[size-1];
-
-    // Count highest bit
-    while (msw)
-    {
-        msw >>= 1;
-        tmp++;
-    }
-
-    return size*32 - (32-tmp);
-}

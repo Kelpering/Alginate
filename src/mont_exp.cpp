@@ -48,7 +48,6 @@
 *   calls, which significantly improves prime checking speed.
 */
 #include "Alginate.hpp"
-#include <stdexcept>
 
 void mont_redc(AlgInt& x, AlgInt& temp, const AlgInt& m, const AlgInt& m_prime, const AlgInt& r_sub, size_t r_shift)
 {

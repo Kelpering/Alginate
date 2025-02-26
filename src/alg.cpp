@@ -7,7 +7,6 @@
 *   be repeated often enough to warrant a dedicated method.
 */
 #include "Alginate.hpp"
-#include <stdexcept>
 
 AlgInt AlgInt::abs(const AlgInt& x)
 {

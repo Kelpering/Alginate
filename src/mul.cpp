@@ -80,7 +80,5 @@ void AlgInt::mul(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign)
 void AlgInt::mul(uint32_t x, const AlgInt& y, AlgInt& ret, bool unsign)
 {
     // x * y == y * x
-    mul(y, x, ret, unsign);
-
-    return;
+    return mul(y, x, ret, unsign);
 }
