@@ -1,186 +1,710 @@
+/**
+*   File: Alginate.hpp
+*   Project: Alginate
+*   SPDX-License-Identifier: Unlicense
+* 
+*   Alginate is an arbitrary-precision arithmetic C++ library. The main interface is
+*   through the AlgInt class. All arithmetic operations are provided via static methods. 
+*   In addition, Alginate provides ample operator overloading for simple arithmetic such
+*   as addition and multiplication (most of C's operators are valid operators). AlgInts
+*   are dynamically allocated upon construction and are de-allocated when they fall out
+*   of scope. AlgInt's methods throw exceptions in response to invalid or unsupported 
+*   inputs (such as division by zero or negative exponents).
+*   
+*   All AlgInts are considered to have an infinite chain of leading zeroes. In addition, 
+*   the canonical representation of zero is an array size of 0. For efficiency, leading
+*   zeroes are truncated during correct usage. AlgInts are represented in sign-magnitude,
+*   with canonical zero being positive. All methods (including constructors) are 
+*   guaranteed to output canonical AlgInts. The default constructor creates an AlgInt
+*   equal to a canonical zero (which requires no internal allocation).
+*   
+*   Alginate was designed to be a supplement to another library (Phloios) which is
+*   a cryptographic library. To this end, Alginate does not use internal random
+*   functions, but instead requires external randomness. Despite this, Alginate
+*   is not side-channel secure and is not recommended to be used in any
+*   production environment.
+* 
+*   AlgInts store the arbitrary integer within an array of 32-bit words. Each index 
+*   contains one digit in base 2^32. The array is ordered from the least to most 
+*   significant word. This is the reverse of natural writing (base-10), which is written
+*   from most to least significant.
+*/
+
 #ifndef __ALGINATE_HPP__
 #define __ALGINATE_HPP__
-
-#include <bit>
 #include <cstdint>
 #include <cstddef>
-#include <iostream>
+#include <stdexcept>
+#include <vector>
 
 class AlgInt
 {
     private:
+
+    //? Internals
+
         uint32_t* num = nullptr;
         size_t size = 0;
         size_t cap = 0;
         bool sign = false;
 
-        void resize(size_t new_size);
+
+    //? Private functions
+
+        /**
+         * @brief Used to safely resize the internal num array. Might allocate more memory than required.
+         * 
+         * @param size The number of accessible (not allocated) digits.
+         */
+        void resize(size_t size);
         
-    public: 
+        /**
+         * @brief Used to canonize numbers. Removes leading zeroes and forces -0 into +0.
+         */
         void trunc();
-        static void swap(AlgInt& x, AlgInt& y);
-        //* Basic constructor/destructors
-        AlgInt() : AlgInt((uint32_t*)NULL, 0, false) {}
-        AlgInt(const AlgInt& other) : AlgInt(other.num, other.size, other.sign) {};
+
+        /**
+         * @brief Swaps two AlgInts in O(1) time. Useful for temporary AlgInt movements.
+         */
+        static void swap(AlgInt& first, AlgInt& second);
+
+        /**
+         * @brief Perform `x` ** `y` % `m` = `ret`.
+         * 
+         * @param x The base.
+         * @param y The exponent.
+         * @param m The modulus, must be odd.
+         * @param ret The AlgInt to store the result in. May overlap with `x`, `y`, or `m`.
+         * 
+         * @note This method is faster than the `mod_exp()` method, but this comes with the drawback that `m` must be odd.
+         */
+         static void mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret);
+
+
+    public:
+    
+    //? Constructors
+
+        /**
+         * @brief Constructs a new AlgInt from a pre-existing AlgInt. Performs a deep copy of the internal num array.
+         * 
+         * @param other The AlgInt to copy.
+         */
+        AlgInt(const AlgInt& other);
+
+        /**
+         * @brief Constructs a new AlgInt from a pre-existing AlgInt. Performs a shallow copy of the internal num array and destroys the pre-existing AlgInt.
+         * 
+         * @param other 
+         */
+        AlgInt(AlgInt&& other);
+
+        /**
+         * @brief Default AlgInt constructor. The constructed AlgInt is equal to 0. There are no allocations performed, so it is efficient to create and reassign later.
+         * 
+         */
+         AlgInt() : AlgInt((uint32_t*) nullptr, 0, false) {};
+
+        /**
+         * @brief Constructs a new AlgInt from an external number array. `num` is interpreted as a base 2^8 integer of `size` digits, read from LSW to MSW.
+         * 
+         * @param num An array of base 2^8 digits, read LSW to MSW.
+         * @param size The size of the `num` array.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         */
+        AlgInt(const uint8_t* num, size_t size, bool sign = false);
+
+        /**
+         * @brief Constructs a new AlgInt from an external number vector. `num` is interpreted as a base 2^8 integer, read from LSW to MSW.
+         * 
+         * @param num A vector of base 2^8 digits, read LSW to MSW.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         */
+         AlgInt(std::vector<uint8_t>& num, bool sign = false);
+        
+        /**
+         * @brief Constructs a new AlgInt from an external number array. `num` is interpreted as a base 2^32 integer of `size` digits, read from LSW to MSW.
+         * 
+         * @param num An array of base 2^32 digits, read LSW to MSW.
+         * @param size The size of the `num` array.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         */
+        AlgInt(const uint32_t* num, size_t size, bool sign = false);
+
+        /**
+         * @brief Constructs a new AlgInt from an external number vector. `num` is interpreted as a base 2^32 integer, read from LSW to MSW.
+         * 
+         * @param num A vector of base 2^32 digits, read LSW to MSW.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         */
+         AlgInt(std::vector<uint32_t>& num, bool sign = false);
+
+        /**
+         * @brief Constructs an AlgInt equal to the provided number.
+         * 
+         * @param num The number to assign.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         */
+        AlgInt(uint64_t num, bool sign = false);
+        
+        /**
+         * @brief Constructs an AlgInt with random data. Each digit is randomly generated from the provided `randfunc()`.
+         * 
+         * @param size The number of base 2^32 digits to generate. Calls to `randfunc()` might vary to prevent a leading zero.
+         * @param randfunc A user provided random integer function. Must return `uint32_t` and must accept no parameters.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         */
+        AlgInt(size_t size, uint32_t(*randfunc)(), bool sign = false);
+
+        /**
+         * @brief Constructs an AlgInt with random data. Each digit is randomly generated from the provided `randfunc()`.
+         * 
+         * @param size The number of base 2^8 digits to generate. Calls to `randfunc()` might vary to prevent a leading zero.
+         * @param randfunc A user provided random integer function. Must return `uint8_t` and must accept no parameters.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         */
+        AlgInt(size_t size, uint8_t(*randfunc)(), bool sign = false);
+
+        /**
+         * @brief Destroys the AlgInt and deallocates the internal `num` array.
+         */
         ~AlgInt();
 
-        //* Complex constructors
-        AlgInt(uint64_t num, bool sign = false);
-        AlgInt(const uint32_t* num, size_t size, bool sign = false);
-            // Will not allow leading zeroes, might call randfunc more than size times
-        AlgInt(uint32_t (*randfunc)(), size_t size, bool sign = false);
-            // Will not allow leading zeroes, might call randfunc more than size times
-        AlgInt(uint8_t (*randfunc)(), size_t size, bool sign = false);
 
-        //* Basic print
-        void print_debug(const char* name = "Number", bool show_size = false) const;
-        void print_log(const char* name = "Number", bool show_size = true) const;
-        void print(const char* name = "Number") const;
-
-        //! Keep everything very basic to speed up development/debugging
-        //! Work with signed integers throughout the process
-        //! Reduce number of function calls
-        //! Log all "alias calls" (ex: add(x,y) where y is negative is actually sub(x,y))
+    //? Arithmetic
 
         /**
-         * @brief Compares x to y.
-         * @return 1: (x > y) ||| 0: (x == y) ||| -1: (x < y)
-         */
-         //! Currently unsigned
-        static int cmp(const AlgInt& x, const AlgInt& y);
-
-        /**
-         * @brief ret = x + y
+         * @brief Perform `x` + `y` = `ret`.
          * 
-         * @param ret Cannot be x
+         * @param ret The AlgInt to store the result in. May overlap with `x` or `y`.
+         * @param unsign If true, perform `|x|` + `|y|` = `ret`.
          */
-        //! Unsigned
-        static void add_digit(const AlgInt& x, uint32_t y, AlgInt& ret);
+        static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
 
         /**
-         * @brief ret = x + y
+         * @brief Perform `x` - `y` = `ret`.
          * 
-         * @param ret Cannot be x or y
+         * @param ret The AlgInt to store the result in. May overlap with `x` or `y`.
+         * @param unsign If true, perform `|x|` - `|y|` = `ret`.
          */
-        static void add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign = false);
+        static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
 
         /**
-         * @brief ret = x - y
+         * @brief Perform `x` * `y` = `ret`.
          * 
-         * @param ret Cannot be x or y
-         * @note If x < y, then the result will be the absolute of the result.
+         * @param ret The AlgInt to store the result in. May overlap with `x` or `y`.
+         * @param unsign If true, perform `|x|` * `|y|` = `ret`.
          */
-        static void sub(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool ignore_sign = false);
-
-        //! Unsigned
-        static void sub_digit(const AlgInt& x, uint32_t y, AlgInt& ret);
+        static void mul(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
 
         /**
-         * @brief ret = x * y
+         * @brief Perform `x` / `y` = `(q, r)`.
          * 
-         * @param ret Cannot be x.
-         */
-        static void mul_digit(const AlgInt& x, uint32_t y, AlgInt& ret);
-
-        /**
-         * @brief ret = x * y
+         * @param q The AlgInt to store the quotient in. May overlap with `x` or `y`.
+         * @param r The AlgInt to store the remainder in. May overlap with `x` or `y`.
+         * @param unsign If true, perform `|x|` / `|y|` = `(q, r)`.
          * 
-         * @param ret Cannot be x or y.
+         * @note Performs Euclidean Division where `x` = `q` * `y` + `r`.
+         * @warning If the AlgInt for `q` equals the AlgInt for `r`, the behavior is undefined.
+         *
+         * @exception std::domain_error Will throw if `y` == 0.
          */
-        static void mul(const AlgInt& x, const AlgInt& y, AlgInt& ret);
-
-        /**
-         * @brief ret = x / y (euclidean)
-         * 
-         * @param ret Cannot be x, contains quotient.
-         * @returns The remainder.
-         */
-        //! Currently (r ONLY) unsigned
-        static uint32_t div_digit(const AlgInt& x, uint32_t y, AlgInt& ret);
-
-        // Benefit: Doesn't require a ret (temp) variable
-        //! Currently unsigned
-        static uint32_t mod_digit(const AlgInt& x, uint32_t y);
-
-        //! Currently (r ONLY) unsigned
-        static void div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r);
-
-        //! Unsigned
-        static void bw_shl(const AlgInt& x, size_t y, AlgInt& ret);
-        static void bw_shr(const AlgInt& x, size_t y, AlgInt& ret);
+        static void div(const AlgInt& x, const AlgInt& y, AlgInt& q, AlgInt& r, bool unsign = false);
         
-        static void sqr(const AlgInt& x, AlgInt& ret);
-        static void exp(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        /**
+         * @brief Perform `x` / `y` = `q`.
+         * 
+         * @param q The AlgInt to store the quotient in. May overlap with `x` or `y`.
+         * @param unsign If true, perform `|x|` / `|y|` = `q`.
+         * 
+         * @note Performs Euclidean Division where `x` = `q` * `y` + r.
+         *
+         * @exception std::domain_error Will throw if `y` == 0.
+         */
+        static void div(const AlgInt& x, const AlgInt& y, AlgInt& q, bool unsign = false);
 
-        // X and Y are expected to already be modulo `m`
+        /**
+         * @brief Perform `x` % `y` = `r`.
+         * 
+         * @param r The AlgInt to store the remainder in. May overlap with `x` or `y`.
+         * @param unsign If true, perform `|x|` % `|y|` = `r`.
+         * 
+         * @note Performs Euclidean Division where `x` = `q` * `y` + `r`. Additionally, `r` is always positive, which may affect `q`. This is not an issue because we do not return `q`.
+         *
+         * @exception std::domain_error Will throw if `y` == 0.
+         */
+        static void mod(const AlgInt& x, const AlgInt& y, AlgInt& r, bool unsign = false);
+        
+        
+    //? Short Arithmetic Overloads
+
+        /**
+         * @brief Perform `x` + `y` = `ret`.
+         * 
+         * @param ret The AlgInt to store the result in. May overlap with `x`.
+         * @param unsign If true, perform `|x|` + `|y|` = `ret`.
+         * 
+         * @note This method is faster than the `add(AlgInt, AlgInt)` method.
+         */
+        static void add(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign = false);
+
+        /**
+         * @brief Perform `x` + `y` = `ret`.
+         * 
+         * @param ret The AlgInt to store the result in. May overlap with `y`.
+         * @param unsign If true, perform `|x|` + `|y|` = `ret`.
+         * 
+         * @note This method is faster than the `add(AlgInt, AlgInt)` method.
+         */
+        static void add(uint32_t x, const AlgInt& y, AlgInt& ret, bool unsign = false);
+
+        /**
+         * @brief Perform `x` - `y` = `ret`.
+         * 
+         * @param ret The AlgInt to store the result in. May overlap with `x`.
+         * @param unsign If true, perform `|x|` - `|y|` = `ret`.
+         * 
+         * @note This method is faster than the `sub(AlgInt, AlgInt)` method.
+         */
+        static void sub(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign = false);
+
+        /**
+         * @brief Perform `x` - `y` = `ret`.
+         * 
+         * @param ret The AlgInt to store the result in. May overlap with `y`.
+         * @param unsign If true, perform `|x|` - `|y|` = `ret`.
+         * 
+         * @note This method is faster than the `sub(AlgInt, AlgInt)` method.
+         */
+        static void sub(uint32_t x, const AlgInt& y, AlgInt& ret, bool unsign = false);
+        
+        /**
+         * @brief Perform `x` * `y` = `ret`.
+         * 
+         * @param ret The AlgInt to store the result in. May overlap with `x`.
+         * @param unsign If true, perform `|x|` * `|y|` = `ret`.
+         * 
+         * @note This method is faster than the `mul(AlgInt, AlgInt)` method.
+         */
+        static void mul(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign = false);
+
+        /**
+         * @brief Perform `x` * `y` = `ret`.
+         * 
+         * @param ret The AlgInt to store the result in. May overlap with `y`.
+         * @param unsign If true, perform `|x|` * `|y|` = `ret`.
+         * 
+         * @note This method is faster than the `mul(AlgInt, AlgInt)` method.
+         */
+        static void mul(uint32_t x, const AlgInt& y, AlgInt& ret, bool unsign = false);
+        
+        /**
+         * @brief Perform `x` / `y` = `(q, r)`.
+         * 
+         * @param q The AlgInt to store the quotient in. May overlap with `x`.
+         * @param unsign If true, perform `|x|` / `|y|` = `(q, r)`.
+         * @return Returns the remainder `r`.
+         * 
+         * @note Performs Euclidean Division where `x` = `q` * `y` + `r`.
+         * @note This method is faster than the `div(AlgInt, AlgInt)` method.
+         *
+         * @exception std::domain_error Will throw if `y` == 0.
+         */
+        static int64_t div(const AlgInt& x, uint32_t y, AlgInt& q, bool unsign = false);
+
+        /**
+         * @brief Perform `x` % `y` = `r`.
+         * 
+         * @param r The AlgInt to store the remainder in. May overlap with `x` or `y`.
+         * @param unsign If true, perform `|x|` % `|y|` = `r`.
+         * 
+         * @note Performs Euclidean Division where `x` = `q` * `y` + `r`. Additionally, `r` is always positive, which may affect `q`. This is not an issue because we do not return `q`.
+         * @note This method is faster than the `mod(AlgInt, AlgInt)` method.
+         *
+         * @exception std::domain_error Will throw if `y` == 0.
+         */
+        static uint32_t mod(const AlgInt& x, uint32_t y, bool unsign = false);
+
+
+    //? Exponential
+
+        /**
+         * @brief Perform `x` ** `y` = `ret`.
+         * 
+         * @param x The base.
+         * @param y The exponent.
+         * @param ret The AlgInt to store the result in. May overlap with `x` or `y`.
+         * @param unsign If true, perform `|x|` ** `|y|` = `ret`.
+         */
+        static void exp(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign = false);
+
+        /**
+         * @brief Perform `x` ** `y` % `m` = `ret`.
+         * 
+         * @param x The base.
+         * @param y The exponent.
+         * @param m The modulus.
+         * @param ret The AlgInt to store the result in. May overlap with `x`, `y`, or `m`.
+         *
+         * @exception std::domain_error Will throw if `m` == 0.
+         */
         static void mod_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret);
 
-        // the reduce (redc) step in montgomery space
-        // r_sub = r - 1
-        // r_shift = 1 << r_shift == r
-        // r substitutes allow fast optimizations in mont_redc
-        // static void mont_redc(const AlgInt& x, const AlgInt& rInv, const AlgInt& m, const AlgInt& mPrime, const AlgInt& r_sub, size_t r_shift, AlgInt& ret);
 
-        // Same as mod_exp + m must be odd
-        // static void mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt& ret);
+    //? Bitwise
 
-        // False == candidate is NOT prime
-        // True  == prime OR witness strong liar
-        // witness must be [2, candidate-1) and completely random
+        /**
+         * @brief Return the value of the requested bit, zero indexed.
+         */
+        bool get_bit(size_t bit) const;
+
+        /**
+         * @brief Set the requested bit, zero indexed.
+         */
+        void set_bit(size_t bit);
+
+        /**
+         * @brief Clear the requested bit, zero indexed.
+         */
+        void clr_bit(size_t bit);
+
+        /**
+         * @brief Perform `x` & `y` = `ret`.
+         * 
+         * @param ret The AlgInt to store the result in. May overlap with `x` or `y`.
+         */
+        static void bw_and(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+
+        /**
+         * @brief Perform `x` ^ `y` = `ret`.
+         * 
+         * @param ret The AlgInt to store the result in. May overlap with `x` or `y`.
+         */
+        static void bw_xor(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        
+        /**
+         * @brief Perform `x` | `y` = `ret`.
+         * 
+         * @param ret The AlgInt to store the result in. May overlap with `x` or `y`.
+         */
+        static void bw_or(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        
+        /**
+         * @brief Perform `x` << `y` = `ret`.
+         * 
+         * @param ret The AlgInt to store the result in. May overlap with `x` or `y`.
+         */
+        static void bw_shl(const AlgInt& x, size_t y, AlgInt& ret);
+        
+        /**
+         * @brief Perform `x` >> `y` = `ret`.
+         * 
+         * @param ret The AlgInt to store the result in. May overlap with `x` or `y`.
+         */
+        static void bw_shr(const AlgInt& x, size_t y, AlgInt& ret);
+
+
+    //? Algorithm
+
+        /**
+         * @brief Performs `|x|` = `ret`.
+         * 
+         * @return The AlgInt with the absolute value of `x`.
+         */
+        static AlgInt abs(const AlgInt& x);
+        
+        /**
+         * @brief Perform `gcd(a, b)` = `ret`. The gcd of two numbers `a` and `b` is the highest number that divides both numbers evenly. 
+         * 
+         * @param ret The AlgInt to store the result in. May overlap with `a` or `b`.
+         */
+        static void gcd(const AlgInt& a, const AlgInt& b, AlgInt& ret);
+
+        /**
+         * @brief Perform `gcd(a, b)` = `ret`. The gcd of two numbers `a` and `b` is the highest number that divides both numbers evenly. 
+         * 
+         * @return An AlgInt containing the result `ret`. May overlap with `a` or `b`.
+         */
+        static AlgInt gcd(const AlgInt& a, const AlgInt& b);
+        
+        /**
+         * @brief Perform `lcm(x, y)` = `ret`. The lcm of two numbers `x` and `y` is the lowest number that is divisible by both numbers.
+         * 
+         * @return An AlgInt containing the result `ret`. May overlap with `x` or `y`.
+         */
+        static AlgInt lcm(const AlgInt& x, const AlgInt& y);
+
+        /**
+         * @brief Find the numbers `x` and `y` that fulfills the equation `a` * `x` + `b` * `y` = `gcd(a,b)`.
+         * 
+         * @param x The bezout coefficient for `a`.
+         * @param y The bezout coefficient for `b`.
+         * 
+         * @return An AlgInt containing gcd(a,b) May overlap with `x` or `y`.
+         *
+         * @warning If the AlgInts for `x`, `y`, or the return AlgInt overlap, the behavior is undefined.
+         */
+        static AlgInt ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y);
+        
+        /**
+         * @brief Find the modular multiplicative inverse `inv` of `x` `(mod m)`. In other words, find the number `inv` where `x` * `inv` = `1` `(mod m)` Always returns a positive AlgInt.
+         * 
+         * @param x The number to be inverted.
+         * @param m The modulus.
+         * @param ret The AlgInt to store the result in. May overlap with `x` or `m`.
+         * 
+         * @exception std::domain_error Will be thrown if `x` has no inverse mod `m`. This happens only if `gcd(x, m) != 1`.
+         */
+        static void mod_inv(const AlgInt& x, const AlgInt& m, AlgInt& inv);
+
+        /**
+         * @brief Performs one round of the probabilistic Miller-Rabin primality test. Each successive run of `miller_rabin()` decreases the chances of a false positive.
+         * 
+         * @param candidate The number to check for primality.
+         * @param witness The number that serves as a witness for the primality of `candidate`. Must be within the range [2, candidate-1). Must be picked randomly (not iteratively) to guarantee probability results are accurate.
+         * 
+         * @return true `candidate` is probably prime. `witness` might be a strong liar.
+         * @return false `candidate` is certainly not prime. 
+         *
+         * @warning `miller_rabin()` might return true even if `candidate` is not prime. However, `miller_rabin()` will never return false for a real prime. In order to prevent false positives, `miller_rabin()` should be ran repeatedly with randomly chosen `witness` values until a desired probability is reached. Each trial of `miller_rabin()` has a worst-case probability of `25%` to return a false positive. 
+         *
+         * @exception std::domain_error Will be thrown if `witness` is not within the range [2, candidate-1).
+         */
         static bool miller_rabin(const AlgInt& candidate, const AlgInt& witness);
 
-        bool get_bit(size_t bit) const;
-        void set_bit(size_t bit);
-        void clear_bit(size_t bit);
+
+    //? Comparison
+        
+        /**
+         * @brief Compares `x` to `y`, returns an `int` to represent the relation between `x` and `y`.
+         * 
+         * @param unsign If true, compare `|x|` to `|y|`.
+         * @return  1 `x` > `y`
+         * @return  0 `x` == `y`
+         * @return -1 `x` < `y`
+         */
+        static int cmp(const AlgInt& x, const AlgInt& y, bool unsign = false);
+
+        /**
+         * @brief Compares `x` to `y`, returns an `int` to represent the relation between `x` and `y`.
+         * 
+         * @param unsign If true, compare `|x|` to `|y|`.
+         * @return  1 `x` > `y`
+         * @return  0 `x` == `y`
+         * @return -1 `x` < `y`
+         */
+        static int cmp(const AlgInt& x, int32_t y, bool unsign = false);
+
+        /**
+         * @brief Compares `x` to `y`, returns an `int` to represent the relation between `x` and `y`.
+         * 
+         * @param unsign If true, compare `|x|` to `|y|`.
+         * @return  1 `x` > `y`
+         * @return  0 `x` == `y`
+         * @return -1 `x` < `y`
+         */
+        static int cmp(int32_t x, const AlgInt& y, bool unsign = false);
+
+
+    //? Input
+
+        /**
+         * @brief Constructs an AlgInt from a valid null-terminated string. Whitespace and commas are completely ignored and can be used freely for readability. Sign is specified with the first non-whitespace character being either '+' or '-' (default sign is positive).
+         * 
+         * @param num A null-terminated string containing the base10 representation of the number.
+         *
+         * @exception Throws std::domain_error if the string provided is invalid.
+         */
+        void init_string(const char* num);
+
+        /**
+         * @brief Constructs an AlgInt from a base256, MSW vector representation.
+         *
+         * @param arr The vector containing the number representation. Read from MSW to LSW.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         * 
+         * @note This method is functionally equivalent to RFC 8017's Octet String To Integer Primitive (OS2IP).
+         * 
+         * @warning This method is not equivalent to the uint8_t* constructor. This method works with MSW arrays.
+         */
+        void init_arr_base256(std::vector<uint8_t> arr, bool sign);
+
+        /**
+         * @brief Constructs an AlgInt from a base256, MSW array representation.
+         *
+         * @param arr The array containing the number representation. Read from MSW to LSW.
+         * @param size The size of the array.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         * 
+         * @note This method is functionally equivalent to RFC 8017's Octet String To Integer Primitive (OS2IP).
+         *
+         * @warning This method is not equivalent to the uint8_t* constructor. This method works with MSW arrays.
+         */
+        void init_arr_base256(uint8_t* arr, size_t size, bool sign);
+
+        /**
+         * @brief Constructs an AlgInt from a base2^32, MSW vector representation.
+         *
+         * @param arr The vector containing the number representation. Read from MSW to LSW.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         *
+         * @warning This method is not equivalent to the uint32_t* constructor. This method works with MSW arrays.
+         */
+        void init_arr_base2pow32(std::vector<uint32_t> arr, bool sign);
+
+        /**
+         * @brief Constructs an AlgInt from a base2^32, MSW array representation.
+         *
+         * @param arr The array containing the number representation. Read from MSW to LSW.
+         * @param size The size of the array.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         *
+         * @warning This method is not equivalent to the uint32_t* constructor. This method works with MSW arrays.
+         */
+        void init_arr_base2pow32(uint32_t* arr, size_t size, bool sign);
+
+
+    //? Output
+
+        /**
+         * @brief Returns the internal `size` variable.
+         */
         size_t get_size() const;
+
+        /**
+         * @brief Returns the internal `cap` variable.
+         */
+        size_t get_cap() const;
+
+        /**
+         * @brief Returns the internal `sign` variable.
+         * 
+         * @return true Negative
+         * @return false Positive
+         */
+        bool get_sign() const;
+
+        /**
+         * @brief Returns the bitsize of the associated AlgInt. Accounts for leading binary zeroes.
+         */
         size_t get_bitsize() const;
 
-        // a*x + b*y = gcd(a,b)
-        static void ext_gcd(const AlgInt& a, const AlgInt& b, AlgInt& x, AlgInt& y, AlgInt& gcd);
+        /**
+         * @brief Returns the base10 string representation of the AlgInt.
+         */
+        std::string output_string_base10() const;
 
-        static void bw_and(const AlgInt& x, const AlgInt& y, AlgInt& ret);
-        static void bw_or(const AlgInt& x, const AlgInt& y, AlgInt& ret);
-        static void bw_xor(const AlgInt& x, const AlgInt& y, AlgInt& ret);
+        /**
+         * @brief Returns the base2^32 string representation of the AlgInt.
+         */
+        std::string output_string_base2pow32() const;
 
-        //^ gcd
-        //^ Extended Euclidean
-        //^ mod_inv (technically just Extended Euclidean)
-        //^ rand initializer
+        /**
+         * @brief Returns the internal num array, formatted for convenience, as a string.
+         */
+        std::string output_string_debug() const;
+
+        /**
+         * @brief Returns the base256, MSW representation of the AlgInt as a vector.
+         * 
+         * @note This function is functionally equivalent to RFC 8017's Integer to Octet String Primitive (I2OSP).
+         */
+        std::vector<uint8_t> output_arr_base256();
         
-    //? Basic function types?
-        //^ add public (x, y, ret)
-            //^ returns into ret
-            //^ ret CAN be x or y
-            //^ Chooses between add, self_add, and add_digit
-
-        //^ add (x, y, ret)
-            //^ returns into ret
-            //^ ret cannot be the same as x or y
-            //^ No carry variable because ret is only allocated once (might be shrunk, no alloc)
-
+        /**
+         * @brief Returns the base256, MSW representation of the AlgInt as an array.
+         * 
+         * @param arr A uint8_t* that is dynamically allocated by the method. Must be de-allocated by the caller.
+         * 
+         * @return The size of the array.
+         * 
+         * @note This function is functionally equivalent to RFC 8017's Integer to Octet String Primitive (I2OSP).
+         */
+        size_t output_arr_base256(uint8_t*& arr);
         
-        //^ self_add signed (x, y)
-            //^ returns into x
-            //^ Should be more space and time efficient than add (1 less number to create, except resize)
-            //^ Use carry variable to prevent unnecessary re-alloc in resize
+        /**
+         * @brief Returns the base2^32, MSW representation of the AlgInt as a vector.
+         */
+        std::vector<uint32_t> output_arr_base2pow32();
+        
+        /**
+         * @brief Returns the base2^32, MSW representation of the AlgInt as an array.
+         * 
+         * @param arr A uint32_t* that is dynamically allocated by the method. Must be de-allocated by the caller.
+         * 
+         * @return The size of the array.
+         */
+        size_t output_arr_base2pow32(uint32_t*& arr);
 
-        //^ add digit (x, int, ret)
-            //^ returns into ret
-            //^ ret can be x
-            //^ int must be a uint32_t
-            //^ Much faster than temp w/ conversion + add
+        //* This overload allows AlgInt to be printed directly with `std::cout << AlgInt`.
+        friend std::ostream& operator<<(std::ostream& out, const AlgInt& obj);
 
 
-        // Mul and Div are next
-        // Signs are easier (ret.sign = x.sign ^ y.sign)
-        // Mul is faster if we implement addition directly in the step by step
-        // Div is faster if we implement a mul_digit function 
-        // Barrett Reduction might be useful for modular exponentiation
+    //? Operators
 
+        // Copy Operator
         AlgInt& operator=(const AlgInt& other);
+
+        // Move Operator
         AlgInt& operator=(AlgInt&& other);
 
+        // Addition Operators
+        AlgInt operator+(const AlgInt& other) const;
+        AlgInt operator+(uint32_t other) const;
+        AlgInt& operator+=(const AlgInt& other);
+        AlgInt& operator+=(uint32_t other);
 
+        // Subtraction Operators
+        AlgInt operator-(const AlgInt& other) const;
+        AlgInt operator-(uint32_t other) const;
+        AlgInt& operator-=(const AlgInt& other);
+        AlgInt& operator-=(uint32_t other);
+        
+        // Multiplication Operators
+        AlgInt operator*(const AlgInt& other) const;
+        AlgInt operator*(uint32_t other) const;
+        AlgInt& operator*=(const AlgInt& other);
+        AlgInt& operator*=(uint32_t other);
+        
+        // Division Operators
+        AlgInt operator/(const AlgInt& other) const;
+        AlgInt operator/(uint32_t other) const;
+        AlgInt& operator/=(const AlgInt& other);
+        AlgInt& operator/=(uint32_t other);
+        
+        // Modulus Operators
+        AlgInt operator%(const AlgInt& other) const;
+        AlgInt operator%(uint32_t other) const;
+        AlgInt& operator%=(const AlgInt& other);
+        AlgInt& operator%=(uint32_t other);
+        
+        // Bitwise And Operators
+        AlgInt operator&(const AlgInt& other) const;
+        AlgInt& operator&=(const AlgInt& other);
+
+        // Bitwise Xor Operators
+        AlgInt operator^(const AlgInt& other) const;
+        AlgInt& operator^=(const AlgInt& other);
+        
+        // Bitwise Or Operators
+        AlgInt operator|(const AlgInt& other) const;
+        AlgInt& operator|=(const AlgInt& other);
+        
+        // Bitwise Shift Left Operators
+        AlgInt operator<<(size_t other) const;
+        AlgInt& operator<<=(size_t other);
+        
+        // Bitwise Shift Right Operators
+        AlgInt operator>>(size_t other) const;
+        AlgInt& operator>>=(size_t other);
+
+        // Comparison Operators
+        bool operator<(const AlgInt& other) const;
+        bool operator<=(const AlgInt& other) const;
+        bool operator!=(const AlgInt& other) const;
+        bool operator==(const AlgInt& other) const;
+        bool operator>(const AlgInt& other) const;
+        bool operator>=(const AlgInt& other) const;
 };
 
 #endif // __ALGINATE_HPP__
