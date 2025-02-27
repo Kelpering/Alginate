@@ -6,7 +6,7 @@ project(Alginate)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Add all source files to "sources"
-file(GLOB_RECURSE sources "${CMAKE_SOURCE_DIR}/src/*.cpp")
+file(GLOB_RECURSE sources "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 # Mark Alginate as a static library
 add_library(Alginate STATIC
