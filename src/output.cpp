@@ -9,7 +9,6 @@
 */
 #include "Alginate.hpp"
 #include <sstream>
-#include <iostream>
 
 size_t AlgInt::get_size() const
 {
