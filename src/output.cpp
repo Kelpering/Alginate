@@ -9,6 +9,7 @@
 */
 #include "Alginate.hpp"
 #include <sstream>
+#include <iostream>
 
 size_t AlgInt::get_size() const
 {
@@ -110,50 +111,40 @@ std::string AlgInt::output_string_debug() const
 }
 
 std::vector<uint8_t> AlgInt::output_arr_base256()
-{
+{   
+    // Handle first digit (to account for leading zeroes)
     std::vector<uint8_t> out;
+    for (size_t i = 0; i < 4; i++)
+        out.push_back((uint8_t) (num[size-1] >> (3-i)*8));
 
     // Reverse word order from LSW to MSW
-    for (size_t i = size; i-- > 0;)
+    for (size_t i = size-1; i-- > 0;)
     {
-        out.push_back((num[i] >>  0) & 0xFF);
-        out.push_back((num[i] >>  8) & 0xFF);
-        out.push_back((num[i] >> 16) & 0xFF);
-        out.push_back((num[i] >> 24) & 0xFF);
+        out.push_back((uint8_t) (num[i] >> 24));
+        out.push_back((uint8_t) (num[i] >> 16));
+        out.push_back((uint8_t) (num[i] >>  8));
+        out.push_back((uint8_t) (num[i] >>  0));
     }
-
-    // Remove leading zeroes if they appeared.
-    for (size_t i = size; out.num[--i] == 0;)
-        out.pop_back();
         
     return out;
 }
 
 size_t AlgInt::output_arr_base256(uint8_t*& arr)
 {
-    uint32_t digit = num[size-1];
-    uint8_t size_last = 0;
-    
-    while (digit >> (size_last*8))
-        size_last++;
+    // Use the existing vector output method.
+    std::vector<uint8_t> out;
+    out = output_arr_base256();
 
-    // Allocate arr while removing leading zeroes.
-    arr = new uint8_t[(size-1) * 8 + size_last]
+    arr = new uint8_t[out.size()];
+    for (size_t i = 0; i < out.size(); i++)
+        arr[i] = out[i];
 
-    //! Not finished
-    for (size_t i = size; i-- > 1;)
-    {
-        out.num[i*4 + 0] = (num[i] >>  0) & 0xFF;
-        out.num[i*4 + 1] = (num[i] >>  8) & 0xFF;
-        out.num[i*4 + 2] = (num[i] >> 16) & 0xFF;
-        out.num[i*4 + 3] = (num[i] >> 24) & 0xFF;
-    }
-
+    return out.size();
 }
 
 std::vector<uint32_t> AlgInt::output_arr_base2pow32()
 {
-    std::vector<uint8_t> out;
+    std::vector<uint32_t> out;
 
     // Reverse word order from LSW to MSW
     for (size_t i = size; i-- > 0;)
@@ -168,7 +159,7 @@ size_t AlgInt::output_arr_base2pow32(uint32_t*& arr)
 
     // Reverse word order from LSW to MSW
     for (size_t i = size; i-- > 0;)
-        arr.num[size - i - 1] = num[i];
+        arr[size - i - 1] = num[i];
 
     return size;
 }
@@ -176,5 +167,5 @@ size_t AlgInt::output_arr_base2pow32(uint32_t*& arr)
 std::ostream& operator<<(std::ostream& out, const AlgInt& obj)
 { 
     //* We return the resulting ostream to allow chaining (std::cout << 1 << 2).
-    return out << obj.output_base10();
+    return out << obj.output_string_base10();
 }

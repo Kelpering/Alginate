@@ -148,52 +148,6 @@ AlgInt::AlgInt(uint64_t num, bool sign)
     return;
 }
 
-//! Conflicts with constructors
-//! Convert into string input function
-
-// AlgInt::AlgInt(std::string num)
-// {
-//     // What we want to do here is use an AlgInt to store the power of 10.
-//     // Cycle through the LSW to MSW (read normally).
-
-//     AlgInt pow10 = 1;
-//     AlgInt temp;
-
-//     // Skip whitespace
-//     size_t i = 0;
-//     if (num[i] == ' ')
-//         while (num[i++] == ' ');
-
-//     // Allow for either '-' or '+' to appear once to specify sign.
-//     if (num[i] == '-')
-//     {
-//         sign = true;
-//         i++;
-//     } else if (num[i] == '+')
-//     {
-//         sign = false;
-//         i++;
-//     }
-
-//     // Primary constructor
-//     while (num[i++] != '\0')
-//     {
-//         // Skip whitespace
-//         if (num[i] == ' ')
-//             continue;
-
-//         // Prevent invalid string.
-//         if (num[i] < '0' || num[i] > '9')
-//             throw std::domain_error("Provided string is not a correctly formatted base 10 string.");
-
-//         temp += pow10 * (num[i] - '0');
-//         pow10 *= 10;
-//     }
-
-//     *this = temp;
-//     return;
-// }
-
 AlgInt::AlgInt(size_t size, uint32_t(*randfunc)(), bool sign)
 {
     // Zero check

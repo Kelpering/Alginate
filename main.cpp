@@ -21,8 +21,12 @@ int main()
     // Remove make log from view
     std::cout << '\n';
 
-    AlgInt x = std::string("42");
-    std::cout << "x: " << x;
+    uint8_t x_temp[] = {1,0,1,0};
+    AlgInt x = {x_temp, sizeof(x_temp)/sizeof(x_temp[0]), false};
+    x.init_arr_base256(x_temp, sizeof(x_temp)/sizeof(x_temp[0]), false);
+
+    std::cout << "x: " << x.output_string_base2pow32() << '\n';
+    std::cout << "x: " << x << '\n';
 
     return 0;
 

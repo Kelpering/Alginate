@@ -507,7 +507,61 @@ class AlgInt
 
 
     //? Input
-        //! Should accept PKCS#1, string base, and others as functions
+
+        /**
+         * @brief Constructs an AlgInt from a valid null-terminated string. Whitespace and commas are completely ignored and can be used freely for readability. Sign is specified with the first non-whitespace character being either '+' or '-' (default sign is positive).
+         * 
+         * @param num A null-terminated string containing the base10 representation of the number.
+         *
+         * @exception Throws std::domain_error if the string provided is invalid.
+         */
+        void init_string(const char* num);
+
+        /**
+         * @brief Constructs an AlgInt from a base256, MSW vector representation.
+         *
+         * @param arr The vector containing the number representation. Read from MSW to LSW.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         * 
+         * @note This method is functionally equivalent to RFC 8017's Octet String To Integer Primitive (OS2IP).
+         * 
+         * @warning This method is not equivalent to the uint8_t* constructor. This method works with MSW arrays.
+         */
+        void init_arr_base256(std::vector<uint8_t> arr, bool sign);
+
+        /**
+         * @brief Constructs an AlgInt from a base256, MSW array representation.
+         *
+         * @param arr The array containing the number representation. Read from MSW to LSW.
+         * @param size The size of the array.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         * 
+         * @note This method is functionally equivalent to RFC 8017's Octet String To Integer Primitive (OS2IP).
+         *
+         * @warning This method is not equivalent to the uint8_t* constructor. This method works with MSW arrays.
+         */
+        void init_arr_base256(uint8_t* arr, size_t size, bool sign);
+
+        /**
+         * @brief Constructs an AlgInt from a base2^32, MSW vector representation.
+         *
+         * @param arr The vector containing the number representation. Read from MSW to LSW.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         *
+         * @warning This method is not equivalent to the uint32_t* constructor. This method works with MSW arrays.
+         */
+        void init_arr_base2pow32(std::vector<uint32_t> arr, bool sign);
+
+        /**
+         * @brief Constructs an AlgInt from a base2^32, MSW array representation.
+         *
+         * @param arr The array containing the number representation. Read from MSW to LSW.
+         * @param size The size of the array.
+         * @param sign The sign of the AlgInt. False represents positive integers.
+         *
+         * @warning This method is not equivalent to the uint32_t* constructor. This method works with MSW arrays.
+         */
+        void init_arr_base2pow32(uint32_t* arr, size_t size, bool sign);
 
 
     //? Output
@@ -538,19 +592,51 @@ class AlgInt
         /**
          * @brief Returns the base10 string representation of the AlgInt.
          */
-        std::string output_base10() const;
+        std::string output_string_base10() const;
 
         /**
-         * @brief Returns the base32 string representation of the AlgInt.
+         * @brief Returns the base2^32 string representation of the AlgInt.
          */
-        std::string output_debug() const;
+        std::string output_string_base2pow32() const;
 
         /**
-         * @brief Returns the internal num array, preformatted for convenience, as a string.
+         * @brief Returns the internal num array, formatted for convenience, as a string.
          */
-        std::string output_internal() const;
+        std::string output_string_debug() const;
 
-        //* This overload allows AlgInt to be printed directly with std::cout.
+        /**
+         * @brief Returns the base256, MSW representation of the AlgInt as a vector.
+         * 
+         * @note This function is functionally equivalent to RFC 8017's Integer to Octet String Primitive (I2OSP).
+         */
+        std::vector<uint8_t> output_arr_base256();
+        
+        /**
+         * @brief Returns the base256, MSW representation of the AlgInt as an array.
+         * 
+         * @param arr A uint8_t* that is dynamically allocated by the method. Must be de-allocated by the caller.
+         * 
+         * @return The size of the array.
+         * 
+         * @note This function is functionally equivalent to RFC 8017's Integer to Octet String Primitive (I2OSP).
+         */
+        size_t output_arr_base256(uint8_t*& arr);
+        
+        /**
+         * @brief Returns the base2^32, MSW representation of the AlgInt as a vector.
+         */
+        std::vector<uint32_t> output_arr_base2pow32();
+        
+        /**
+         * @brief Returns the base2^32, MSW representation of the AlgInt as an array.
+         * 
+         * @param arr A uint32_t* that is dynamically allocated by the method. Must be de-allocated by the caller.
+         * 
+         * @return The size of the array.
+         */
+        size_t output_arr_base2pow32(uint32_t*& arr);
+
+        //* This overload allows AlgInt to be printed directly with `std::cout << AlgInt`.
         friend std::ostream& operator<<(std::ostream& out, const AlgInt& obj);
 
 
