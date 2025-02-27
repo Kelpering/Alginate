@@ -1,5 +1,4 @@
 # TODO
-
 - Reorganize project
   - src w/ all individual .c files
   - header in main
