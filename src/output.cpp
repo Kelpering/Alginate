@@ -42,7 +42,7 @@ size_t AlgInt::get_bitsize() const
 
 
 
-std::string AlgInt::output_base10() const
+std::string AlgInt::output_string_base10() const
 {
     // Output string.
     std::stringstream str;
@@ -70,7 +70,7 @@ std::string AlgInt::output_base10() const
     return str.str();
 }
 
-std::string AlgInt::output_debug() const
+std::string AlgInt::output_string_base2pow32() const
 {
     // Output string
     std::stringstream str;
@@ -89,7 +89,7 @@ std::string AlgInt::output_debug() const
     return str.str();
 }
 
-std::string AlgInt::output_internal() const
+std::string AlgInt::output_string_debug() const
 {
     // Output string
     std::stringstream str;
@@ -107,6 +107,70 @@ std::string AlgInt::output_internal() const
         str << num[i] << ", ";
     str << num[size-1] << "}";
     return str.str();
+}
+
+std::vector<uint8_t> AlgInt::output_arr_base256()
+{
+    std::vector<uint8_t> out;
+
+    // Reverse word order from LSW to MSW
+    for (size_t i = size; i-- > 0;)
+    {
+        out.push_back((num[i] >>  0) & 0xFF);
+        out.push_back((num[i] >>  8) & 0xFF);
+        out.push_back((num[i] >> 16) & 0xFF);
+        out.push_back((num[i] >> 24) & 0xFF);
+    }
+
+    // Remove leading zeroes if they appeared.
+    for (size_t i = size; out.num[--i] == 0;)
+        out.pop_back();
+        
+    return out;
+}
+
+size_t AlgInt::output_arr_base256(uint8_t*& arr)
+{
+    uint32_t digit = num[size-1];
+    uint8_t size_last = 0;
+    
+    while (digit >> (size_last*8))
+        size_last++;
+
+    // Allocate arr while removing leading zeroes.
+    arr = new uint8_t[(size-1) * 8 + size_last]
+
+    //! Not finished
+    for (size_t i = size; i-- > 1;)
+    {
+        out.num[i*4 + 0] = (num[i] >>  0) & 0xFF;
+        out.num[i*4 + 1] = (num[i] >>  8) & 0xFF;
+        out.num[i*4 + 2] = (num[i] >> 16) & 0xFF;
+        out.num[i*4 + 3] = (num[i] >> 24) & 0xFF;
+    }
+
+}
+
+std::vector<uint32_t> AlgInt::output_arr_base2pow32()
+{
+    std::vector<uint8_t> out;
+
+    // Reverse word order from LSW to MSW
+    for (size_t i = size; i-- > 0;)
+        out.push_back(num[i]);
+
+    return out;
+}
+
+size_t AlgInt::output_arr_base2pow32(uint32_t*& arr)
+{
+    arr = new uint32_t[size];
+
+    // Reverse word order from LSW to MSW
+    for (size_t i = size; i-- > 0;)
+        arr.num[size - i - 1] = num[i];
+
+    return size;
 }
 
 std::ostream& operator<<(std::ostream& out, const AlgInt& obj)
