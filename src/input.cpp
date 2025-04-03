@@ -57,13 +57,13 @@ void AlgInt::init_string(const char* num)
     return;
 }
 
-void AlgInt::init_arr_base256(std::vector<uint8_t> arr, bool sign)
+void AlgInt::init_arr_base256(const std::vector<uint8_t>& arr, bool sign)
 {
     // Use existing array init method.
     return init_arr_base256(&arr[0], arr.size(), sign);
 }
 
-void AlgInt::init_arr_base256(uint8_t* arr, size_t size, bool sign)
+void AlgInt::init_arr_base256(const uint8_t* arr, size_t size, bool sign)
 {
     if (size == 0)
         return;
@@ -71,19 +71,24 @@ void AlgInt::init_arr_base256(uint8_t* arr, size_t size, bool sign)
     // Allocate the internal num array.
     resize((size+3)/4);
 
-    // Reverse word order from MSW to LSW
-    size_t i = 0;
-    for (; size >= 4; i++)
+    //! Temporary until I figure out a better method
+    std::vector<uint8_t> arr_new;
+    arr_new.resize(size);
+    for (size_t i = 0; i < size; i++)
+        arr_new[size - i - 1] = arr[i];
+
+    size_t i;
+    for (i = 0; i < size/4; i++)
     {
-        AlgInt::num[i] |= (uint32_t) arr[--size] << 0;
-        AlgInt::num[i] |= (uint32_t) arr[--size] << 8;
-        AlgInt::num[i] |= (uint32_t) arr[--size] << 16;
-        AlgInt::num[i] |= (uint32_t) arr[--size] << 24;
+        AlgInt::num[i] |= (uint32_t) arr_new[i*4+0] <<  0;
+        AlgInt::num[i] |= (uint32_t) arr_new[i*4+1] <<  8;
+        AlgInt::num[i] |= (uint32_t) arr_new[i*4+2] << 16;
+        AlgInt::num[i] |= (uint32_t) arr_new[i*4+3] << 24;
     }
 
     // If the size was uneven (not divisible by 4).
-    for (; size-- > 0; i++)
-        AlgInt::num[0] |= (uint32_t) arr[size] << (i*8);
+    for (size_t j = 0; j < (size % 4); j++)
+        AlgInt::num[i] |= (uint32_t) arr_new[i*4+j] << (j*8);
 
     // Remove any leading zeroes
     trunc();
@@ -92,13 +97,13 @@ void AlgInt::init_arr_base256(uint8_t* arr, size_t size, bool sign)
     AlgInt::sign = sign;
 }
 
-void AlgInt::init_arr_base2pow32(std::vector<uint32_t> arr, bool sign)
+void AlgInt::init_arr_base2pow32(const std::vector<uint32_t>& arr, bool sign)
 {
     // Use existing array init method.
     return init_arr_base2pow32(&arr[0], arr.size(), sign);
 }
 
-void AlgInt::init_arr_base2pow32(uint32_t* arr, size_t size, bool sign)
+void AlgInt::init_arr_base2pow32(const uint32_t* arr, size_t size, bool sign)
 {
     // Allocate the internal num array.
     resize(size);

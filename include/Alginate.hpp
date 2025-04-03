@@ -527,7 +527,7 @@ class AlgInt
          * 
          * @warning This method is not equivalent to the uint8_t* constructor. This method works with MSW arrays.
          */
-        void init_arr_base256(std::vector<uint8_t> arr, bool sign);
+        void init_arr_base256(const std::vector<uint8_t>& arr, bool sign);
 
         /**
          * @brief Constructs an AlgInt from a base256, MSW array representation.
@@ -540,7 +540,7 @@ class AlgInt
          *
          * @warning This method is not equivalent to the uint8_t* constructor. This method works with MSW arrays.
          */
-        void init_arr_base256(uint8_t* arr, size_t size, bool sign);
+        void init_arr_base256(const uint8_t* arr, size_t size, bool sign);
 
         /**
          * @brief Constructs an AlgInt from a base2^32, MSW vector representation.
@@ -550,7 +550,7 @@ class AlgInt
          *
          * @warning This method is not equivalent to the uint32_t* constructor. This method works with MSW arrays.
          */
-        void init_arr_base2pow32(std::vector<uint32_t> arr, bool sign);
+        void init_arr_base2pow32(const std::vector<uint32_t>& arr, bool sign);
 
         /**
          * @brief Constructs an AlgInt from a base2^32, MSW array representation.
@@ -561,7 +561,7 @@ class AlgInt
          *
          * @warning This method is not equivalent to the uint32_t* constructor. This method works with MSW arrays.
          */
-        void init_arr_base2pow32(uint32_t* arr, size_t size, bool sign);
+        void init_arr_base2pow32(const uint32_t* arr, size_t size, bool sign);
 
 
     //? Output

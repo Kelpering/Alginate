@@ -111,10 +111,14 @@ std::string AlgInt::output_string_debug() const
 
 std::vector<uint8_t> AlgInt::output_arr_base256()
 {   
-    // Handle first digit (to account for leading zeroes)
+    // Handle first digit (to account for leading byte zeroes)
     std::vector<uint8_t> out;
+    
     for (size_t i = 0; i < 4; i++)
-        out.push_back((uint8_t) (num[size-1] >> (3-i)*8));
+    {
+        if ((num[size-1] >> (3-i)*8) != 0)
+            out.push_back((uint8_t) (num[size-1] >> (3-i)*8));
+    }
 
     // Reverse word order from LSW to MSW
     for (size_t i = size-1; i-- > 0;)
