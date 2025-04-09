@@ -64,6 +64,11 @@ class AlgInt
         void trunc();
 
         /**
+         * @brief Shrinks the num array (via full replacement) to save memory.
+         */
+        void shrink_to_fit();
+
+        /**
          * @brief Swaps two AlgInts in O(1) time. Useful for temporary AlgInt movements.
          */
         static void swap(AlgInt& first, AlgInt& second);

@@ -68,6 +68,24 @@ void AlgInt::trunc()
     return;
 }
 
+void AlgInt::shrink_to_fit()
+{
+    // Reduce memory size from extraneous zeroes.
+    trunc();
+
+    // Replace the current, wasteful array with a smaller, wasteless array.
+    uint32_t* new_arr = new uint32_t[size];
+
+    for (size_t i = 0; i < size; i++)
+        new_arr[i] = num[i];
+
+    // Finalize replacement
+    delete[] num;
+    num = new_arr;
+
+    return;
+}
+
 void AlgInt::swap(AlgInt& first, AlgInt& second)
 {
     std::swap(first.num, second.num);
