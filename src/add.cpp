@@ -61,6 +61,9 @@ void AlgInt::add(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
         carry >>= 32;
     }
 
+    // Apply sign
+    tret.sign = ret.sign;
+    
     // Remove leading zeroes
     tret.trunc();
 
@@ -90,6 +93,9 @@ void AlgInt::add(const AlgInt& x, uint32_t y, AlgInt& ret, bool unsign)
         carry >>= 32;
     } 
 
+    // Apply sign
+    tret.sign = ret.sign;
+    
     // Remove leading zeroes
     tret.trunc();
 

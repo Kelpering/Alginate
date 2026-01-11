@@ -31,7 +31,6 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
     // Basic setup
     AlgInt sqr = x;
     AlgInt tret = 1;
-    tret.sign = x.sign && !unsign;
 
     //? Primary exponentiation loop
     for (size_t i = 0; i < y.get_bitsize(); i++)
@@ -43,6 +42,8 @@ void AlgInt::exp(const AlgInt& x, const AlgInt& y, AlgInt& ret, bool unsign)
         // sqr = sqr*sqr
         mul(sqr, sqr, sqr);
     }
+
+    tret.sign = (unsign) ? false : y.get_bit(0) && x.sign;
 
     // Return values
     AlgInt::swap(tret, ret);

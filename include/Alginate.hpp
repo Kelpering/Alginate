@@ -73,6 +73,9 @@ class AlgInt
          */
         static void swap(AlgInt& first, AlgInt& second);
 
+
+    //! Temporary public. Used in mont_exp_timing.
+    public:
         /**
          * @brief Perform `x` ** `y` % `m` = `ret`.
          * 

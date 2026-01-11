@@ -40,8 +40,6 @@ size_t AlgInt::get_bitsize() const
     return size*32 - (32-tmp);
 }
 
-
-
 std::string AlgInt::output_string_base10() const
 {
     // Output string.

@@ -14,6 +14,8 @@
 *   individual bits last, which is faster.
 */
 #include "Alginate.hpp"
+#include <iostream>
+#include <stdexcept>
 
 bool AlgInt::get_bit(size_t bit) const
 {
@@ -154,10 +156,10 @@ void AlgInt::bw_shr(const AlgInt& x, size_t y, AlgInt& ret)
         // All but last digit
         size_t i;
         for (i = 0; i < temp.size-1; i++)
-            temp.num[i] = (temp.num[i+1] << (32-y)) | (temp.num[i] >> y);
+            temp.num[i] = (temp.num[i+1] << (32-bit_shift)) | (temp.num[i] >> bit_shift);
 
         // Final digit
-        temp.num[i] >>= y;
+        temp.num[i] >>= bit_shift;
     }
     
     // Remove leading zeroes
@@ -165,5 +167,6 @@ void AlgInt::bw_shr(const AlgInt& x, size_t y, AlgInt& ret)
 
     // Return values
     AlgInt::swap(ret, temp);
+
     return;
 }

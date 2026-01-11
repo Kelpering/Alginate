@@ -51,19 +51,24 @@ void AlgInt::div(const AlgInt& x, const AlgInt& y, AlgInt& quotient, AlgInt& rem
     // Truncation is performed during assignment.
     int cmp_ret = cmp(xnorm, ynorm, true);
 
+
     // Fast comparison divison (prevent x < y OoB)
     if (cmp_ret == -1)
     {
-        quotient = 0;
-        remainder = x;
-        remainder.sign = x.sign && !unsign;
+        AlgInt tquo = 0;
+        AlgInt trem = x;
+        trem.sign = x.sign && !unsign;
+        AlgInt::swap(tquo, quotient);
+        AlgInt::swap(trem, remainder);
 
         return;
     } else if (cmp_ret == 0)
     {
-        quotient = 1;
-        quotient.sign = (x.sign ^ y.sign) && !unsign;
-        remainder = 0;
+        AlgInt tquo = 1;
+        tquo.sign = (x.sign ^ y.sign) && !unsign;
+        AlgInt trem = 0;
+        AlgInt::swap(tquo, quotient);
+        AlgInt::swap(trem, remainder);
 
         return;
     }

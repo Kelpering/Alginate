@@ -174,8 +174,6 @@ AlgInt::AlgInt(size_t size, uint32_t(*randfunc)(), bool sign)
     return;
 }
 
-#include <iostream>
-
 AlgInt::AlgInt(size_t size, uint8_t(*randfunc)(), bool sign)
 {
     if (size == 0)

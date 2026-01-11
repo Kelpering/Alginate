@@ -90,7 +90,6 @@ void AlgInt::mont_exp(const AlgInt& x, const AlgInt& y, const AlgInt& m, AlgInt&
     if (m_prime.sign)
         sub(r, m_prime, m_prime, true);
 
-
     // sqr = x * r (mod m)
     AlgInt sqr;
     mul(x, r, sqr);

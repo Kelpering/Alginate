@@ -8,10 +8,11 @@
 *   bitcounts, O(N**2) is sufficient. For higher bitcounts, other algorithms such
 *   as karatsuba can perform significantly faster O(N**log_2(3)) multiplication.
 *   
-*   Karatsuba multiplication performs 3 O(N/2) multiplications, which happen to be
-*   faster than the equivalent O(N) multiplication. Eventually, we reach a faster
-*   O(N) multiplication than the equivalent 3 O(N/2), so we swap back to the  faster
-*   schoolbook algorithm when we reach this point.
+*   Karatsuba multiplication splits multiplication into 3 O(N/2) multiplications, 
+*   which happen to be faster at higher bitcounts. We perform this recursively 
+*   until we reach a threshold where schoolbook multiplication is faster. 
+*   Additionally, by splitting the number, Karatsuba allows for parallel computation;
+*   however, there are no plans to take advantage of this optimization in this library.
 *   
 *   Karatsuba works by:
 *   ! Update when we write a karatsuba optimization.

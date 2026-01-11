@@ -40,8 +40,8 @@ void AlgInt::mod_inv(const AlgInt& x, const AlgInt& m, AlgInt& inv)
     if (cmp(gcd, 1) != 0)
         throw std::domain_error("x^-1 (mod m) does not exist for provided x and m. x^-1 only exists if gcd(x, m) == 1.");
 
-    //* Inv might be returned negative by ext_gcd (-inv = inv - m). For convenience, only
-    //*  positive values of inv are returned, although both are valid inverses.
+    //* Inv might be returned negative by ext_gcd (-inv == inv - m (mod m)). For convenience, only
+    //*  positive values of inv are returned, although both are valid inverses under modulo.
     if (inv.sign)
         add(inv, m, inv);
 

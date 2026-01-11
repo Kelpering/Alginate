@@ -1,5 +1,5 @@
 # Set project and minimum version
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.5)
 project(Alginate)
 
 # Exports compile_commands.json (which clangd uses)
